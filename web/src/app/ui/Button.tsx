@@ -17,3 +17,7 @@ export function Button({ variant = 'primary', className, type = 'button', ...pro
 export function ButtonLink({ variant = 'primary', className, ...props }: LinkProps & { variant?: Variant }) {
   return <Link {...props} className={cx(buttonClass(variant), className)} />
 }
+/** A link that leaves the app, or saves a file, drawn as a button. ButtonLink is for the app's own screens. */
+export function ButtonAnchor({ variant = 'primary', className, ...props }: ComponentProps<'a'> & { variant?: Variant }) {
+  return <a {...props} className={cx(buttonClass(variant), className)} />
+}

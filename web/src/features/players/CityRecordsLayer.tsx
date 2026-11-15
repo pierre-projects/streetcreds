@@ -20,10 +20,10 @@ import {
   LAYER_OF,
   type MapBox,
   RESOURCE_LAYERS,
-  TEMPE_311_FORM_URL,
 } from './cityRecords'
 import { cityFinding } from './cityText'
 import { POPUP_WIDTH, TAP_PX } from './mapReports'
+import { tempe311RecordTarget, tempe311Url } from './tempe311'
 
 /** From this zoom in, the records in view are pins that can be tapped. Further out they would cover each other. */
 const PIN_ZOOM = 16
@@ -142,9 +142,10 @@ function CityPopup({ record, reported }: { record: CityRecord; reported: boolean
       {record.cityFix && <p className="line-clamp-2 text-xs">{strings.city.cityFix(record.cityFix)}</p>}
       {reported && <p className="text-xs">{strings.city.reported}</p>}
       <p className="text-xs text-muted">{strings.city.source(record.surveyed)}</p>
-      {/* Two ways to act on it: the City's own form, and the game's report quest, which pays points. */}
+      {/* Two ways to act on it: the City's own form, opened on the issue this kind of record is,
+          and the game's report quest, which pays points. */}
       <div className="flex flex-wrap justify-between gap-x-3">
-        <a className="popup-link" href={TEMPE_311_FORM_URL} target="_blank" rel="noopener noreferrer" aria-label={strings.city.tell311Label}>
+        <a className="popup-link" href={tempe311Url(tempe311RecordTarget(record.kind))} target="_blank" rel="noopener noreferrer" aria-label={strings.city.tell311Label}>
           {strings.city.tell311}
         </a>
         <Link className="popup-link" to="/report" aria-label={strings.city.reportHereLabel(POINTS['report-new'])}>

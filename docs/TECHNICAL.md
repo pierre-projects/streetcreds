@@ -70,7 +70,9 @@ streetcreds/
       features/
         players/                    (Pierre)
           JoinScreen.tsx  HomeScreen.tsx  LeaderboardScreen.tsx  MapScreen.tsx
-          cityReport.ts             builds the "Copy city report" text
+          cityReport.ts             builds the location and details a player pastes into the City's form
+          tempe311.ts               which page of the City's form each category and City record opens
+          CityHandoff.tsx           the "Send to Tempe 311" panel; CityHandoffDialog.tsx shows it over the map
           cityRecords.ts            the City's accessibility records: loading, layers, matching to reports
           CityRecordsLayer.tsx  CityLayerToggles.tsx
         quests/                     (Sarah)
@@ -653,7 +655,7 @@ One screen driven by a state value: `idle`, `resizing`, `uploading`, `labeling`,
 5. **Confirm.** Show the photo, description, severity and a category picker preselected with Gemini's answer.
 6. **Locate.** On "Submit", call `navigator.geolocation.getCurrentPosition` with `{ enableHighAccuracy: true, timeout: 10000 }`. If it is denied or times out, show `LocationPicker` (a small Leaflet map; tap to place the pin).
 7. **Submit.** `POST /reports/:id/submit`.
-8. **Reward** (`RewardCard`): points earned, new total, and by `award.chainStatus`: `sent` shows the explorer link, `pending` shows "On-chain confirmation pending", `off` shows nothing.
+8. **Reward** (`RewardCard`): points earned, new total, and by `award.chainStatus`: `sent` shows the explorer link, `pending` shows "On-chain confirmation pending", `off` shows nothing. Under it, the "Send to Tempe 311" panel for the report just filed (see "Send to Tempe 311" below).
 
 Camera capture and geolocation need HTTPS or `localhost`. They do not work on `http://192.168.x.x`, so test on a phone through the deployed Amplify URL.
 
@@ -661,7 +663,7 @@ Camera capture and geolocation need HTTPS or `localhost`. They do not work on `h
 
 - `react-leaflet` `MapContainer` centered on `MAP_CENTER`, zoom 14. Import `leaflet/dist/leaflet.css` and give the container an explicit height, or the map renders blank.
 - Tiles: `https://tile.openstreetmap.org/{z}/{x}/{y}.png` with the attribution `© OpenStreetMap contributors`. The attribution is required.
-- One `Marker` per report with a `divIcon`: a round pin `20 + 4 * Math.min(count, 6)` px wide, colored by severity, with the count written on it from 2 up, centered in a 44 px touch area. Popup: category, description, count, photo, and a "Copy city report" button.
+- One `Marker` per report with a `divIcon`: a round pin `20 + 4 * Math.min(count, 6)` px wide, colored by severity, with the count written on it from 2 up, centered in a 44 px touch area. Popup: category, description, count, photo, and a "Send to Tempe 311" button (see "Send to Tempe 311" below).
 - The tiles are drawn in grey (a CSS filter in `web/src/index.css`), so the pins are the only color. After the first load the map zooms out once if a report is outside the opening view.
 - **Grouped pins.** Reports whose pins would overlap at the current zoom (closer than 48 px) are drawn as one black pin with the number of reports in it and a ring in the color of the most serious one. Tapping it zooms in until they come apart; at the closest zoom (18) every report has its own pin. The grouping is `groupPins()` in `mapReports.ts`, written by hand so no clustering library is needed.
 - **Filters.** `ReportFilters.tsx` draws a switch for each severity (they are also the color key), a menu of types and a line such as "Showing 15 of 60 open reports" with "Show all". The phone uses its short form: severity switches only. The filter applies to the pins and, on the board, to the list.
@@ -678,17 +680,39 @@ The map also shows what the City of Tempe's own ADA Transition Plan survey (2016
 - **On the map.** `CityRecordsLayer.tsx` draws every record as a small dot on a canvas, which cannot be tapped. From zoom 16, with at most 150 records in view, the records in view also get a square, black-on-white pin with a letter (B, R or S) in a 44 px touch area, drawn under the report pins. Its popup shows the place, what the survey found, the City's proposed fix, and for bus stops the shelter, bench, shade and surface temperature. It always ends with the survey date and "It may have been fixed since."
 - **Helpful places.** The same file also holds places from the City's open data on ArcGIS Online, which answers a script, so these pages download without any saving by hand: drinking fountains in parks (with ADA access, bottle filler and chilled water), restrooms in parks (the City's one row per door becomes one record per building, with rooms, hours and lighting) and places to get food (food pantries and meals, produce pickups and Farm Express bus stops that are marked active; gardens, compost and seed libraries are left out, and so are rows outside Tempe). `isBarrier()` tells the two sorts apart. A helpful place is a white dot and, zoomed in, a diamond pin with W or F. It never matches a report.
 - **Switches.** `CityLayerToggles.tsx` has two rows: bus stops, curb ramps and sidewalk under "Barriers awaiting repair", and water and restrooms and food help under "Helpful places". They start off on the phone's map, below the map, and on on the board.
-- **Matching reports.** `matchReports()` gives each `blocked-sidewalk` or `other` report the nearest City record within 30 m. That report's popup then says the City's survey recorded the spot too, "Copy city report" gains a line, the City's pin is filled with the accent color, and the board counts the matches. Other report types never match: a pothole beside a bus stop is not the bus stop's problem.
-- **Links.** A barrier's popup has two links: "Tell Tempe 311", which opens the City's service request form (`TEMPE_311_FORM_URL` in `cityRecords.ts`) in a new tab, and "Report: +50 pts", which goes to the report quest at `/report`. A player report's popup has "Open the form" beside "Copy city report", to the same City form. The City's records carry no public link of their own: the survey's report links point at `gisapp.tempe.gov`, which does not answer from outside the City's network.
+- **Matching reports.** `matchReports()` gives each `blocked-sidewalk` or `other` report the nearest City record within 30 m. That report's popup then says the City's survey recorded the spot too, the details copied for the City gain a line, the City's pin is filled with the accent color, and the board counts the matches. Other report types never match: a pothole beside a bus stop is not the bus stop's problem.
+- **Links.** A barrier's popup has two links: "Tell Tempe 311", which opens the City's service request form in a new tab on the page for that kind of record (`tempe311RecordTarget` in `tempe311.ts`: Bus Stop Maintenance for a bus stop, Sidewalk or Curb Repair for a missing ramp, a lifted slab or a gap, the Streets list for an obstruction), and "Report: +50 pts", which goes to the report quest at `/report`. A player report's popup has "Send to Tempe 311". The City's records carry no public link of their own: the survey's report links point at `gisapp.tempe.gov`, which does not answer from outside the City's network.
 - **If the file does not load**, the switches are disabled with a plain message and the rest of the map works as before.
 
 ### Live board (Pierre)
 
 - `/board` is the view for a big screen: a projector during the game, a judge's laptop, or someone at the city looking at where the street problems are. It needs no player, so nobody has to join to see it.
 - From 1024 px wide it fills the window: the neighborhood standings in a strip across the top (route 4, every 4 seconds), `ReportsMap` on the left, and on the right a panel with the filters and every open report (route 8, every 10 seconds), most serious first, then most reported, then newest. Only the list scrolls. It shows 20 rows at a time, with a "Show 20 more" button, and a menu changes its order to newest or most reported. Each row has the photo, a colored edge for the severity, how long ago it was made, and a tag when the spot is also in the City survey. `photoUrls.ts` keeps one photo address per report while the page is open, so photos are not downloaded again on every refresh. Narrower, the same parts stack.
-- Picking a report in the list opens its popup on the map, zooming in first if the report is inside a group. Opening a pin marks its row in the list. "Copy city report" is in the popup, as on the phone.
+- Picking a report in the list opens its popup on the map, zooming in first if the report is inside a group. Opening a pin marks its row in the list. "Send to Tempe 311" is in the popup, as on the phone.
 - On a wide screen `/` opens the board. The phone layout shows a "Live board" link in the empty space beside the column, and the board has a "Play" button back to `/join` or `/home`.
-- `cityReport.ts` builds the clipboard text (pure function, has a test):
+
+### Send to Tempe 311 (Pierre)
+
+StreetCreds never sends a report to the City. "Send to Tempe 311" opens the City's own service request form on the right page and gives the player the two fields to paste. The player fills in the form's own dropdowns, adds the photo and presses Submit there. Nothing here touches the API or the contract.
+
+- **The City's form.** The form on tempe.gov is an Accela CRM app shown in a frame. Opened on its own, at `https://iframe.publicstuff.com/#?client_id=1000028`, it reads two settings from its address: `request_type_id` opens one issue's form, and `request_type_category_id` opens one group's list of issues. It takes no location, description or photo from a link. Pasting `33.42150, -111.93400` into its Address box places the pin. All of this was tried on the live form on 2026-11-15, with nothing submitted.
+- **Where each report goes** (`tempe311.ts`, pure, has a test). Every form here takes a report without an account.
+
+| StreetCreds | The City's page | Setting |
+| --- | --- | --- |
+| `pothole` | Pothole form | `request_type_id=1009682` |
+| `streetlight` | Transportation - Street Lights list | `request_type_category_id=4765` |
+| `graffiti` | Graffiti list | `request_type_category_id=4720` |
+| `blocked-sidewalk` | Transportation - Streets list | `request_type_category_id=4768` |
+| `other` | The City's picker, with its search | none |
+| City record `bus-stop` | Bus Stop Maintenance form | `request_type_id=1009772` |
+| City record `curb-ramp`, `uneven-sidewalk`, `gap` | Sidewalk or Curb Repair form | `request_type_id=1009685` |
+| City record `obstruction` | Transportation - Streets list | `request_type_category_id=4768` |
+
+- **If the ids stop working.** The ids are the City's, and the City has said it will replace this system. An id the form does not know shows its full list instead. The panel always has a link to the City's own page (`TEMPE_311_FORM_URL` in `cityRecords.ts`), which depends on none of them. To fix a broken link, read the ids again from the form's list of issue types and change `tempe311.ts`.
+- **The panel** (`CityHandoff.tsx`). Three numbered parts: the location with "Copy location", the details with "Copy details", and "Save photo" where the photo is still on the phone. Then "Open Tempe's form", a plain link to a new tab, with a line saying which City page it opens. Opening the form copies the location if nothing has been copied yet, because the form asks for it first; the player comes back once for the details. A status line says what was copied and where to paste it. If copying fails it says so, and the whole text is shown so it can be selected by hand.
+- **Where it appears.** On the reward screen, under the reward card, with "Save photo" (`ReportScreen.tsx` keeps the report the submit response returns). Over the map and the board, as a native `<dialog>` opened from a report's popup (`CityHandoffDialog.tsx`), without "Save photo": the map's photo links are on another origin, where a browser does not save from a link.
+- **The texts** (`cityReport.ts`, pure, has a test). `cityLocationText(lat, lng)` gives the location, `33.42150, -111.93400`. `buildCityReport(report, cityRecord?)` gives the details:
 
 ```
 Category: Pothole
@@ -699,6 +723,8 @@ Reports: 3
 Photo: {photoUrl} (link expires in about an hour)
 Reported with StreetCreds on 2026-11-14
 ```
+
+The `Photo` line is left out for a report that has no photo link, which is the case on the reward screen: the submit response carries none.
 
 For a report at a spot the City's survey recorded too, one line is added after `Location`:
 
@@ -824,7 +850,8 @@ Unit tests (Vitest) are required for these pure functions and nothing else:
 | `haversineMeters` | api | Same point is 0; two points about 30 m apart; about 1 km apart |
 | `checkReportLimit` (the rate-limit helper) | api | Times older than one hour are dropped; the fifth passes, the sixth fails |
 | Request schemas | api | Nickname of 1, 2, 20 and 21 characters; an offensive nickname; an unknown neighborhood |
-| `buildCityReport` | web | Output matches the format in section 7 |
+| `buildCityReport`, `cityLocationText` | web | Output matches the format in section 7; no `Photo` line without a photo link |
+| `tempe311Url`, `tempe311Target`, `tempe311RecordTarget` | web | Each category and each kind of City record opens the page in section 7 |
 | Resize size math | web | Landscape, portrait, and an image already under 1280 px |
 
 Do not write tests that call Gemini, Solana or AWS. Check those by hand:
@@ -905,7 +932,7 @@ These are settled. Do not redesign them during the hackathon.
 | The API is bundled by our own esbuild script, not by `sam build` | `sam build` failed on the first try: it builds from a copy of `api/` that cannot reach `shared/` |
 | DynamoDB with scans and no indexes | A few hundred items; simplest correct code |
 | Council items in a JSON file, not a table | Three static items that a human checked |
-| Photos private, shown through presigned links that expire | No public bucket; the "Copy city report" photo link is temporary and says so |
+| Photos private, shown through presigned links that expire | No public bucket; the photo link in the details copied for the City is temporary and says so |
 | Points in DynamoDB are the source of truth; Solana mirrors them | The game keeps working when devnet is slow |
 | `awardPoints` writes the award and then adds the points, as two separate calls | If the second call fails, the award exists without its points and a retry gets `already_awarded`. Accepted for the demo: it takes a DynamoDB failure between two calls a few milliseconds apart, and a transaction is not worth the time |
 | Pierre writes the scaffold and the API's shared core (`index.ts`, `lib/`) once, and each person wires their own routes | Nobody waits on the other person to add one line. See Ownership in `AGENTS.md` |
@@ -931,6 +958,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 - The player can change the category before submitting.
 - If location is denied, the player can pick the spot on a map.
 - If Gemini fails or says the photo is not a street problem, the player sees a clear message and no points are awarded.
+- After a report is submitted, the reward screen shows "Send to Tempe 311" under the reward: the location and details to copy, "Save photo", and a link that opens the City's form in a new tab on the page for the report's final category.
 
 **F3. Points wallet (P0)**
 - Each award is a token mint on Solana devnet, paid for by the treasury.
@@ -949,7 +977,8 @@ A feature is done when its checks pass on a real phone against the deployed site
 
 **F6. Map (P1) and duplicate merge (P2)**
 - The map shows one pin per open report, sized by `count`.
-- "Copy city report" puts category, description, location and photo link on the clipboard.
+- "Send to Tempe 311" in a report's popup opens a panel over the map. "Copy details" puts category, description, location and photo link on the clipboard, "Copy location" puts the location alone, and "Open Tempe's form" opens the City's form in a new tab on the page for that category.
+- Pasted into the City form's Address box, the copied location moves the City's pin to the report's spot.
 - P2: a new report with the same category within about 30 meters of an open one is merged into it and raises its count.
 - City records: with a group switched on, the map shows the City's records as dots, and zoomed in as square pins whose popup names the place, the finding and the survey date.
 - City records: a `blocked-sidewalk` or `other` report within 30 meters of a City record says so in its popup, and its copied city report has the `City ADA survey` line.

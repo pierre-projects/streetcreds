@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PublicReport } from '../../../../shared/types'
 import type { CityRecord } from './cityRecords'
-import { buildCityReport } from './cityReport'
+import { buildCityReport, cityLocationText } from './cityReport'
 
 const report: PublicReport = {
   id: 'report-1',
@@ -50,6 +50,11 @@ describe('buildCityReport', () => {
     expect(buildCityReport({ ...report, lat: null, lng: null })).toContain('Location: not recorded')
   })
 
+  it('leaves the photo line out of a report that has no photo link', () => {
+    const justFiled = { ...report, photoUrl: undefined }
+    expect(buildCityReport(justFiled).split('\n').slice(4)).toEqual(['Reports: 3', 'Reported with StreetCreds on 2026-11-14'])
+  })
+
   it('adds the City’s own record of the spot after the location', () => {
     const ramp: CityRecord = {
       id: '260515171717',
@@ -72,5 +77,15 @@ describe('buildCityReport', () => {
     expect(buildCityReport(report, slab)).toContain(
       'City ADA survey: A slab is lifted 1.3 in. S MILL AVE. Survey layer 8, row 25, listed as awaiting repair.',
     )
+  })
+})
+
+describe('cityLocationText', () => {
+  it('writes the spot the way the City’s Address box takes it', () => {
+    expect(cityLocationText(33.4215, -111.934)).toBe('33.42150, -111.93400')
+  })
+
+  it('keeps five decimals, which is about a meter', () => {
+    expect(cityLocationText(33.4254987, -111.9400012)).toBe('33.42550, -111.94000')
   })
 })

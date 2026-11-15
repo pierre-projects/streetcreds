@@ -181,10 +181,6 @@ export const strings = {
     severity: (label: string) => `${label} severity`,
     reportedTimes: (count: number) => (count === 1 ? 'Reported once' : `Reported ${count} times`),
     photoAlt: (category: string) => `Photo of the reported problem: ${category.toLowerCase()}`,
-    copy: 'Copy city report',
-    copyHint: 'Makes a report you can paste into the city’s own form.',
-    copied: 'Copied. Paste it into the city’s report form.',
-    copyFailed: 'Could not copy. Try again.',
   },
 
   // The City of Tempe's own accessibility records, drawn on the map as square pins.
@@ -270,17 +266,50 @@ export const strings = {
     source: (surveyed: string | null) =>
       `City ADA survey, ${surveyed ?? '2016 to 2020'}. Listed as awaiting repair. It may have been fixed since.`,
     reported: 'A player has reported a problem here.',
-    // Links in a barrier's popup, and beside "Copy city report".
+    // Links in a barrier's popup.
     // Kept short: the two links share one line of a popup.
     tell311: 'Tell Tempe 311',
     tell311Label: 'Open the City of Tempe’s service request form in a new tab',
     reportHere: (points: number) => `Report: +${points} pts`,
     reportHereLabel: (points: number) => `Report it in StreetCreds for ${points} points`,
-    openForm: 'Open the form',
+    // "Send to Tempe 311": passing one report on to the City's own form (CityHandoff.tsx).
+    // The City's form has an Address box, a Description box and "Add a photo"; those names are its own.
+    handoff: {
+      // The button in a report's popup on the map, and the line under it.
+      send: 'Send to Tempe 311',
+      sendHint: 'Opens the City’s form with this report ready to paste.',
+      eyebrow: 'Tell the City',
+      title: 'Send this to Tempe 311',
+      intro: 'StreetCreds does not send reports to the City. Paste these into the City’s form and submit it there.',
+      locationLabel: '1. Location, for the form’s Address box',
+      copyLocation: 'Copy location',
+      noLocation: 'This report has no location. Move the pin on the City’s map instead.',
+      detailsLabel: '2. Details, for the form’s Description box',
+      copyDetails: 'Copy details',
+      photoLabel: '3. Photo, for the form’s “Add a photo”',
+      savePhoto: 'Save photo',
+      photoFileName: 'streetcreds-report.jpg',
+      open: 'Open Tempe’s form',
+      newTab: '(opens in a new tab)',
+      // Where the City's form opens. `name` is the City's own name for that page.
+      opens: {
+        form: (name: string) => `It opens on the City’s “${name}” form.`,
+        list: (name: string) => `It opens on the City’s “${name}” list. Pick the closest match.`,
+        picker: 'It opens on the City’s list of issues. Pick the closest match.',
+      },
+      // The status line. It always says what to do next.
+      idle: 'Opening the form copies the location for you.',
+      idleNoLocation: 'Copy the details, then open the form.',
+      locationCopied: 'Location copied. Paste it into Address, then come back for the details.',
+      detailsCopied: 'Details copied. Paste them into Description.',
+      copyFailed: 'Could not copy. Press and hold the text to copy it.',
+      cityPage: 'Form not opening? Use the City’s 311 page',
+      close: 'Close',
+    },
     pinLabel: (kind: string, where: string | null) => (where ? `City record: ${kind}, ${where}` : `City record: ${kind}`),
     // On a player's report that is at a spot the City recorded too.
     matchNote: (finding: string) => `Also in the City’s ADA survey, awaiting repair: ${finding}`,
-    // The line added to "Copy city report".
+    // The line added to the details a player copies for the City's form.
     copyLine: (finding: string, where: string | null, ref: string, surveyed: string | null) =>
       `City ADA survey: ${finding}${where ? ` ${where}.` : ''} ${ref}${surveyed ? `, surveyed ${surveyed}` : ''}, listed as awaiting repair.`,
     recordRef: (id: string) => `Record ${id}`,

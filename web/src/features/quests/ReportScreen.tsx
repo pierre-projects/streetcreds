@@ -3,7 +3,8 @@ import { CATEGORIES } from '../../../../shared/constants'
 import type { Award, Category, DealUnlockView, Player, Report } from '../../../../shared/types'
 import { api, ApiError } from '../../app/api'
 import { usePlayer } from '../../app/player'
-import { Button, ErrorNotice, OptionCard, ScreenHeader } from '../../app/ui'
+import { Button, Card, ErrorNotice, OptionCard, ScreenHeader } from '../../app/ui'
+import { CityHandoff } from '../players/CityHandoff'
 import { LocationPicker } from './LocationPicker'
 import { resizeImage } from './resizeImage'
 import { RewardCard } from './RewardCard'
@@ -102,6 +103,8 @@ export function ReportScreen() {
         lng,
         category: category !== report.category ? category : undefined,
       })
+      // The report as it was published, with its place and final category, for "Send to Tempe 311".
+      setReport(result.report)
       setAward(result.award)
       setPlayer(result.player)
       setUnlock(result.unlock)
@@ -198,6 +201,12 @@ export function ReportScreen() {
       {phase === 'picking' ? <LocationPicker onConfirm={(lat, lng) => void submitAt(lat, lng)} /> : null}
 
       {phase === 'reward' && award && player ? <RewardCard award={award} player={player} unlock={unlock} /> : null}
+      {/* Passing the report on to the City's own form. The photo is the one still on this phone. */}
+      {phase === 'reward' && report ? (
+        <Card>
+          <CityHandoff report={report} photoHref={previewUrl} emphasis="secondary" />
+        </Card>
+      ) : null}
 
       {phase === 'error' ? (
         <ErrorNotice

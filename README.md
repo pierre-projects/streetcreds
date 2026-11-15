@@ -20,7 +20,7 @@ In progress during the hackathon. So far a player can join with a nickname and a
 | Product plan, technical spec, agent rules | Done |
 | Shared contract (`shared/`): constants, data types, API types | Done |
 | API (`api/`) | Joining, loading a player and the leaderboard work against the database. `awardPoints` exists as a database-only stand-in. Quest routes are not built |
-| Web app (`web/`) | App shell, join screen, home screen, the live leaderboard and the map with "Copy city report". On a big screen, a live board at `/board` shows the map, the standings and every open report. The two quest screens are placeholders |
+| Web app (`web/`) | App shell, join screen, home screen, the live leaderboard and the map with "Send to Tempe 311". On a big screen, a live board at `/board` shows the map, the standings and every open report. The two quest screens are placeholders |
 | Solana points | Each new player gets a devnet address, and every award is minted as a CIVIC token with a link to the transaction. If devnet is slow the points still count and the award is marked pending |
 
 ## Documentation
@@ -127,6 +127,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The Privacy, Terms, About & contact pages and their navigation links were drafted and implemented with Codex (OpenAI).
 - The About, Privacy and Terms copy was revised with Codex (OpenAI) for clarity and current app behavior.
 - The Home map fixes and the motion rules (`web/src/app/motion.ts`, the motion and "Reduce motion" sections of `web/src/index.css`) were written with Claude Code (Anthropic). The reduced-motion rules follow the `accessible-animation` skill from `iart-ai/web-animation-skills` (MIT).
+- "Send to Tempe 311" (`web/src/features/players/tempe311.ts`, `CityHandoff.tsx`, `CityHandoffDialog.tsx`, and the reward-screen and map-popup wiring) was written with Claude Code (Anthropic). The links into the City of Tempe's service request form were worked out by reading that form's own page; nothing was submitted to it.
 - The council quest (`api/scripts/generate-council.ts`, `api/src/quests/council.json`, `councilRoutes.ts`, and the council screens) was implemented with Cursor Agent / Composer. Agenda text is from the City of Tempe Agenda Online portal (Regular City Council Meeting, Nov 5, 2026).
 
 ## License

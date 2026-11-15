@@ -1,5 +1,5 @@
 // The words for one City record: what the survey found there, and how to point at the record.
-// Pure. The popup on the map and the "Copy city report" text both use these.
+// Pure. The popup on the map and the details a player copies for the City's form both use these.
 import { strings } from '../../app/strings'
 import type { CityRecord } from './cityRecords'
 
@@ -29,7 +29,7 @@ export function cityRecordRef(record: CityRecord): string {
   return layer !== undefined && row !== undefined ? strings.city.rowRef(layer, row) : strings.city.recordRef(record.id)
 }
 
-/** The line "Copy city report" adds for a report at a spot the City recorded too. */
+/** The line the copied details gain for a report at a spot the City recorded too. */
 export function cityCopyLine(record: CityRecord): string {
   return strings.city.copyLine(cityFinding(record), record.where, cityRecordRef(record), record.surveyed)
 }
