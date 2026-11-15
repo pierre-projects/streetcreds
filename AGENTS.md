@@ -9,7 +9,7 @@ StreetCreds is a phone-first web game built at sunhacks 2026 by two people, Sara
 | `docs/TECHNICAL.md` | Stack, data models, API contract, core functions, setup, build order, acceptance checks | Any implementation question |
 | `docs/CONTRIBUTING.md` | GitHub rules: branches, commits, pull requests, what never to commit, what agents may do with Git | Any Git or GitHub question |
 | `docs/SARAH-PHASES.md`, `docs/PIERRE-PHASES.md` | Each person's checklist for every phase. Work on the items of the person you are working for, and never tick a box yourself | What to build next |
-| `docs/PRD.md` | Export of the product doc: scope, user flow, demo script, risks. May be missing; `docs/TECHNICAL.md` is enough to build from | Any "should this exist" question |
+| `docs/PRD.md` | Export of the product doc: scope, user flow, demo script, risks. `docs/TECHNICAL.md` is enough to build from | Any "should this exist" question |
 | `AGENTS.md` (this file) | Rules for working in this repo | Any conflict about how to work |
 
 Read `docs/TECHNICAL.md` in full before writing code. Do not guess a route, field name or table name: they are all defined there.
@@ -23,7 +23,7 @@ Read `docs/TECHNICAL.md` in full before writing code. Do not guess a route, fiel
 5. **Priorities.** Finish every P0 item before any P1, and every P1 before any P2. Do not build P2 features unless asked by name.
 6. **No new dependencies** beyond the list in `docs/TECHNICAL.md` without asking.
 7. **No accounts or personal data.** Players have a nickname and a neighborhood. Do not add email, login, analytics or tracking.
-8. **Ask before anything that leaves the laptop.** Do not run `sam deploy`, `git push`, a Solana airdrop or anything that creates cloud resources or costs money on your own. Print the command and wait.
+8. **Ask before anything that leaves the laptop.** Do not run `sam deploy`, `git push`, a Solana airdrop, a script that sends a Solana transaction (`solana-setup.ts`, `mint-test.ts`) or anything that creates cloud resources or costs money on your own. Print the command and wait.
 9. **Credit sources.** The hackathon rules require crediting tutorials and AI tools. When you follow a tutorial or generate a substantial file, add one line to the Credits section of `README.md`.
 
 ## Ownership
@@ -32,11 +32,22 @@ Work only in the area of the person you are working for. To change the other are
 
 | Owner | Features | Paths |
 | --- | --- | --- |
-| Sarah | Report quest, council quest | `web/src/features/quests/`, `api/src/quests/`, `api/scripts/generate-council.ts` |
+| Sarah | Report quest, council quest | `web/src/features/quests/`, `api/src/quests/`, `api/scripts/generate-council.ts`, `api/scripts/label-photos.ts` |
 | Pierre | Joining, points wallet, leaderboard, map, app shell, infrastructure | `web/src/features/players/`, `web/src/app/`, `api/src/players/`, `api/src/points/`, `api/template.yaml`, `amplify.yml` |
-| Both (agree first) | The contract | `shared/`, `api/src/index.ts`, `api/src/lib/` |
+| Pierre | The scaffold | Package and config files in `web/` and `api/` (`package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, `.env.example`), `web/src/main.tsx`, `api/src/local.ts`, `api/scripts/solana-setup.ts`, `api/scripts/mint-test.ts`, `api/scripts/seed.ts` |
+| Both (agree first) | The contract and the API's shared core | `shared/`, `api/src/index.ts`, `api/src/lib/` |
 
-The two hand-offs between the halves are `awardPoints()` (Pierre provides, Sarah calls) and `GET /reports` (Sarah provides, Pierre's map reads).
+Three notes on the table:
+
+- **Pierre creates `api/src/index.ts` and `api/src/lib/` once, in Phase 0** (`index.ts`, `lib/env.ts`, `lib/db.ts`, `lib/errors.ts`). After the Phase 0 checkpoint they change only by agreement.
+- **Wiring your own work is always allowed.** Either person may add the line in `api/src/index.ts` that mounts their own routes file. Sarah may add or change the route lines for her three screens in `web/src/app/App.tsx` and the fixtures for her own routes in `web/src/app/mock/`. Nothing else in those files.
+- **`package.json` is Pierre's.** The scaffold installs every dependency listed in `docs/TECHNICAL.md`. Adding another falls under rule 6 and goes through him.
+
+The hand-offs between the halves:
+
+- `awardPoints()` and the rate-limit helper `checkReportLimit()`: Pierre provides them, Sarah's routes call them.
+- The typed client functions in `web/src/app/api.ts` and the mock fixtures, for all ten routes: Pierre provides them, Sarah's screens use them.
+- `GET /reports`: Sarah provides it, Pierre's map reads it.
 
 ## Commands
 
@@ -50,6 +61,7 @@ Run from the package folder named.
 | `api/` | `npm run dev` | Local API on http://localhost:3001, using the real AWS tables and bucket |
 | `api/` | `npm run check` | Type-check and unit tests |
 | `api/` | `npm run seed` | Load demo players and reports (asks before writing) |
+| `api/` | `npx tsx scripts/mint-test.ts [count]` | Send test mints to devnet and print the explorer links. Humans only, see rule 8 |
 | `api/` | `npm run deploy` | `sam build && sam deploy`. Humans only, see rule 8 |
 
 ## Definition of done
@@ -60,7 +72,7 @@ A change is done when all of these hold:
 - The feature's acceptance checks in `docs/TECHNICAL.md` section 13 pass.
 - New screens work at 375 px wide with no horizontal scroll, and every tap target is at least 44 px.
 - Every API error uses the standard error shape from `docs/TECHNICAL.md` section 5, and the screen shows a plain-language message for it.
-- No file outside your owner's paths changed, unless the change was agreed.
+- No file outside your owner's paths changed, unless the change was agreed or is one of the wiring lines described under Ownership.
 
 ## When something is unclear
 

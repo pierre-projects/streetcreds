@@ -2,9 +2,10 @@
 
 Sarah owns the **report quest** and the **council quest**, from the screen down to the database. This file is her checklist and her prompts, phase by phase.
 
-- **Her folders:** `web/src/features/quests/`, `api/src/quests/`, `api/scripts/generate-council.ts`
-- **Hands-off without a yes from Pierre:** `shared/`, Pierre's folders, `api/src/index.ts`, `api/src/lib/`, `api/template.yaml`
-- **Where she meets Pierre:** she calls his `awardPoints` (a stub exists first), and his map reads her `GET /reports`
+- **Her folders:** `web/src/features/quests/`, `api/src/quests/`, and the scripts `generate-council.ts` and `label-photos.ts` in `api/scripts/`
+- **Hands-off without a yes from Pierre:** `shared/`, Pierre's folders, `api/src/index.ts`, `api/src/lib/`, `api/template.yaml`, `package.json` and the other project config files
+- **The exception, wiring her own work:** she may add the line in `api/src/index.ts` that mounts her routes, the route lines for her three screens in `web/src/app/App.tsx`, and the fixtures for her own routes in `web/src/app/mock/`
+- **Where she meets Pierre:** she calls his `awardPoints` (a stub exists first) and his rate-limit helper; her screens call the typed functions in his `web/src/app/api.ts` (he writes one for each of her routes, with mock data); and his map reads her `GET /reports`
 - **Shared checkpoints and timing:** [PHASES.md](PHASES.md). Pierre's list: [PIERRE-PHASES.md](PIERRE-PHASES.md)
 
 ## How to use this file
@@ -21,7 +22,7 @@ Do not start a phase until the checkpoint before it passes on a real phone.
 ```text
 I'm Sarah, working on StreetCreds. Read AGENTS.md, docs/TECHNICAL.md, docs/CONTRIBUTING.md and docs/SARAH-PHASES.md in full before doing anything.
 
-I own the quests: web/src/features/quests/ and api/src/quests/. Work only in those folders. Do not change shared/, Pierre's folders, or the deploy template. If a task needs a change there, describe the change and stop.
+I own the quests: web/src/features/quests/, api/src/quests/, and the scripts generate-council.ts and label-photos.ts in api/scripts/. Work only in those. The one exception is wiring my own work: you may add the line in api/src/index.ts that mounts my routes, the route lines for my three screens in web/src/app/App.tsx, and the fixtures for my own routes in web/src/app/mock/. Apart from that, do not change shared/, Pierre's folders, package.json or the deploy template. If a task needs a change there, describe the change and stop.
 
 Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) the routes and functions I am responsible for, (3) anything in the docs that looks unclear or contradictory. Do not write code yet.
 ```
@@ -41,7 +42,7 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 - [ ] `labelPhoto` works as a script: a photo goes to Gemini and category, severity and description come back as JSON.
 - [ ] 10 test photos collected: real potholes, a streetlight, graffiti, a blocked sidewalk, plus two that are not street problems.
 - [ ] Prompt tuned until all 10 photos are labeled correctly.
-- [ ] Report screen built on mock data, showing every state: capture, labeling, confirm, reward, error.
+- [ ] Report screen built on mock data, showing every state: capture, labeling, confirm, reward, error. The mock data and the typed API functions come from Pierre's app shell, so start this item once he says it's merged.
 - [ ] `npm run check` passes in `api/` and `web/`.
 
 Prompt:
@@ -49,9 +50,9 @@ Prompt:
 ```text
 Do Sarah's Phase 1 from docs/SARAH-PHASES.md, following docs/TECHNICAL.md sections 5 and 6.
 
-1. Build GET /upload-url (route 5).
-2. Build labelPhoto in api/src/quests/labelPhoto.ts using the Gemini Interactions API as shown in docs/TECHNICAL.md. Also write a script that runs it on every image in a local folder and prints the result as a table, so I can tune the prompt on my 10 test photos.
-3. Build the report screen against mock data only (VITE_USE_MOCKS=true), with every state in the report flow: idle, resizing, uploading, labeling, confirm, locating, submitting, reward, error.
+1. Build GET /upload-url (route 5) in api/src/quests/reportRoutes.ts, and add the one line in api/src/index.ts that mounts it.
+2. Build labelPhoto in api/src/quests/labelPhoto.ts using the Gemini Interactions API as shown in docs/TECHNICAL.md. Also write api/scripts/label-photos.ts, which runs it on every image in a local folder and prints the result as a table, so I can tune the prompt on my 10 test photos.
+3. Build the report screen against mock data only (VITE_USE_MOCKS=true), with every state in the report flow: idle, resizing, uploading, labeling, confirm, locating, submitting, reward, error. Use the typed functions in web/src/app/api.ts and do not write your own fetch calls. If Pierre's app shell is not merged yet, stop before this step and tell me.
 
 Type-check against the installed packages as you go and fix what fails. Write the unit tests docs/TECHNICAL.md asks for. Stop when Phase 1 is done and tell me exactly how to test it by hand.
 ```
@@ -94,6 +95,7 @@ Cover the failure cases: not a street problem, Gemini error or timeout, location
 - [ ] `GET /quests/council` returns the items without the answers.
 - [ ] `POST /quests/council/answer` awards points once per player per item.
 - [ ] Council list screen and council item screen work on a phone.
+- [ ] Rate limit added to `POST /reports` with Pierre's `checkReportLimit` helper: a sixth report within an hour gets a clear message.
 - [ ] `npm run check` passes.
 
 Prompt:
@@ -104,6 +106,7 @@ Do Sarah's Phase 3 from docs/SARAH-PHASES.md.
 1. Write api/scripts/generate-council.ts. It reads agenda text I paste into a local file and drafts a three-sentence plain-language summary plus one multiple-choice question for each item. It must print the drafts for me to check and must NOT write council.json itself.
 2. Build GET /quests/council and POST /quests/council/answer (routes 9 and 10), with one award per player per item.
 3. Build the council list screen and the council item screen.
+4. Add the report rate limit to POST /reports (route 6, step 2) by calling Pierre's checkReportLimit from api/src/players/rateLimit.ts, and show the rate_limited message on the report screen. If his helper is not merged yet, skip this step and tell me.
 
 Never invent agenda content. Use only the text I give you. Stop when done and tell me how to test acceptance check F5.
 ```

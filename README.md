@@ -74,7 +74,7 @@ Never commit keys. Secrets go in `api/.env` and `api/samconfig.toml`, which `.gi
 | Person | Owns |
 | --- | --- |
 | Sarah | Quests: the report quest and the council quest, from screen to database |
-| Pierre | Players, points and boards: joining, the Solana points wallet, leaderboard, map, AWS setup and deploys |
+| Pierre | Players, points and boards: joining, the Solana points wallet, leaderboard, map, the project scaffold, AWS setup and deploys |
 
 ## Working with a coding agent
 

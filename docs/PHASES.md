@@ -5,7 +5,7 @@ The shared view of the build: what each phase is, and the checkpoint you both te
 - **[SARAH-PHASES.md](SARAH-PHASES.md):** quests (report quest, council quest)
 - **[PIERRE-PHASES.md](PIERRE-PHASES.md):** players, points and boards (joining, Solana points, leaderboard, map, infrastructure)
 
-The two lists meet in only two places: Sarah calls Pierre's `awardPoints`, and Pierre's map reads Sarah's `GET /reports`. Both have a stand-in, so nobody waits.
+The two lists meet in only a few places: Sarah's routes call Pierre's `awardPoints` and his rate-limit helper, her screens use the client functions and mock data in his app shell, and Pierre's map reads Sarah's `GET /reports`. `awardPoints` ships as a stub first and the map starts on mock data, so nobody waits.
 
 ## Phases at a glance
 
@@ -13,10 +13,10 @@ The time shares are of whatever hacking time is left. Write real clock times in 
 
 | Phase | Share | Sarah | Pierre | Ends by |
 | --- | --- | --- | --- | --- |
-| 0. Setup | First 30 to 45 min | Gemini key, local setup | Scaffold, first deploy, hosting, domain | |
-| 1. Skeleton | 20% | Upload link, Gemini labeling, report screen on mock data | Solana setup, app shell, player and leaderboard routes, join and home screens, `awardPoints` stub | |
+| 0. Setup | First 30 to 45 min | Gemini key, local setup | Scaffold, first deploy (API, tables, bucket), hosting, domain | |
+| 1. Skeleton | 20% | Upload link, Gemini labeling, report screen on mock data | Solana setup and a test mint, app shell, player and leaderboard routes, join and home screens, `awardPoints` stub | |
 | 2. Core loop | 30% | Full report quest, end to end | Real `awardPoints`, leaderboard screen | |
-| 3. Second quest and map | 20% | Council quest | Map, "Copy city report", rate limit | |
+| 3. Second quest and map | 20% | Council quest; rate limit added to her report route | Map, "Copy city report", rate-limit helper | |
 | 4. Polish | 15% | Own screens; test Pierre's features | Own screens; test Sarah's features; backup video | |
 | 5. Submit | 15% | Devpost page; talks in the demo | README, slide; runs the phone in the demo | |
 

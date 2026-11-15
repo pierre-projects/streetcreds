@@ -56,16 +56,16 @@ streetcreds/
     types.ts              Player, Report, Award, CouncilItem
     api.ts                request and response types for every route, error codes
   web/
-    package.json  vite.config.ts  tsconfig.json  index.html  .env.example
+    package.json  vite.config.ts  tsconfig.json  index.html  .env.example    (Pierre)
     src/
-      main.tsx
+      main.tsx                      (Pierre)
       app/                          (Pierre)
-        App.tsx                     routes
+        App.tsx                     all eight routes; placeholders until Sarah's screens exist
         Layout.tsx                  header with points, bottom nav
         api.ts                      fetch helper and typed endpoint functions
         player.ts                   stored player id, usePlayer()
         strings.ts                  every user-facing string, keyed
-        mock/                       JSON fixtures with the API shapes
+        mock/                       one JSON fixture per route, all ten
       features/
         players/                    (Pierre)
           JoinScreen.tsx  HomeScreen.tsx  LeaderboardScreen.tsx  MapScreen.tsx
@@ -77,16 +77,17 @@ streetcreds/
           RewardCard.tsx
           CouncilListScreen.tsx  CouncilItemScreen.tsx
   api/
-    package.json  tsconfig.json  template.yaml  .env.example
+    package.json  tsconfig.json  template.yaml  .env.example    (Pierre)
     samconfig.toml                  git-ignored, holds deploy parameters
     src/
-      index.ts                      Hono app, exports `app` and `handler`
-      local.ts                      local server with CORS
-      lib/                          (both, agree first)
+      index.ts                      Hono app: GET /health, error handler, mounts the route files; exports `app` and `handler` (both; Pierre creates it)
+      local.ts                      local server with CORS (Pierre)
+      lib/                          (both, agree first; Pierre creates env, db and errors in Phase 0)
         env.ts  db.ts  errors.ts  geo.ts
       players/                      (Pierre)
         routes.ts                   POST /players, GET /players/:id, GET /leaderboard
         leaderboard.ts              pure aggregation
+        rateLimit.ts                checkReportLimit, called by Sarah's POST /reports
       points/                       (Pierre)
         awardPoints.ts
         solana.ts
@@ -97,12 +98,16 @@ streetcreds/
         councilRoutes.ts
         council.json                the checked council items
     scripts/
-      solana-setup.ts               creates the treasury and the CIVIC mint
-      generate-council.ts           drafts summaries for a human to check
-      seed.ts                       demo data for development
+      solana-setup.ts               creates the treasury and the CIVIC mint (Pierre)
+      mint-test.ts                  sends test mints to devnet and prints the explorer links (Pierre)
+      generate-council.ts           drafts summaries for a human to check (Sarah)
+      label-photos.ts               runs labelPhoto on a folder of test photos (Sarah)
+      seed.ts                       demo data for development (Pierre)
 ```
 
 `web/vite.config.ts` needs `server.fs.allow: ['..']` and `web/tsconfig.json` needs `"include": ["src", "../shared"]` so the relative imports of `shared/` work. `api/tsconfig.json` needs the same include.
+
+Who may change which file, including the wiring lines each person may add to `index.ts` and `App.tsx`, is in `AGENTS.md` under Ownership.
 
 ## 3. Environment variables
 
@@ -309,7 +314,7 @@ Three DynamoDB tables, one item type each. Every table has the partition key `id
 | Create a player | players | `PutItem`, condition `attribute_not_exists(#id)` |
 | Load a player | players | `GetItem` |
 | Build the leaderboard | players | Paginated `Scan` |
-| Add points | players | `UpdateItem`, `ADD #points :p`, `ReturnValues: 'ALL_NEW'` |
+| Add points | players | `UpdateItem`, `ADD #points :p`, condition `attribute_exists(#id)`, `ReturnValues: 'ALL_NEW'` |
 | Record a submitted report's time | players | `UpdateItem`, `SET #recentReportTimes = :times` |
 | Save a draft report | reports | `PutItem` |
 | Load a report | reports | `GetItem` |
@@ -352,7 +357,7 @@ DynamoDB rules for this project:
 
 - Use `DynamoDBDocumentClient` from `@aws-sdk/lib-dynamodb` so items are plain objects.
 - `status` and `count` are DynamoDB reserved words. Always alias attribute names in expressions (`#status`, `#count`) with `ExpressionAttributeNames`.
-- Add points with an atomic update, never read-modify-write: `UpdateExpression: 'ADD #points :p'`, `ReturnValues: 'ALL_NEW'`.
+- Add points with an atomic update, never read-modify-write: `UpdateExpression: 'ADD #points :p'`, `ConditionExpression: 'attribute_exists(#id)'`, `ReturnValues: 'ALL_NEW'`. The condition matters: without it, DynamoDB creates a new item when the id does not exist, which would leave a player with points and no nickname.
 - "Only once" writes use `ConditionExpression: 'attribute_not_exists(#id)'` and catch the error whose `name` is `ConditionalCheckFailedException`.
 
 ## 5. API contract
@@ -395,7 +400,7 @@ Errors always look like this, with the matching HTTP status:
 
 Routes 3 and 7 are not in the PRD's first API table. They exist because the home screen needs to refresh points, and because the player must be able to correct the label before points are awarded.
 
-**1. `GET /health`** returns `200 { "ok": true }`.
+**1. `GET /health`** returns `200 { "ok": true }`. It is defined in `api/src/index.ts`, not in a routes file.
 
 **2. `POST /players`**
 Request: `{ "nickname": string, "neighborhood": NeighborhoodId }`.
@@ -417,7 +422,7 @@ The client must `PUT` the JPEG to `uploadUrl` with the header `Content-Type: ima
 Request: `{ "playerId": string, "photoKey": string }`.
 Steps:
 1. `404` if the player does not exist. `400` unless `photoKey` starts with `reports/{playerId}/`.
-2. Rate limit (P1): drop times older than one hour from `recentReportTimes`; if 5 or more remain, `429 rate_limited`.
+2. Rate limit (P1): call `checkReportLimit(player.recentReportTimes, new Date())` from `api/src/players/rateLimit.ts` (section 6). It drops times older than one hour; if 5 or more remain, `429 rate_limited`.
 3. `labelPhoto(photoKey)`. On failure `502 label_failed`. If `isStreetProblem` is false, `422 not_street_problem`.
 4. Write a `Report` with `status: 'draft'`, `count: 1`, `lat` and `lng` null.
 
@@ -431,7 +436,7 @@ Steps:
 3. P2 only: `findDuplicate(report)`. If it returns an open report `R`: set this report to `merged`, add 1 to `R.count`, and award `report-confirm` with `refId = R.id`. Respond with `R` and `"merged": true`. Until P2 is built, skip this step.
 4. Set `status: 'open'`, `submittedAt` to now. Use a condition that `status` is still `draft` so a double tap cannot submit twice.
 5. `awardPoints(playerId, POINTS['report-new'], 'report-new', report.id)`.
-6. Append the current time to the player's `recentReportTimes`.
+6. Append the current time to the player's `recentReportTimes`. Once the rate limit exists, write back the pruned list from `checkReportLimit` plus the current time, so the list stays short.
 
 Response: `200 { "report": Report, "award": Award, "player": Player, "merged": boolean }`.
 
@@ -517,9 +522,11 @@ Returns `{ award: Award, player: Player }`. This is the only way points are crea
 Steps:
 1. `awardId = \`${questType}#${refId}#${playerId}\``.
 2. Put the `Award` with `chainStatus: 'pending'` (or `'off'` when `SOLANA_MODE` is `off`) and the condition `attribute_not_exists(#id)`. If the condition fails, throw `ApiError('already_awarded')`.
-3. Atomic `ADD` of `points` on the player; keep the returned player.
+3. Atomic `ADD` of `points` on the player, with the condition `attribute_exists(#id)`; keep the returned player. If the condition fails, the player does not exist: throw `ApiError('not_found')`. Callers check the player first (routes 7 and 10 do), so this is only a safety net.
 4. If `SOLANA_MODE` is not `off`: call `mintPoints(...)` with a 10 second limit. On success, update the award with `txSignature` and `chainStatus: 'sent'`. On any failure, log it and leave `'pending'`. Never throw from this step: the points already count.
 5. Return the award and the player.
+
+Steps 2 and 3 are two separate writes. If step 3 fails after step 2 succeeded, the award exists without its points and a retry gets `already_awarded`. That is accepted for the demo (section 12). Do not add a transaction.
 
 **The stub.** With `SOLANA_MODE=off`, steps 1 to 3 are the whole function. Pierre ships this first so Sarah's quests are never blocked on Solana.
 
@@ -561,6 +568,17 @@ Notes:
 - Each player's first award also creates their token account, which costs the treasury about 0.002 SOL of rent. 2 SOL covers several hundred players.
 - The memo holds the player id only. Never put a nickname on chain.
 - Explorer link: `https://explorer.solana.com/tx/{txSignature}?cluster=devnet`.
+- `api/scripts/mint-test.ts [count]` calls `mintPoints` for a throwaway address `count` times (default 1), prints each explorer link and reports how many succeeded. It sends devnet transactions and does not touch the database. A human runs it: once in Phase 1 to prove the setup, and with a count of 10 in Phase 3.
+
+### `checkReportLimit(recentReportTimes, now)` (Pierre, `api/src/players/rateLimit.ts`, P1)
+
+```ts
+export function checkReportLimit(recentReportTimes: string[], now: Date): { allowed: boolean; times: string[] };
+```
+
+Pure function, has tests. `times` is the input with every entry older than one hour before `now` dropped. `allowed` is `false` when `times.length` is `REPORT_LIMIT_PER_HOUR` or more.
+
+Pierre writes it and Sarah's routes call it. `POST /reports` returns `429 rate_limited` when `allowed` is false. `POST /reports/:id/submit` writes `[...times, now.toISOString()]` back to the player.
 
 ### `findDuplicate(report)` (Sarah, P2)
 
@@ -587,7 +605,8 @@ Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods pres
 
 ### Shared pieces (Pierre builds first)
 
-- **`app/api.ts`**: one `request<T>(path, init)` helper that prefixes `VITE_API_URL`, parses JSON, and throws `ApiError { status, code, message }` for non-2xx responses. One typed function per route. When `VITE_USE_MOCKS` is `true`, the functions return fixtures from `app/mock/` after a short delay.
+- **`app/App.tsx`**: registers all eight paths from the start. Until Sarah's screens exist, `/report`, `/council` and `/council/:itemId` render a placeholder; she swaps in her screens by changing those route lines.
+- **`app/api.ts`**: one `request<T>(path, init)` helper that prefixes `VITE_API_URL`, parses JSON, and throws `ApiError { status, code, message }` for non-2xx responses. One typed function per route, for all ten routes: Pierre writes Sarah's six as well, in Phase 1, so her screens can start on mocks. When `VITE_USE_MOCKS` is `true`, the functions return fixtures from `app/mock/` after a short delay. There is one fixture per route, and Sarah may change the ones for her routes.
 - **`app/player.ts`**: the player id is stored in `localStorage` under `streetcreds.playerId`. `usePlayer()` loads the player with TanStack Query and refetches every 4 seconds. On `404`, clear the id and go to `/join`.
 - **`app/strings.ts`**: every user-facing string, in one object keyed by name. Screens read from it. This is what makes the P2 Spanish toggle a small job.
 - **`app/Layout.tsx`**: header with nickname and points, content area, bottom navigation (Home, Leaderboard, Map).
@@ -707,8 +726,10 @@ The Solana CLI is not required. `api/scripts/solana-setup.ts` does the same job 
    - In `web/`: `npm i react-router @tanstack/react-query leaflet react-leaflet` and `npm i -D tailwindcss @tailwindcss/vite @types/leaflet vitest`
    - In `api/`: `npm init -y`, then `npm i hono zod @google/genai @solana/web3.js@1 @solana/spl-token @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @aws-sdk/client-s3 @aws-sdk/s3-request-presigner` and `npm i -D typescript tsx esbuild vitest @hono/node-server @types/node @types/aws-lambda`
    - Add `shared/`, `.gitignore` (section 3), the `amplify.yml` above, and the npm scripts in `AGENTS.md`.
+   - Create the API's shared core: `api/src/index.ts` with `GET /health` and the error handler, `api/src/local.ts`, and `api/src/lib/env.ts`, `db.ts` and `errors.ts`. Pierre writes these once; after the first checkpoint they change only by agreement.
+   - Write `api/template.yaml` in full from section 8, with the three tables and the bucket, so the first deploy creates everything Sarah needs.
 2. **Contract (both).** `shared/` is already written. Read its three files together once. From here on they change only by agreement.
-3. **First deploy (Pierre).** `sam build`, then `sam deploy --guided` with `SolanaMode=off` and empty Solana values. Save the answers to `samconfig.toml`. Note `ApiUrl` and `PhotoBucketName`.
+3. **First deploy (Pierre).** `sam build`, then `sam deploy --guided` with `SolanaMode=off` and empty Solana values. Save the answers to `samconfig.toml`. Note `ApiUrl` and `PhotoBucketName` and send both to Sarah.
 4. **Local env (both).** Copy `api/.env.example` to `api/.env` and fill it from the stack outputs. Copy `web/.env.example` to `web/.env` with `VITE_API_URL=http://localhost:3001`.
 5. **Hosting (Pierre).** Connect Amplify as in section 8. Add the Amplify URL to `WebOrigins` and redeploy. Start the `streetcreds.app` custom domain at the same time, because DNS takes a while.
 6. **Solana (Pierre, 90-minute limit).** Run `npx tsx scripts/solana-setup.ts`. It must:
@@ -717,7 +738,7 @@ The Solana CLI is not required. `api/scripts/solana-setup.ts` does the same job 
    - create the CIVIC mint with `createMint(connection, treasury, treasury.publicKey, null, 0)`;
    - print `CIVIC_MINT` and the base64 `SOLANA_TREASURY_SECRET` for the human to paste into `api/.env` and `samconfig.toml`.
 
-   Then set `SOLANA_MODE=per-player`, run one award locally and open the explorer link. If this is not working after 90 minutes, set `SOLANA_MODE=shared`; if that fails too, stay on `off` and move on.
+   Then write `mintPoints` (section 6), set `SOLANA_MODE=per-player` in `api/.env`, run `npx tsx scripts/mint-test.ts` and open the explorer link it prints. This tests the mint on its own, before `awardPoints` exists. If it is not working after 90 minutes, set `SOLANA_MODE=shared` and run it again; if that fails too, stay on `off` and move on. The deployed API stays on `off` until the real `awardPoints` is merged in Phase 2.
 
 ### Daily loop
 
@@ -736,7 +757,7 @@ Unit tests (Vitest) are required for these pure functions and nothing else:
 | --- | --- | --- |
 | `aggregateLeaderboard` | api | Empty input, ties, a neighborhood with no players |
 | `haversineMeters` | api | Same point is 0; two points about 30 m apart; about 1 km apart |
-| Rate-limit helper (prune and count) | api | Times older than one hour are dropped; the fifth passes, the sixth fails |
+| `checkReportLimit` (the rate-limit helper) | api | Times older than one hour are dropped; the fifth passes, the sixth fails |
 | Request schemas | api | Nickname of 1, 2, 20 and 21 characters; an unknown neighborhood |
 | `buildCityReport` | web | Output matches the format in section 7 |
 | Resize size math | web | Landscape, portrait, and an image already under 1280 px |
@@ -759,7 +780,7 @@ The acceptance checks for each feature are in section 13. Run them on a real pho
 
 ### Seed data
 
-`npm run seed` writes a few players and reports whose ids start with `seed-`, and `npm run seed -- --clear` removes them. Both print what they will change and ask for a yes first. It is for development only. For the demo, the PRD calls for real reports collected on campus; clear the seed data before judging.
+`npm run seed` writes a few players and reports whose ids start with `seed-`, and `npm run seed -- --clear` removes them. Seed items are the one exception to "ids are uuids": the prefix is how the script finds them again. Every seeded report points at one placeholder photo, `api/scripts/seed-photo.jpg` (any small JPEG you took yourself), which the script uploads to the bucket as `reports/seed/placeholder.jpg`. Both print what they will change and ask for a yes first. It is for development only. For the demo, the PRD calls for real reports collected on campus; clear the seed data before judging.
 
 ### When something breaks
 
@@ -779,14 +800,14 @@ The acceptance checks for each feature are in section 13. Run them on a real pho
 
 ## 10. Build order
 
-Each milestone ends with the checkpoint from the matching phase in `PRD.md`. Do not start a milestone until the one before it passes on a phone.
+Each milestone ends with the checkpoint from the matching phase in `docs/PHASES.md`. Do not start a milestone until the one before it passes on a phone.
 
 | # | Milestone | Sarah | Pierre | Done when |
 | --- | --- | --- | --- | --- |
-| M0 | Setup | Gemini key; read the contract in `shared/` together | Scaffold, first deploy, Amplify | The live URL opens on a phone and `GET /leaderboard` returns four rows of zeros |
-| M1 | Skeleton | `GET /upload-url`; `labelPhoto` tuned on 10 photos in a script; report screen on mocks | Solana setup script; app shell; `POST /players`, `GET /players/:id`, `GET /leaderboard`; join and home screens; `awardPoints` stub | A player can join from a phone and is in the table |
+| M0 | Setup | Gemini key; read the contract in `shared/` together | Scaffold, including `api/src/index.ts` and `api/src/lib/`; first deploy with the tables and bucket; Amplify | The live URL opens on a phone and `GET /leaderboard` returns four rows of zeros |
+| M1 | Skeleton | `GET /upload-url`; `labelPhoto` tuned on 10 photos in a script; report screen on mocks | Solana setup script, `mintPoints` and one test mint; app shell with client functions and fixtures for all ten routes; `POST /players`, `GET /players/:id`, `GET /leaderboard`; join and home screens; `awardPoints` stub | A player can join from a phone and is in the table |
 | M2 | Core loop (P0) | Capture, resize, upload; `POST /reports`; `POST /reports/:id/submit`; confirm and reward screens; `GET /reports` | Wallet on join; real `awardPoints`; leaderboard screen | Photo to label to points to leaderboard works on a phone. **This is the cut line in the PRD** |
-| M3 | Second quest and map (P1) | Council content checked by a human; council routes; council screens | Map and "Copy city report"; rate limit; ten awards in a row | Both quests work and the map shows pins |
+| M3 | Second quest and map (P1) | Council content checked by a human; council routes; council screens; rate limit added to `POST /reports` | Map and "Copy city report"; rate-limit helper; ten test mints in a row | Both quests work and the map shows pins |
 | M4 | Polish | Own screens: loading, errors, small and large phones | Own screens: the same; backup video | Feature freeze. Bug fixes only after this |
 | M5 | Submit | Devpost page | README with credits; architecture slide | Submitted, demo rehearsed twice |
 
@@ -815,6 +836,8 @@ These are settled. Do not redesign them during the hackathon.
 | Council items in a JSON file, not a table | Three static items that a human checked |
 | Photos private, shown through presigned links that expire | No public bucket; the "Copy city report" photo link is temporary and says so |
 | Points in DynamoDB are the source of truth; Solana mirrors them | The game keeps working when devnet is slow |
+| `awardPoints` writes the award and then adds the points, as two separate calls | If the second call fails, the award exists without its points and a retry gets `already_awarded`. Accepted for the demo: it takes a DynamoDB failure between two calls a few milliseconds apart, and a transaction is not worth the time |
+| Pierre writes the scaffold and the API's shared core (`index.ts`, `lib/`) once, and each person wires their own routes | Nobody waits on the other person to add one line. See Ownership in `AGENTS.md` |
 | Player wallets are addresses only; secret keys are discarded | Minting needs only the address, and nothing sensitive is stored |
 | Spending points (P2) has no design yet | It needs a decision on how a player without a key spends; ask before building |
 | Devnet only, token has no value | Hackathon demo; no real money anywhere |

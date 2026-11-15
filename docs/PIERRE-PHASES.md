@@ -3,8 +3,10 @@
 Pierre owns **joining, the points wallet, the leaderboard, the map, the app shell and the infrastructure**. This file is his checklist and his prompts, phase by phase.
 
 - **His folders:** `web/src/features/players/`, `web/src/app/`, `api/src/players/`, `api/src/points/`, `api/template.yaml`, `amplify.yml`
-- **Hands-off without a yes from Sarah:** `shared/`, Sarah's folders (`web/src/features/quests/`, `api/src/quests/`)
-- **Where he meets Sarah:** she calls his `awardPoints` (ship the stub first), and his map reads her `GET /reports` (use mock data until it's live)
+- **Also his, the scaffold:** package and config files in `web/` and `api/`, `web/src/main.tsx`, `api/src/local.ts`, and the scripts `solana-setup.ts`, `mint-test.ts` and `seed.ts` in `api/scripts/`
+- **Shared with Sarah:** `api/src/index.ts` and `api/src/lib/`. He creates them in Phase 0. After that he only adds the line that mounts his own routes; anything else needs her yes
+- **Hands-off without a yes from Sarah:** `shared/`, Sarah's folders (`web/src/features/quests/`, `api/src/quests/`) and her two scripts in `api/scripts/`
+- **Where he meets Sarah:** she calls his `awardPoints` (ship the stub first) and his rate-limit helper; her screens use the client functions and fixtures in his `app/api.ts` and `app/mock/` (he writes them for all ten routes); and his map reads her `GET /reports` (use mock data until it's live)
 - **Shared checkpoints and timing:** [PHASES.md](PHASES.md). Sarah's list: [SARAH-PHASES.md](SARAH-PHASES.md)
 
 ## How to use this file
@@ -21,7 +23,7 @@ Do not start a phase until the checkpoint before it passes on a real phone. The 
 ```text
 I'm Pierre, working on StreetCreds. Read AGENTS.md, docs/TECHNICAL.md, docs/CONTRIBUTING.md and docs/PIERRE-PHASES.md in full before doing anything.
 
-I own players, points and boards: web/src/features/players/, web/src/app/, api/src/players/, api/src/points/, api/template.yaml and amplify.yml. Work only in those. Do not change shared/ or Sarah's folders (web/src/features/quests/, api/src/quests/). If a task needs a change there, describe the change and stop.
+I own players, points and boards: web/src/features/players/, web/src/app/, api/src/players/, api/src/points/, api/template.yaml and amplify.yml. I also own the scaffold: package and config files in web/ and api/, web/src/main.tsx, api/src/local.ts, and the scripts solana-setup.ts, mint-test.ts and seed.ts in api/scripts/. Work only in those. api/src/index.ts and api/src/lib/ are shared: create them in Phase 0, and after that only add the line that mounts my own routes. Do not change shared/ or Sarah's folders (web/src/features/quests/, api/src/quests/). If a task needs a change there, describe the change and stop.
 
 Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) the routes and functions I am responsible for, (3) anything in the docs that looks unclear or contradictory. Do not write code yet.
 ```
@@ -30,8 +32,9 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 
 - [ ] Read `shared/` with Sarah once. It is the fixed contract.
 - [ ] Install Node.js 24, the AWS CLI and the AWS SAM CLI. Run `aws configure` for `us-west-2`.
-- [ ] Scaffold `web/` and `api/` with the exact install commands in TECHNICAL.md section 9, step 1.
-- [ ] First deploy with Solana off, so the API URL exists. Save the answers in `samconfig.toml` (git-ignored).
+- [ ] Scaffold `web/` and `api/` with the exact install commands in [TECHNICAL.md](TECHNICAL.md) section 9, step 1. This includes `api/src/index.ts` and `api/src/lib/`.
+- [ ] Deploy template written in full: the API, the three DynamoDB tables and the S3 bucket.
+- [ ] First deploy with Solana off, so the API URL, the tables and the bucket exist. Save the answers in `samconfig.toml` (git-ignored).
 - [ ] Connect Amplify hosting to the repo, app root `web`, and set `VITE_API_URL`.
 - [ ] Add the Amplify URL to the allowed origins and redeploy.
 - [ ] Start the `streetcreds.app` custom domain in Amplify. DNS can take hours.
@@ -42,7 +45,9 @@ Prompt:
 ```text
 Do Pierre's Phase 0 from docs/PIERRE-PHASES.md, following docs/TECHNICAL.md sections 2, 3, 8 and 9.
 
-Scaffold web/ and api/ with the exact install commands in section 9 step 1 (@solana/web3.js must be version 1). Add the npm scripts listed in AGENTS.md, the tsconfig and vite settings that let both packages import shared/, .env.example files, and amplify.yml. Write api/template.yaml with a GET /health route and a GET /leaderboard route that returns the four neighborhoods with zero points.
+Scaffold web/ and api/ with the exact install commands in section 9 step 1 (@solana/web3.js must be version 1). Add the npm scripts listed in AGENTS.md, the tsconfig and vite settings that let both packages import shared/, .env.example files, and amplify.yml.
+
+In api/, create src/index.ts (the Hono app: GET /health, the error handler, and the mounted player routes), src/local.ts, src/lib/env.ts, src/lib/db.ts and src/lib/errors.ts. Create src/players/routes.ts with a GET /leaderboard that returns the four neighborhoods with zero points for now. Write api/template.yaml in full from section 8, including the three tables and the photo bucket, so the first deploy creates everything.
 
 Do not run sam deploy or anything else that creates cloud resources: print each command and wait for me. Stop when the scaffold type-checks and both dev servers start.
 ```
@@ -52,10 +57,10 @@ Do not run sam deploy or anything else that creates cloud resources: print each 
 ## Phase 1. Skeleton (about 20% of the time)
 
 - [ ] **Solana first, 90-minute limit.** `solana-setup.ts` creates the treasury and the CIVIC token.
-- [ ] One test award sent and opened on the explorer. If not working at 90 minutes: switch to shared-wallet mode, or leave Solana off, and move on.
-- [ ] App shell: routing, layout with header and bottom navigation, the API helper, mock mode, the strings file.
-- [ ] DynamoDB tables and the S3 bucket are in the deploy template.
-- [ ] `POST /players`, `GET /players/:id` and `GET /leaderboard` work.
+- [ ] `mintPoints` written. One test mint sent with `mint-test.ts` and opened on the explorer. If not working at 90 minutes: switch to shared-wallet mode, or leave Solana off, and move on.
+- [ ] App shell: routing for all eight paths (placeholders for Sarah's three screens), layout with header and bottom navigation, the strings file.
+- [ ] API helper with a typed function and a mock fixture for all ten routes, Sarah's six included. Tell Sarah when it's merged: her report screen needs it.
+- [ ] `POST /players`, `GET /players/:id` and `GET /leaderboard` work against the real table.
 - [ ] Join screen and home screen work on a phone.
 - [ ] `awardPoints` stub (database only) merged. Sarah is told it's ready.
 - [ ] `npm run check` passes in `api/` and `web/`.
@@ -65,12 +70,11 @@ Prompt:
 ```text
 Do Pierre's Phase 1 from docs/PIERRE-PHASES.md, following docs/TECHNICAL.md sections 5, 6, 8 and 9. Go in this order and stop after each numbered step so I can check it.
 
-1. Write api/scripts/solana-setup.ts as described in section 9, step 6. Do not run an airdrop or create anything on devnet yourself: print the command and wait for me.
-2. Build the app shell: routing, layout, app/api.ts with mock mode, app/player.ts, app/strings.ts.
-3. Add the three DynamoDB tables and the S3 bucket from section 8 to api/template.yaml. Do not run sam deploy: print the command and wait for me.
-4. Build POST /players, GET /players/:id and GET /leaderboard, with aggregateLeaderboard as a tested pure function.
-5. Build the join and home screens.
-6. Build the awardPoints stub (SOLANA_MODE=off: write the award once, add the points). Sarah depends on this, so keep its signature exactly as documented.
+1. Write api/scripts/solana-setup.ts as described in section 9, step 6, then mintPoints in api/src/points/solana.ts (section 6), then api/scripts/mint-test.ts, which calls mintPoints for a throwaway address as many times as its count argument says (default 1), prints each explorer link and reports how many succeeded. Do not run either script, request an airdrop or send anything to devnet yourself: print the commands and wait for me.
+2. Build the app shell: routing for all eight paths with a placeholder screen for /report, /council and /council/:itemId, the layout, app/player.ts and app/strings.ts. In app/api.ts write one typed function per route for all ten routes, Sarah's six included, with mock mode and one fixture per route in app/mock/.
+3. Build POST /players, GET /players/:id and GET /leaderboard against the real table, with aggregateLeaderboard as a tested pure function.
+4. Build the join and home screens.
+5. Build the awardPoints stub (SOLANA_MODE=off: write the award once, add the points). Sarah depends on this, so keep its signature exactly as documented.
 
 Install @solana/web3.js@1, never version 3. Type-check as you go.
 ```
@@ -108,8 +112,8 @@ Do not change the awardPoints signature or return shape. Stop when done and give
 - [ ] Map screen shows a pin for every open report, sized by count and colored by severity.
 - [ ] Pin popup shows the photo and details.
 - [ ] "Copy city report" puts category, description, location and photo link on the clipboard.
-- [ ] Rate-limit helper written and tested; Sarah has added the two lines to her route.
-- [ ] 10 awards sent in a row all arrive.
+- [ ] Rate-limit helper `checkReportLimit` written and tested in `api/src/players/rateLimit.ts`; Sarah has added it to her route.
+- [ ] 10 test mints in a row all arrive (`mint-test.ts 10`).
 - [ ] One-slide architecture diagram drafted.
 - [ ] `npm run check` passes.
 
@@ -120,8 +124,8 @@ Do Pierre's Phase 3 from docs/PIERRE-PHASES.md.
 
 1. Build the map screen from docs/TECHNICAL.md section 7: react-leaflet, OpenStreetMap tiles with attribution, one circle marker per open report sized by count and colored by severity, a popup with the photo and details.
 2. Build buildCityReport as a tested pure function and wire the "Copy city report" button.
-3. Add the rate limit of 5 reports per player per hour. The check belongs in Sarah's POST /reports route, so write the pure helper and its tests in api/src/lib/ and describe the two lines she needs to add. Do not edit her files.
-4. Write a script that sends 10 awards in a row and reports how many reached devnet.
+3. Add the rate limit of 5 reports per player per hour. The check belongs in Sarah's POST /reports route, so write the pure helper checkReportLimit and its tests in api/src/players/rateLimit.ts, as docs/TECHNICAL.md section 6 defines it, and describe the lines she needs to add. Do not edit her files.
+4. Check that api/scripts/mint-test.ts reports how many of its mints reached devnet, then print the command that sends 10 in a row and wait for me to run it.
 
 Build the map against mock data if GET /reports is not live yet. Stop when done and tell me how to test acceptance check F6.
 ```

@@ -89,10 +89,11 @@ When an AI agent wrote most of a commit, keep the co-author line it adds. It is 
 A pull request **must** wait for the other person's yes when it touches any of these:
 
 - `shared/` (the contract)
-- the other person's folders
-- `api/src/index.ts` or `api/src/lib/`
-- `api/template.yaml` or `amplify.yml`
+- the other person's folders or files
+- `api/src/index.ts` or `api/src/lib/`, beyond the wiring lines described under "Who owns what"
 - this file, `AGENTS.md` or `TECHNICAL.md`
+
+`api/template.yaml` and `amplify.yml` are Pierre's, so he merges changes to them like any other change in his own files. He tells Sarah whenever one affects her: a new environment variable, a renamed resource, or a deploy she needs to know about.
 
 **Docs-only exception:** ticking boxes in `PHASES.md`, `SARAH-PHASES.md` or `PIERRE-PHASES.md`, adding a line to the README Credits, or fixing a typo can be committed straight to `main`. Pull first.
 
@@ -100,9 +101,13 @@ A pull request **must** wait for the other person's yes when it touches any of t
 
 | Owner | Paths |
 | --- | --- |
-| Sarah | `web/src/features/quests/`, `api/src/quests/`, `api/scripts/generate-council.ts` |
+| Sarah | `web/src/features/quests/`, `api/src/quests/`, `api/scripts/generate-council.ts`, `api/scripts/label-photos.ts` |
 | Pierre | `web/src/features/players/`, `web/src/app/`, `api/src/players/`, `api/src/points/`, `api/template.yaml`, `amplify.yml` |
+| Pierre (the scaffold) | Package and config files in `web/` and `api/` (`package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, `.env.example`), `web/src/main.tsx`, `api/src/local.ts`, `api/scripts/solana-setup.ts`, `api/scripts/mint-test.ts`, `api/scripts/seed.ts` |
 | Both, agree first | `shared/`, `api/src/index.ts`, `api/src/lib/` |
+
+- Pierre creates `api/src/index.ts` and `api/src/lib/` once, in Phase 0. After the Phase 0 checkpoint they change only by agreement.
+- **Wiring your own work is always allowed.** Either person may add the line in `api/src/index.ts` that mounts their own routes file. Sarah may add or change the route lines for her three screens in `web/src/app/App.tsx` and the fixtures for her own routes in `web/src/app/mock/`. Nothing else in those files.
 
 Staying in your own folders is what keeps merge conflicts rare.
 
