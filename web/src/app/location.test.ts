@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { locationMessages } from '../../../shared/location'
 import { LOCATION_WAIT_MS, readCurrentLocation } from './location'
+import { strings } from './strings'
 
 beforeEach(() => { vi.useFakeTimers() })
 afterEach(() => {
@@ -100,6 +101,25 @@ describe('reading the device location for one action', () => {
     device.fails(1)
     await outcome
     expect(device.clearWatch).toHaveBeenCalledExactlyOnceWith(WATCH_ID)
+  })
+
+  it('gives an iPhone the steps for the Settings app when location is blocked', async () => {
+    const device = fakeDevice()
+    vi.stubGlobal('navigator', {
+      ...globalThis.navigator,
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    })
+    const outcome = expect(readCurrentLocation()).rejects.toThrow(strings.location.blockedOnIphone)
+    device.fails(1)
+    await outcome
+  })
+
+  it('says the address is the problem when the page is not on https', async () => {
+    const device = fakeDevice()
+    vi.stubGlobal('isSecureContext', false)
+    const outcome = expect(readCurrentLocation()).rejects.toThrow(strings.location.notSecure)
+    device.fails(1)
+    await outcome
   })
 
   it('stops at once when the device has no position and none has arrived', async () => {

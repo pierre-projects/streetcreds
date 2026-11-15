@@ -84,6 +84,14 @@ export const strings = {
     submitting: 'Joining…',
   },
 
+  // What to do when the browser refuses to give a position. The general wording is in
+  // shared/location.ts; these are the cases where the player needs exact steps.
+  location: {
+    blockedOnIphone:
+      'Location is blocked for this browser. In iPhone Settings, go to Privacy & Security, then Location Services, then Safari Websites (or the app you opened this page in), and pick While Using the App. Then reload this page and tap Allow.',
+    notSecure: 'Location only works on a secure address. Open the app from its https:// link and try again.',
+  },
+
   home: {
     pointsLabel: 'Your points',
     rank: (neighborhood: string, rank: number, total: number) => `${neighborhood} is #${rank} of ${total}`,
