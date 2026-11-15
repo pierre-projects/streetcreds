@@ -20,12 +20,35 @@ export const strings = {
     loading: 'Loading…',
   },
 
+  join: {
+    nicknameLabel: 'Pick a nickname',
+    nicknameHint: (min: number, max: number) => `${min} to ${max} characters. No email or password.`,
+    nicknameInvalid: (min: number, max: number) => `Nickname must be ${min} to ${max} characters.`,
+    neighborhoodLabel: 'Your neighborhood',
+    neighborhoodInvalid: 'Pick your neighborhood.',
+    submit: 'Start playing',
+    submitting: 'Joining…',
+  },
+
+  home: {
+    pointsLabel: 'Your points',
+    rank: (neighborhood: string, rank: number, total: number) => `${neighborhood} is #${rank} of ${total}`,
+    neighborhoodPoints: (points: number) => `${points} pts as a neighborhood`,
+    rankLoading: 'Loading the leaderboard…',
+    rankError: 'Could not load the leaderboard.',
+    questsTitle: 'Earn points',
+    reportTitle: 'Report a street problem',
+    reportBody: 'Take a photo of a pothole, a broken light, graffiti or a blocked sidewalk.',
+    councilTitle: 'Council quest',
+    councilBody: 'Read a short summary of a real council item and answer one question.',
+    reward: (points: number) => `+${points} pts`,
+    loading: 'Loading your points…',
+    retry: 'Try again',
+  },
+
   comingSoon: {
     body: 'This part of the game is still being built.',
     backHome: 'Back to home',
-    join: 'Joining opens soon',
-    joinBody: 'The game is being built at sunhacks 2026. Check back shortly.',
-    home: 'Home',
     report: 'Report a street problem',
     council: 'Council quest',
     leaderboard: 'Leaderboard',

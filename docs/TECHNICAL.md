@@ -6,7 +6,7 @@ This file is the implementation spec for StreetCreds: stack, data models, API co
 
 **Priorities.** P0 must work for the demo, P1 is added once P0 works on a phone, P2 is built only when a human asks for it by name. Each route in section 5 and each milestone in section 10 carries its priority.
 
-**Status on 2026-11-14:** the contract in `shared/` (constants, data fields, API shapes) and the Phase 0 scaffold exist: `web/` with a placeholder page, and `api/` with `GET /health`, a stand-in `GET /leaderboard`, the shared core in `src/lib/` and the deploy template. Nothing is deployed. Everything else is still to build.
+**Status on 2026-11-14:** the contract in `shared/` (constants, data fields, API shapes) and Pierre's Phase 1 exist. In `api/`: routes 1 to 4 (`GET /health`, `POST /players`, `GET /players/:id`, `GET /leaderboard`) against the real tables, the `awardPoints` stub (database only, no minting), `mintPoints`, and the Solana setup and mint-test scripts. In `web/`: the app shell (routing, layout, the `api` object, mock mode), the join screen and the home screen. Routes 5 to 10, the quest screens, the leaderboard screen and the map are still to build. Other code can import `isConditionalCheckFailed` from `api/src/players/store.ts` to recognize a refused conditional write.
 
 **Names.** The product is written StreetCreds. In code, resource names and storage keys it is `streetcreds`: the stack is `streetcreds`, the tables are `streetcreds-*`, and the stored player key is `streetcreds.playerId`. The site is planned for `https://streetcreds.app`. The points token keeps the symbol CIVIC.
 
