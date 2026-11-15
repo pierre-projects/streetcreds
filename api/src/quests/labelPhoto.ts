@@ -65,9 +65,16 @@ export async function labelJpegBase64(base64Jpeg: string): Promise<PhotoLabel> {
     const interaction = await withLimit(
       ai.interactions.create({
         model: env.GEMINI_MODEL,
+        // The prompt and the photo go inside one `user_input` step. Sent as a bare list of content
+        // parts, the API answers 400: "'image' is not supported for 'input[1].type' in v1".
         input: [
-          { type: 'text', text: LABEL_PROMPT },
-          { type: 'image', data: base64Jpeg, mime_type: 'image/jpeg' },
+          {
+            type: 'user_input',
+            content: [
+              { type: 'text', text: LABEL_PROMPT },
+              { type: 'image', data: base64Jpeg, mime_type: 'image/jpeg' },
+            ],
+          },
         ],
         response_format: { type: 'text', mime_type: 'application/json', schema: LABEL_JSON_SCHEMA },
       }),
@@ -80,8 +87,30 @@ export async function labelJpegBase64(base64Jpeg: string): Promise<PhotoLabel> {
     return LabelSchema.parse(JSON.parse(text));
   } catch (error) {
     if (error instanceof ApiError) throw error;
+    logLabelFailure('gemini', error);
     throw new ApiError('label_failed');
   }
+}
+
+/**
+ * One log line saying why labeling failed, since the player only ever sees `label_failed`.
+ * It holds the error's name, status and a short message. Long runs of base64 are cut out, so the
+ * photo can never end up in a log.
+ */
+function logLabelFailure(where: 'gemini' | 's3', error: unknown): void {
+  const status = (error as { status?: unknown } | null)?.status;
+  const message = (error instanceof Error ? error.message : String(error))
+    .replace(/[A-Za-z0-9+/=]{80,}/g, '(data)')
+    .slice(0, 300);
+  console.error(
+    JSON.stringify({
+      level: 'error',
+      where: `labelPhoto.${where}`,
+      name: error instanceof Error ? error.name : 'Error',
+      ...(typeof status === 'number' ? { status } : {}),
+      message,
+    }),
+  );
 }
 
 export async function labelPhoto(photoKey: string): Promise<PhotoLabel> {
@@ -89,9 +118,10 @@ export async function labelPhoto(photoKey: string): Promise<PhotoLabel> {
     const object = await s3.send(new GetObjectCommand({ Bucket: photoBucket(), Key: photoKey }));
     if (!object.Body) throw new ApiError('label_failed');
     const base64Jpeg = await streamToBase64(object.Body as { transformToString: (encoding: string) => Promise<string> });
-    return labelJpegBase64(base64Jpeg);
+    return await labelJpegBase64(base64Jpeg);
   } catch (error) {
     if (error instanceof ApiError) throw error;
+    logLabelFailure('s3', error);
     throw new ApiError('label_failed');
   }
 }

@@ -498,13 +498,24 @@ const base64Jpeg = await object.Body!.transformToString('base64');
 const interaction = await ai.interactions.create({
   model: env.GEMINI_MODEL,
   input: [
-    { type: 'text', text: LABEL_PROMPT },
-    { type: 'image', data: base64Jpeg, mime_type: 'image/jpeg' },
+    {
+      type: 'user_input',
+      content: [
+        { type: 'text', text: LABEL_PROMPT },
+        { type: 'image', data: base64Jpeg, mime_type: 'image/jpeg' },
+      ],
+    },
   ],
   response_format: { type: 'text', mime_type: 'application/json', schema: LABEL_JSON_SCHEMA },
 });
 const label = LabelSchema.parse(JSON.parse(interaction.output_text));
 ```
+
+The prompt and the photo must sit inside one `user_input` step. Sent as a bare list of content parts, the API answers 400 (`'image' is not supported for 'input[1].type' in v1`). This was run against the live API on 2026-11-15.
+
+The S3 client in `api/src/quests/s3.ts` is created with `requestChecksumCalculation: 'WHEN_REQUIRED'`. Without it the SDK adds a checksum for an empty file to every upload link, which the photo the browser sends cannot match.
+
+When labeling fails, the player sees `label_failed` and the API logs one line with `"where": "labelPhoto.gemini"` (or `labelPhoto.s3`) and the cause, without any photo data.
 
 `LABEL_PROMPT`, to start from and tune against 10 test photos:
 
@@ -853,6 +864,7 @@ The acceptance checks for each feature are in section 13. Run them on a real pho
 | Solana types or imports do not exist | `@solana/web3.js` 3.x was installed | `npm i @solana/web3.js@1` |
 | Airdrop fails with 429 | Devnet faucet rate limit | Use https://faucet.solana.com with the treasury address |
 | Awards stay `pending` | Devnet is slow, the treasury is out of SOL, or the free public Solana address is refusing requests (`429 Too Many Requests` in the logs) | Check the treasury balance. For the 429, switch to a dedicated address (see "Deploying and logs"). Points still count either way |
+| Every photo gets "We could not read that photo" | Gemini refused the request, took longer than 12 seconds, or is overloaded (`503 ... high demand`) | Find the `labelPhoto.gemini` line in the logs. If the model is overloaded or not answering, set `GEMINI_MODEL` to another flash model that answers and redeploy |
 | `interactions` is undefined on the Gemini client | `@google/genai` is older than 2.3.0 | Update the package |
 | Lambda times out at 29 s | Gemini or Solana hung | Check the per-call limits in section 6 are in place |
 | An offensive nickname is on the live board | The filter missed it | Delete that player's item from the `streetcreds-players` table in the DynamoDB console; it leaves the board on the next refresh. Then add the word to `EXTRA_BLOCKED_WORDS` in `api/src/players/nickname.ts` and redeploy, so it is refused at join and masked on the board from then on |
