@@ -793,7 +793,7 @@ City ADA survey: This corner has no curb ramp. S MILL AVE & W BROADWAY RD, SW co
 
 ### Street cred card (in `features/quests/share/`, built by Pierre with Sarah's agreement)
 
-- `ShareCard` shows on the reward step (`<ShareCard player earned photoUrl emphasis="secondary" />`) and on the profile (`<ShareCard player />`). It works the same for a guest and a signed-in player.
+- `ShareCard` shows on the reward step (`<ShareCard player earned photoUrl emphasis="secondary" />`) and on the profile (`<ShareCard player preview={false} />`: the profile's own card already shows the logo, nickname, points and neighborhood, so the heading and the picture are left out and only Share and its one-line note show). It works the same for a guest and a signed-in player.
 - `shareCred.ts` (pure, has a test) builds what the card says from the player and the leaderboard: nickname, points, neighborhood and its rank, and what was just earned. Nothing more exact than the neighborhood, and nothing the public leaderboard does not already show.
 - `drawShareCard.ts` draws a 1080 by 1350 PNG on a canvas with the app's token colors and font. `photoUrl` must be a picture already on the device (an object URL): a photo from another site would stop the canvas being saved.
 - The picture is drawn when the card appears, not when Share is pressed, because a phone only opens its share sheet straight from a tap. Share tries, in order: the phone's share sheet with the picture, the share sheet with text and link, then saving the picture and copying the text.
