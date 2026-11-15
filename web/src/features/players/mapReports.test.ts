@@ -9,6 +9,7 @@ import {
   countByCategory,
   countBySeverity,
   groupPins,
+  groupPinsApart,
   hasPlace,
   isFiltering,
   NO_FILTER,
@@ -174,6 +175,31 @@ describe('groupPins', () => {
     const ids = groupPins(many, 15).flatMap((group) => group.reports.map((r) => r.id))
     expect(ids).toHaveLength(50)
     expect(new Set(ids).size).toBe(50)
+  })
+})
+
+describe('groupPinsApart', () => {
+  function pin(id: string, lat: number, lng: number): PinnedReport {
+    return { ...report({ id }), lat, lng }
+  }
+  // All three would be one group at zoom 14.
+  const close = [pin('a', 33.42, -111.94), pin('b', 33.4201, -111.94), pin('c', 33.4202, -111.94)]
+
+  it('groups as groupPins does when no report is kept apart', () => {
+    expect(groupPinsApart(close, 14, null)).toEqual(groupPins(close, 14))
+    // An id that is not in the list changes nothing either.
+    expect(groupPinsApart(close, 14, 'gone')).toEqual(groupPins(close, 14))
+  })
+
+  it('gives the report kept apart a pin of its own and groups the rest', () => {
+    const groups = groupPinsApart(close, 14, 'b')
+    expect(groups.map((group) => group.reports.map((r) => r.id))).toEqual([['a', 'c'], ['b']])
+    expect(groups[1]).toMatchObject({ id: 'b', lat: 33.4201, lng: -111.94 })
+  })
+
+  it('still puts every report in exactly one group', () => {
+    const ids = groupPinsApart(close, 14, 'a').flatMap((group) => group.reports.map((r) => r.id))
+    expect([...ids].sort()).toEqual(['a', 'b', 'c'])
   })
 })
 

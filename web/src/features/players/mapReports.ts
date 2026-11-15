@@ -176,3 +176,14 @@ export function groupPins(pins: PinnedReport[], zoom: number, reachPx: number = 
   })
   return groups
 }
+
+/**
+ * As groupPins, but the report with the id `apartId` always keeps a pin of its own. That is the
+ * report whose popup is open: put in a group, its pin would go and take the popup with it.
+ */
+export function groupPinsApart(pins: PinnedReport[], zoom: number, apartId: string | null): PinGroup[] {
+  const apart = apartId === null ? undefined : pins.find((report) => report.id === apartId)
+  if (!apart) return groupPins(pins, zoom)
+  const others = groupPins(pins.filter((report) => report !== apart), zoom)
+  return [...others, { id: apart.id, lat: apart.lat, lng: apart.lng, reports: [apart] }]
+}

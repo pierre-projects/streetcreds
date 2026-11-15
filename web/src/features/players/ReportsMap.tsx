@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { MAP_CENTER } from '../../../../shared/constants'
 import type { PublicReport, Severity } from '../../../../shared/types'
+import { useReducedMotion } from '../../app/motion'
 import { strings } from '../../app/strings'
 import { Button } from '../../app/ui'
 import { type CityRecord, TEMPE_311_FORM_URL } from './cityRecords'
@@ -20,7 +21,7 @@ import { buildCityReport } from './cityReport'
 import { cityFinding } from './cityText'
 import { renewPhotoUrl, steadyPhotoUrl } from './photoUrls'
 import {
-  groupPins,
+  groupPinsApart,
   type PinGroup,
   type PinnedReport,
   POPUP_WIDTH,
@@ -33,6 +34,30 @@ import {
 const ZOOM = 14
 /** As far in as the map goes. Here every report gets its own pin, however close its neighbors are. */
 const MAX_ZOOM = 18
+/** As far out as the map goes: the Phoenix area, with Tempe still easy to find. Without it a pinch ends up over the whole world. */
+const MIN_ZOOM = 11
+/** How far the map can be moved: about 45 km from the middle of Tempe each way. A report filed from a neighboring city is still in reach. */
+const REACH = L.latLngBounds(
+  [MAP_CENTER.lat - 0.4, MAP_CENTER.lng - 0.5],
+  [MAP_CENTER.lat + 0.4, MAP_CENTER.lng + 0.5],
+)
+
+/**
+ * The zoom settles on quarter steps. On whole steps, which is Leaflet's own setting, the map
+ * jumps to the nearest one when a pinch is let go; on quarter steps it stays about where the
+ * fingers left it.
+ */
+const ZOOM_SNAP = 0.25
+
+/** How much of the map's top and bottom is covered by things floating over it, in pixels. */
+export interface PopupInsets {
+  top: number
+  bottom: number
+}
+/** Kept clear at the sides of an open popup. */
+const POPUP_SIDE = 8
+/** Kept clear under an open popup for its own pin and the label below it. */
+const PIN_ROOM = 64
 
 // The same empty values every time, for a map that is given no City records.
 const NO_RECORDS: CityRecord[] = []
@@ -191,13 +216,28 @@ interface ReportPinProps {
   onOpenChange?: (reportId: string, open: boolean) => void
   /** True when something outside the map picked this report. The pin then opens its own popup. */
   selected: boolean
+  popupInsets?: () => PopupInsets
 }
 
-function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected }: ReportPinProps) {
+function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected, popupInsets }: ReportPinProps) {
   const count = reportCount(report)
   // Kept the same between refreshes: a new array would make Leaflet move the pin and its popup again.
   const position = useMemo<[number, number]>(() => [report.lat, report.lng], [report.lat, report.lng])
   const ref = useRef<L.Marker>(null)
+  const popupRef = useRef<L.Popup>(null)
+
+  // Where a header or a navigation bar floats over the map, Leaflet has to keep the popup clear of
+  // it when it moves the map to show the popup. Leaflet reads these two settings each time it does
+  // that, so they are set when the pin appears and again as its popup opens, when the bars are
+  // sure to be where they stay.
+  const keepClear = useCallback(() => {
+    const popup = popupRef.current
+    if (!popup || !popupInsets) return
+    const { top, bottom } = popupInsets()
+    popup.options.autoPanPaddingTopLeft = L.point(POPUP_SIDE, top)
+    popup.options.autoPanPaddingBottomRight = L.point(POPUP_SIDE, bottom + PIN_ROOM)
+  }, [popupInsets])
+  useEffect(keepClear, [keepClear])
 
   // The pin opens its own popup, here and not from the layer above, so that it also happens when
   // the pin has only just appeared (a group came apart) and React sets it up a second time in
@@ -213,6 +253,7 @@ function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected }:
       popupopen: (event) => {
         const pin = (event.target as L.Marker).getElement()
         pin?.classList.add('is-open')
+        keepClear()
         onOpenChange?.(report.id, true)
       },
       popupclose: (event) => {
@@ -221,7 +262,7 @@ function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected }:
         onOpenChange?.(report.id, false)
       },
     }),
-    [report.id, onOpenChange],
+    [report.id, onOpenChange, keepClear],
   )
 
   return (
@@ -234,10 +275,11 @@ function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected }:
       eventHandlers={handlers}
     >
       <Popup
+        ref={popupRef}
         minWidth={POPUP_WIDTH}
         maxWidth={POPUP_WIDTH}
-        autoPanPaddingTopLeft={[8, 16]}
-        autoPanPaddingBottomRight={[8, 8]}
+        autoPanPaddingTopLeft={[POPUP_SIDE, 16]}
+        autoPanPaddingBottomRight={[POPUP_SIDE, 8]}
       >
         <ReportPopup report={report} cityRecord={cityRecord} copy={copy} onCopy={() => onCopy(report)} />
       </Popup>
@@ -275,21 +317,33 @@ interface PinLayerProps {
   matches: ReadonlyMap<string, CityRecord>
   selectedId: string | null
   onOpenChange?: (reportId: string, open: boolean) => void
+  popupInsets?: () => PopupInsets
 }
 
 /** Every pin and group, for the zoom the map is at. Must be inside the MapContainer. */
-function PinLayer({ pins, matches, selectedId, onOpenChange }: PinLayerProps) {
+function PinLayer({ pins, matches, selectedId, onOpenChange, popupInsets }: PinLayerProps) {
   const [copy, setCopy] = useState<CopyState>(null)
   const [zoom, setZoom] = useState<number | null>(null)
   const map = useMapEvents({ zoomend: () => setZoom(map.getZoom()) })
   const currentZoom = zoom ?? map.getZoom()
 
+  // The report whose popup is open. It keeps a pin of its own while the map is zoomed out, so the
+  // popup stays until the player closes it. Joining a group would remove the pin and the popup with it.
+  const [openId, setOpenId] = useState<string | null>(null)
+  const trackOpen = useCallback(
+    (reportId: string, open: boolean) => {
+      setOpenId((current) => (open ? reportId : current === reportId ? null : current))
+      onOpenChange?.(reportId, open)
+    },
+    [onOpenChange],
+  )
+
   const groups = useMemo<PinGroup[]>(
     () =>
       currentZoom >= MAX_ZOOM
         ? pins.map((report) => ({ id: report.id, lat: report.lat, lng: report.lng, reports: [report] }))
-        : groupPins(pins, currentZoom),
-    [pins, currentZoom],
+        : groupPinsApart(pins, currentZoom, openId),
+    [pins, currentZoom, openId],
   )
 
   const copyReport = useCallback(
@@ -352,8 +406,9 @@ function PinLayer({ pins, matches, selectedId, onOpenChange }: PinLayerProps) {
             cityRecord={matches.get(only.id)}
             copy={copy}
             onCopy={copyReport}
-            onOpenChange={onOpenChange}
+            onOpenChange={trackOpen}
             selected={only.id === selectedId}
+            popupInsets={popupInsets}
           />
         ) : (
           <GroupPin key={`group:${group.id}`} group={group} />
@@ -377,6 +432,11 @@ interface ReportsMapProps {
   children?: ReactNode
   /** Optional map instance callback for recenter and similar HUD controls. */
   onMapReady?: (map: L.Map) => void
+  /**
+   * For a map with a header or navigation floating over it: how much of its top and bottom they
+   * cover right now. An opening popup is kept clear of them. Keep it the same function between renders.
+   */
+  popupInsets?: () => PopupInsets
 }
 
 /** Publishes the Leaflet map once, for HUD controls that live outside MapContainer. */
@@ -397,11 +457,31 @@ export function ReportsMap({
   matches = NO_MATCHES,
   children,
   onMapReady,
+  popupInsets,
 }: ReportsMapProps) {
   // The City records that a player's report is at. Their pins are filled in.
   const reportedIds = useMemo(() => new Set([...matches.values()].map((record) => record.id)), [matches])
+  // With "Reduce motion" on, the map changes zoom at once, without the animation that scales the
+  // whole view. Leaflet reads these settings only when a map is made, so the key makes a new map
+  // if the setting changes while the page is open.
+  const calm = useReducedMotion()
   return (
-    <MapContainer center={[MAP_CENTER.lat, MAP_CENTER.lng]} zoom={ZOOM} maxZoom={MAX_ZOOM} className="h-full w-full">
+    <MapContainer
+      key={calm ? 'calm' : 'moving'}
+      center={[MAP_CENTER.lat, MAP_CENTER.lng]}
+      zoom={ZOOM}
+      minZoom={MIN_ZOOM}
+      maxZoom={MAX_ZOOM}
+      zoomSnap={ZOOM_SNAP}
+      zoomAnimation={!calm}
+      markerZoomAnimation={!calm}
+      fadeAnimation={!calm}
+      // The edge of the reach is solid, and the zoom stops at its limits without springing back.
+      maxBounds={REACH}
+      maxBoundsViscosity={1}
+      bounceAtZoomLimits={false}
+      className="h-full w-full"
+    >
       <TileLayer
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -409,7 +489,7 @@ export function ReportsMap({
       <MapReady onMapReady={onMapReady} />
       <FitToPins pins={pins} />
       <CityRecordsLayer records={cityRecords} reportedIds={reportedIds} />
-      <PinLayer pins={pins} matches={matches} selectedId={selectedId} onOpenChange={onOpenChange} />
+      <PinLayer pins={pins} matches={matches} selectedId={selectedId} onOpenChange={onOpenChange} popupInsets={popupInsets} />
       {children}
     </MapContainer>
   )

@@ -7,13 +7,16 @@ import { Link } from 'react-router'
 import { MAP_CENTER } from '../../../../shared/constants'
 import { api } from '../../app/api'
 import { CouncilIcon, NavigateIcon, PlusIcon } from '../../app/icons'
+import { prefersReducedMotion } from '../../app/motion'
 import { MAP_POLL_MS, reportsKey } from '../../app/queryClient'
 import { strings } from '../../app/strings'
 import { ErrorNotice } from '../../app/ui'
 import { hasPlace } from './mapReports'
-import { ReportsMap } from './ReportsMap'
+import { type PopupInsets, ReportsMap } from './ReportsMap'
 
 const HOME_ZOOM = 14
+/** Left between an open popup and the header or the navigation. */
+const POPUP_GAP = 8
 
 /** Tag / deal glyph for the Local Deals dock control. */
 function DealsIcon() {
@@ -51,8 +54,23 @@ export function HomeScreen() {
   }, [])
 
   function recenter() {
-    mapRef.current?.setView([MAP_CENTER.lat, MAP_CENTER.lng], HOME_ZOOM, { animate: true })
+    mapRef.current?.setView([MAP_CENTER.lat, MAP_CENTER.lng], HOME_ZOOM, { animate: !prefersReducedMotion() })
   }
+
+  // This map fills the screen, so the shell's header and navigation float over it. A popup that
+  // opens has to end up between the two. They are measured when asked, because their place
+  // depends on the phone (the notch, the home bar). The dock is not counted: it steps aside
+  // while a popup is open (see `.app-main-radar:has(.leaflet-popup)` in index.css).
+  const popupInsets = useCallback((): PopupInsets => {
+    const frame = mapRef.current?.getContainer().getBoundingClientRect()
+    if (!frame) return { top: POPUP_GAP, bottom: POPUP_GAP }
+    const header = document.querySelector('.app-header')?.getBoundingClientRect()
+    const nav = document.querySelector('.app-nav-inner')?.getBoundingClientRect()
+    return {
+      top: Math.max(0, header ? header.bottom - frame.top : 0) + POPUP_GAP,
+      bottom: Math.max(0, nav ? frame.bottom - nav.top : 0) + POPUP_GAP,
+    }
+  }, [])
 
   if (reports.isError && !reports.data) {
     return (
@@ -65,7 +83,7 @@ export function HomeScreen() {
   return (
     <div className="relative h-full min-h-0 w-full flex-1">
       <div className="map-frame-radar absolute inset-0" aria-label={strings.home.mapLabel}>
-        <ReportsMap pins={pins} onMapReady={onMapReady} />
+        <ReportsMap pins={pins} onMapReady={onMapReady} popupInsets={popupInsets} />
         <span className="radar-ring" aria-hidden="true" />
         <span className="radar-ring" aria-hidden="true" />
         <span className="radar-ring" aria-hidden="true" />
@@ -74,7 +92,7 @@ export function HomeScreen() {
 
       <button
         type="button"
-        className="radar-dock-btn absolute right-3 top-3 z-[1000]"
+        className="radar-dock-btn radar-recenter"
         aria-label={strings.home.recenter}
         onClick={recenter}
       >
