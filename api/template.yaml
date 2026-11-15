@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: StreetCreds API. One Lambda behind an HTTP API, three DynamoDB tables and one private photo bucket.
 
-# Deploy with `npm run deploy` in api/ (humans only). Stack name: streetcreds. Region: us-west-2.
+# Deploy with `npm run deploy` in api/ (humans only). Stack name: streetcreds. Region: us-east-2 (the AWS project is locked to it).
 # The answers to `sam deploy --guided` are saved in samconfig.toml, which is git-ignored.
 
 Parameters:

@@ -39,7 +39,7 @@ Pin the major versions below. Several of these had major releases recently, so e
 
 **Gemini API warning.** Google's docs now call `generateContent` legacy and recommend the Interactions API (`client.interactions.create`), which needs `@google/genai` 2.3.0 or later. Use the Interactions API. Field names in it are snake_case (`mime_type`, `response_format`, `output_text`).
 
-AWS region: `us-west-2` for everything.
+AWS region: `us-east-2` for everything. The AWS project the team deploys to is locked to that region, so signing in or deploying to any other region is refused.
 
 ## 2. Repo layout
 
@@ -115,7 +115,7 @@ Who may change which file, including the wiring lines each person may add to `in
 | --- | --- | --- | --- |
 | `VITE_API_URL` | web | `http://localhost:3001` or the deployed API URL | No |
 | `VITE_USE_MOCKS` | web | `true` to serve fixtures from `app/mock/` | No |
-| `AWS_REGION` | api | `us-west-2` (Lambda sets it; set it yourself locally) | No |
+| `AWS_REGION` | api | `us-east-2` (Lambda sets it; set it yourself locally) | No |
 | `TABLE_PLAYERS` | api | `streetcreds-players` | No |
 | `TABLE_REPORTS` | api | `streetcreds-reports` | No |
 | `TABLE_AWARDS` | api | `streetcreds-awards` | No |
@@ -712,7 +712,7 @@ After the first Amplify deploy, add its URL to `WebOrigins` and redeploy the API
 | Tool | Who | Why |
 | --- | --- | --- |
 | Node.js 24 and Git | Both | Everything |
-| AWS CLI v2, configured with `aws configure` for `us-west-2` | Both | Local API talks to the real tables and bucket |
+| AWS CLI v2, signed in with `aws login --region us-east-2` (or `aws configure` with an access key) | Both | Local API talks to the real tables and bucket |
 | AWS SAM CLI | Whoever deploys | `sam build`, `sam deploy` |
 | A Gemini API key from Google AI Studio | Sarah (shared with Pierre for deploys) | `labelPhoto` |
 | A phone with a camera | Both | Every checkpoint is tested on a phone |

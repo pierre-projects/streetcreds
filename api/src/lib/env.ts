@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 const EnvSchema = z
   .object({
-    AWS_REGION: z.string().default('us-west-2'),
+    AWS_REGION: z.string().default('us-east-2'),
     TABLE_PLAYERS: z.string().default('streetcreds-players'),
     TABLE_REPORTS: z.string().default('streetcreds-reports'),
     TABLE_AWARDS: z.string().default('streetcreds-awards'),
