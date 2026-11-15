@@ -27,3 +27,21 @@ body {
   margin: 0;
   min-height: 100dvh;
 }
+
+/* Map pins. Leaflet draws them as SVG and sets its own blue; these rules replace it with the
+   severity colors above. The class names are set in features/players/MapScreen.tsx. */
+.pin {
+  stroke: var(--color-ink);
+}
+.pin-low {
+  fill: var(--color-severity-low);
+  stroke: var(--color-severity-low);
+}
+.pin-medium {
+  fill: var(--color-severity-medium);
+  stroke: var(--color-severity-medium);
+}
+.pin-high {
+  fill: var(--color-severity-high);
+  stroke: var(--color-severity-high);
+}
