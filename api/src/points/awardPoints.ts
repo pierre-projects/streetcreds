@@ -11,6 +11,7 @@ import { db, TABLES } from '../lib/db';
 import { env } from '../lib/env';
 import { ApiError } from '../lib/errors';
 import { isConditionalCheckFailed } from '../players/store';
+import { redactRpcUrl } from './redact';
 import { withLimit } from './withLimit';
 
 /** How long to wait for devnet before giving up on the mint. The whole request must fit in 29 s. */
@@ -106,12 +107,14 @@ async function mintAndRecord(award: Award, player: Player): Promise<Award> {
     );
     return { ...award, txSignature, chainStatus: 'sent' };
   } catch (error) {
+    const firstLine = error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error);
     console.error(
       JSON.stringify({
         level: 'error',
         msg: 'Mint failed. The points count and the award stays pending.',
         awardId: award.id,
-        cause: error instanceof Error ? error.message.split('\n')[0] : String(error),
+        // The Solana address can hold an access key, so it never goes into the log.
+        cause: redactRpcUrl(firstLine, env.SOLANA_RPC_URL),
       }),
     );
     return award;

@@ -113,7 +113,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The project scaffold (`web/`, `api/`, `api/template.yaml`, `amplify.yml`) was generated with Claude Code (Anthropic). `web/` started from the `create-vite` `react-ts` template.
 - The Solana setup script, `mintPoints` and the mint test (`api/scripts/`, `api/src/points/solana.ts`) were generated with Claude Code (Anthropic).
 - The web app shell (`web/src/app/`: routing, layout, API client and mock mode) was generated with Claude Code (Anthropic).
-- The player routes, the leaderboard, `awardPoints`, the rate-limit helper, the deploy-secrets script and the join, home, leaderboard and map screens were generated with Claude Code (Anthropic).
+- The player routes, the leaderboard, `awardPoints`, the rate-limit helper, the deploy-secrets script, the Solana address setting and the join, home, leaderboard and map screens were generated with Claude Code (Anthropic).
 - Map tiles are from OpenStreetMap contributors, shown with Leaflet and react-leaflet.
 
 - The temporary design system (`web/src/app/ui/`, `/design`) was generated with Codex (OpenAI), following the StreetCreds landing page.

@@ -14,6 +14,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { createMint, getMint } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { redactRpcUrl } from '../src/points/redact';
 
 const API_DIR = path.resolve(__dirname, '..');
 const KEYPAIR_FILE = path.join(API_DIR, 'treasury-keypair.json');
@@ -21,6 +22,12 @@ const ENV_FILE = path.join(API_DIR, '.env');
 const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const MIN_BALANCE_SOL = 0.5;
 const FAUCET_URL = 'https://faucet.solana.com';
+
+/** One line of an error, with the Solana address taken out: that address can hold an access key. */
+function describe(error: unknown): string {
+  const text = error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error);
+  return redactRpcUrl(text, RPC_URL);
+}
 
 function sol(lamports: number): string {
   return (lamports / LAMPORTS_PER_SOL).toFixed(3);
@@ -57,7 +64,7 @@ async function topUp(connection: Connection, treasury: Keypair): Promise<boolean
       console.log(`Treasury balance: ${sol(await connection.getBalance(treasury.publicKey))} SOL`);
       return true;
     } catch (error) {
-      console.log(`  The faucet said no: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`);
+      console.log(`  The faucet said no: ${describe(error)}`);
     }
   }
   return false;
@@ -95,7 +102,8 @@ async function main(): Promise<void> {
   if (RPC_URL.includes('mainnet')) {
     throw new Error('SOLANA_RPC_URL points at mainnet. StreetCreds runs on devnet only.');
   }
-  console.log(`Solana RPC: ${RPC_URL}\n`);
+  // Only the host is printed: the full address can hold an access key.
+  console.log(`Solana address: ${new URL(RPC_URL).host}\n`);
   const connection = new Connection(RPC_URL, 'confirmed');
   const treasury = loadOrCreateTreasury();
   console.log(`Treasury address: ${treasury.publicKey.toBase58()}`);
@@ -132,6 +140,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error(`\nSetup failed: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(`\nSetup failed: ${describe(error)}`);
   process.exitCode = 1;
 });
