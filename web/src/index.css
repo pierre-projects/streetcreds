@@ -413,7 +413,7 @@ body {
 .map-frame .leaflet-tile-pane,
 .board-map .leaflet-tile-pane,
 .map-frame-radar .leaflet-tile-pane {
-  /* CARTO dark tiles (OpenStreetMap data) are dark already. */
+  /* The Esri dark gray tiles are dark already. */
   filter: none;
 }
 

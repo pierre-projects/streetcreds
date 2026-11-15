@@ -114,7 +114,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The Solana setup script, `mintPoints` and the mint test (`api/scripts/`, `api/src/points/solana.ts`) were generated with Claude Code (Anthropic).
 - The web app shell (`web/src/app/`: routing, layout, API client and mock mode) was generated with Claude Code (Anthropic).
 - The player routes, the leaderboard, `awardPoints`, the rate-limit helper, the deploy-secrets script, the Solana address setting, the join, home, leaderboard and map screens and the big-screen live board were generated with Claude Code (Anthropic).
-- Map tiles are CARTO dark basemaps (carto.com) built on data from OpenStreetMap contributors, shown with Leaflet and react-leaflet.
+- Map tiles are the Esri World Dark Gray Canvas (Esri, HERE, Garmin, OpenStreetMap contributors), shown with Leaflet and react-leaflet.
 - The accessibility records and helpful places on the map are public City of Tempe data: the ADA Transition Plan survey, the "bus stops without a shelter" layer, and the drinking fountain, park restroom and community food site layers, from the City's open data services (`gis.tempe.gov` and the TempeData ArcGIS Online organization).
 - The City records script (`api/scripts/city-records.ts`, `api/scripts/lib/`) and the City records layer on the map (`web/src/features/players/cityRecords.ts`, `cityText.ts`, `CityRecordsLayer.tsx`, `CityLayerToggles.tsx`) were generated with Claude Code (Anthropic). The page checks follow an earlier project of Pierre's, Patchnote.
 
