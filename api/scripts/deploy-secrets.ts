@@ -138,6 +138,10 @@ async function main(): Promise<void> {
 
   saveOverrides(plain);
   console.log('\nDone. samconfig.toml now has the Solana mode and mint, so  npm run deploy  keeps them.');
+
+  // Same check as npm run deploy: the live API should now have every route in this code.
+  const check = spawnSync('npm run check-live', { cwd: API_DIR, shell: true, stdio: 'inherit' });
+  if (check.status !== 0) process.exitCode = 1;
 }
 
 main().catch((error: unknown) => {
