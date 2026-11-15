@@ -2,7 +2,7 @@
 
 This gets StreetCreds running on your laptop and connected to the team's AWS project. Allow about 30 minutes. The first half explains how the pieces fit, so the steps make sense; skip to "Step 1" if you only want the commands.
 
-Where things stand on 2026-11-14: the project skeleton is built and live. The site shows four neighborhoods at 0 points and nothing else yet. The quests are yours to build.
+Where things stand on the evening of 2026-11-14: Pierre's half is built and live. A player can join, see their points, open the leaderboard and open the map. Nobody can earn points yet and the map has no pins, because both come from the quests, which are yours to build. Nothing you need from Pierre is missing.
 
 | What | Address |
 | --- | --- |
@@ -58,7 +58,7 @@ This is your feature, so it helps to see the whole path once.
 5. The player checks the label, and the phone sends the location (`POST /reports/:id/submit`).
 6. The API publishes the report and calls Pierre's `awardPoints` function, which adds the points.
 
-Pierre provides `awardPoints`. Until his real version exists, there is a stand-in with the same name and the same inputs, so you never wait for him.
+Pierre provides `awardPoints`, and it is finished: it adds the points and mints them as a token on Solana. You call it; you do not write it.
 
 ## Step 1. Install the tools
 
@@ -124,7 +124,7 @@ git checkout main
 git pull origin main
 ```
 
-Then read the top of `docs/SARAH-PHASES.md` again. Your session opener and two checklist items changed on 2026-11-14.
+Then read `docs/SARAH-PHASES.md` from the top. It was rewritten on the evening of 2026-11-14 to match what is now built.
 
 ## Step 4. Create your settings files
 
@@ -182,7 +182,7 @@ Open http://localhost:5173. You should see "StreetCreds" and four neighborhoods 
 
 1. Go to https://aistudio.google.com and create an API key.
 2. Put it in `api/.env` as `GEMINI_API_KEY`.
-3. Send it to Pierre privately, so he can add it to the live API. Never put it in the repo, a commit message, or a group chat.
+3. Send it to Pierre privately. He puts it in his own `api/.env` and runs `npm run deploy-secrets`, which adds it to the live API. Never put it in the repo, a commit message, or a group chat.
 
 ## How we work
 
@@ -198,17 +198,14 @@ The full rules are in `docs/CONTRIBUTING.md` and `AGENTS.md`. The short version:
 
 ## What to build first
 
-This is Phase 1 in `docs/SARAH-PHASES.md`, which also has the prompts to paste into your coding agent.
+This is Phase 1 in `docs/SARAH-PHASES.md`, which has the checklists and the prompts to paste into your coding agent. It has two halves, and they touch different folders, so you can run them in two agent chats at the same time:
 
-1. `GET /upload-url`: returns the upload link and the photo's name in the bucket.
-2. `labelPhoto`: sends a photo to Gemini and gets back a category, a severity and a one-sentence description. Collect 10 test photos and tune the prompt until all 10 come back right.
-3. The report screen, built in mock mode. This one waits until Pierre says his app shell is merged, because the mock data and the functions that call the API come from it.
+- **1A, in `api/`:** `GET /upload-url`, which returns the upload link and the photo's name in the bucket, and `labelPhoto`, which sends a photo to Gemini and gets back a category, a severity and a one-sentence description. Collect 10 test photos and tune the prompt until all 10 come back right.
+- **1B, in `web/`:** the whole report screen, built in mock mode. Nothing is waiting on Pierre here: his app shell is merged, with the mock data and the functions that call the API.
 
-Useful things that already exist in `api/src/lib/`:
+The goal after that is the cut line at the end of Phase 2: photo, to label, to points, to leaderboard, on a phone. The whole team is waiting on that one thing, so go straight for it.
 
-- `ApiError`: write `throw new ApiError('not_found')` and the API returns the right error to the phone.
-- `db` and `TABLES`: the database connection and the three table names.
-- `requireEnv('PHOTO_BUCKET')` and `requireEnv('GEMINI_API_KEY')`: read those two settings, with a clear error if one is missing.
+`docs/SARAH-PHASES.md` has a table of everything that already exists for you to use: errors, the database, `awardPoints`, the rate limit, the `api` object for screens, mock mode and more. Read it before your first prompt.
 
 ## If something goes wrong
 

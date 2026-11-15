@@ -810,8 +810,8 @@ Each milestone ends with the checkpoint from the matching phase in `docs/PHASES.
 | --- | --- | --- | --- | --- |
 | M0 | Setup | Gemini key; read the contract in `shared/` together | Scaffold, including `api/src/index.ts` and `api/src/lib/`; first deploy with the tables and bucket; Amplify | The live URL opens on a phone and `GET /leaderboard` returns four rows of zeros |
 | M1 | Skeleton | `GET /upload-url`; `labelPhoto` tuned on 10 photos in a script; report screen on mocks | Solana setup script, `mintPoints` and one test mint; app shell with client functions and fixtures for all ten routes; `POST /players`, `GET /players/:id`, `GET /leaderboard`; join and home screens; `awardPoints` stub | A player can join from a phone and is in the table |
-| M2 | Core loop (P0) | Capture, resize, upload; `POST /reports`; `POST /reports/:id/submit`; confirm and reward screens; `GET /reports` | Wallet on join; real `awardPoints`; leaderboard screen | Photo to label to points to leaderboard works on a phone. **This is the cut line in the PRD** |
-| M3 | Second quest and map (P1) | Council content checked by a human; council routes; council screens; rate limit added to `POST /reports` | Map and "Copy city report"; rate-limit helper; ten test mints in a row | Both quests work and the map shows pins |
+| M2 | Core loop (P0) | Capture, resize, upload; `POST /reports`; `POST /reports/:id/submit`; the rate limit, using Pierre's helper; confirm and reward screens; `GET /reports` | Wallet on join; real `awardPoints`; leaderboard screen | Photo to label to points to leaderboard works on a phone. **This is the cut line in the PRD** |
+| M3 | Second quest and map (P1) | Council content checked by a human; council routes; council screens | Map and "Copy city report"; rate-limit helper; ten test mints in a row | Both quests work and the map shows pins |
 | M4 | Polish | Own screens: loading, errors, small and large phones | Own screens: the same; backup video | Feature freeze. Bug fixes only after this |
 | M5 | Submit | Devpost page | README with credits; architecture slide | Submitted, demo rehearsed twice |
 

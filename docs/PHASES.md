@@ -15,8 +15,8 @@ The time shares are of whatever hacking time is left. Write real clock times in 
 | --- | --- | --- | --- | --- |
 | 0. Setup | First 30 to 45 min | Gemini key, local setup | Scaffold, first deploy (API, tables, bucket), hosting, domain | |
 | 1. Skeleton | 20% | Upload link, Gemini labeling, report screen on mock data | Solana setup and a test mint, app shell, player and leaderboard routes, join and home screens, `awardPoints` stub | |
-| 2. Core loop | 30% | Full report quest, end to end | Real `awardPoints`, leaderboard screen | |
-| 3. Second quest and map | 20% | Council quest; rate limit added to her report route | Map, "Copy city report", rate-limit helper | |
+| 2. Core loop | 30% | Full report quest, end to end, with the rate limit | Real `awardPoints`, leaderboard screen | |
+| 3. Second quest and map | 20% | Council quest | Map, "Copy city report", rate-limit helper | |
 | 4. Polish | 15% | Own screens; test Pierre's features | Own screens; test Sarah's features; backup video | |
 | 5. Submit | 15% | Devpost page; talks in the demo | README, slide; runs the phone in the demo | |
 
