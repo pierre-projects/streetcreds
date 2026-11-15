@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Mayor Patch">
-  <!-- Mayor Patch, the StreetCreds mascot: a chibi mayor waving hello. Big head, tiny body. -->
+  <!-- Mayor Patch, the StreetCreds mascot: a chibi mayor with a beard, waving hello. Big head, tiny body. -->
   <circle cx="100" cy="100" r="100" fill="#FF7A1A"/>
   <g stroke="#1A1210" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
     <!-- ground shadow -->
@@ -30,6 +30,9 @@
     <!-- hair: neat dark cap with a side part -->
     <path d="M49 74 Q46 26 100 24 Q154 26 151 74 Q146 50 128 46 Q112 42 96 44 Q74 44 62 54 Q52 62 49 74 Z" fill="#2B201B"/>
     <path d="M78 38 Q96 30 120 34" fill="none" stroke="#5A4639" stroke-width="2.5"/>
+    <!-- beard: sideburns down around the chin, open around the smile -->
+    <path d="M49 74 Q48 110 72 122 Q86 130 100 130 Q114 130 128 122 Q152 110 151 74 Q146 86 140 92 Q134 112 118 117 Q108 120 100 120 Q92 120 82 117 Q66 112 60 92 Q54 86 49 74 Z" fill="#2B201B"/>
+    <path d="M70 116 Q76 122 84 124 M116 124 Q124 122 130 116" fill="none" stroke="#5A4639" stroke-width="2"/>
     <!-- blush -->
     <ellipse cx="68" cy="96" rx="9" ry="5.5" fill="#E8836A" stroke="none" opacity=".75"/>
     <ellipse cx="132" cy="96" rx="9" ry="5.5" fill="#E8836A" stroke="none" opacity=".75"/>
