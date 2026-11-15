@@ -79,15 +79,33 @@ body {
   .board-side { @apply flex flex-col lg:min-h-0; }
   .board-side-head { @apply flex flex-col gap-3 border-b border-dotted border-line p-4 lg:px-6; }
   .board-list { @apply p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6; }
+  /* The City records switches. On a wide screen they are docked in the map's bottom left corner:
+     dark and see-through, with no card around them, so the map stays the picture. The title bar
+     (.board-city-fold) folds them down to a row of letter keys. On a narrow screen they sit in the side panel instead. */
+  .board-city-dock { @apply absolute bottom-0 left-0 z-[1000] hidden max-w-[34rem] flex-col bg-ink/80 text-on-ink backdrop-blur-sm lg:flex; }
+  .board-city-fold { @apply inline-flex size-11 shrink-0 items-center justify-center text-on-ink hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent; }
+  .board-city-fold[aria-expanded="false"] svg { @apply rotate-180; }
+  /* One letter key in the folded dock (features/players/CityLayerKeys.tsx). */
+  .city-key { @apply inline-flex size-11 shrink-0 items-center justify-center hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent; }
+  .board-city-panel { @apply flex flex-col gap-2 px-4 pb-4 pt-1; }
+  .board-city-inline { @apply border-t border-dotted border-line pt-3 lg:hidden; }
 
   /* Filter controls (features/players/ReportFilters.tsx). */
   .filter-toggle { @apply inline-flex min-h-11 items-center gap-2 rounded-control border border-ink bg-surface px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
   .filter-toggle[aria-pressed="false"] { @apply border-dotted border-line text-muted; }
   .filter-dot { @apply inline-block size-4 shrink-0 rounded-full border-2 border-ink; }
+  /* The key for a City record pin (features/players/CityLayerToggles.tsx): the same square, with its letter. */
+  .filter-square { @apply inline-flex size-5 shrink-0 items-center justify-center border-2 border-ink bg-surface text-[11px] leading-none text-ink; }
+  .filter-toggle:disabled { @apply border-dotted border-line text-muted; }
   .filter-select { @apply min-h-11 min-w-0 flex-1 rounded-control border border-ink bg-surface px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
-  .filter-reset { @apply inline-flex min-h-11 shrink-0 items-center px-2 text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
-  .board-row { @apply flex min-h-11 w-full items-start gap-3 rounded-card border border-dotted border-line bg-surface p-3 text-left hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
-  .board-row[aria-pressed="true"] { @apply border-solid border-ink; box-shadow: inset 4px 0 0 var(--color-accent), var(--shadow-hard); }
+  /* A link inside a map popup, tall enough to tap. */
+  .popup-link { @apply inline-flex min-h-11 items-center text-xs text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
+  .filter-reset {@apply inline-flex min-h-11 shrink-0 items-center px-2 text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
+  /* One report in the board's list. Its left edge is the severity color; the photo and the words follow. */
+  .board-row { @apply flex min-h-11 w-full items-stretch gap-3 overflow-hidden rounded-card border border-dotted border-line bg-surface text-left hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
+  .board-row[aria-pressed="true"] { @apply border-solid border-ink shadow-hard; }
+  /* A small tag on a row: "Reported 3 times", "New". */
+  .board-chip { @apply inline-flex items-center border border-ink px-1.5 py-0.5 font-mono text-[11px] leading-none text-ink; }
   /* The way to the board from the phone layout. Only shown where the window has room beside the column. */
   .board-link { @apply fixed left-6 top-3 z-20 hidden min-h-11 items-center gap-2 rounded-control border border-ink bg-surface px-4 text-sm text-ink shadow-hard hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink lg:inline-flex; }
 }
@@ -167,6 +185,41 @@ body {
 .pin-group-low { border-color: var(--color-severity-low); }
 .pin-group-medium { border-color: var(--color-severity-medium); }
 .pin-group-high { border-color: var(--color-severity-high); }
+
+/* A City record (features/players/CityRecordsLayer.tsx): square and black on white, so it is never
+   taken for a report. Filled with the accent color once a player has reported a problem there. */
+.pin-city {
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 11px;
+}
+.pin-city-reported { background: var(--color-accent); color: var(--color-on-accent); }
+/* A helpful place from the City: the same pin turned to a diamond, with its letter kept upright. */
+.pin-resource, .filter-diamond { transform: rotate(45deg); }
+.pin-resource > span, .filter-diamond > span { transform: rotate(-45deg); }
+
+/* Inside the dark City dock the switches and the small print are light on dark. Unlayered, so
+   these win over the usual colors. A switch that is off keeps its dotted edge and goes dim. */
+.board-city-dock .filter-toggle { background: transparent; border-color: var(--color-on-ink); color: var(--color-on-ink); outline-color: var(--color-accent); }
+.board-city-dock .filter-toggle[aria-pressed="false"],
+.board-city-dock .filter-toggle:disabled {
+  border-color: color-mix(in srgb, var(--color-on-ink) 45%, transparent);
+  color: color-mix(in srgb, var(--color-on-ink) 70%, transparent);
+}
+.board-city-dock .filter-toggle[aria-pressed="false"] .filter-square { opacity: .55; }
+.board-city-dock .text-muted { color: color-mix(in srgb, var(--color-on-ink) 75%, transparent); }
+/* The letter keys of the folded dock: a little bigger than on a switch, and when a group is off
+   its key is an empty dotted outline. */
+.city-key .filter-square { width: 1.625rem; height: 1.625rem; font-size: 13px; }
+.city-key[aria-pressed="false"] .filter-square,
+.city-key:disabled .filter-square {
+  border-style: dotted;
+  border-color: color-mix(in srgb, var(--color-on-ink) 60%, transparent);
+  background: transparent;
+  color: color-mix(in srgb, var(--color-on-ink) 70%, transparent);
+}
 
 /* A severity that is switched off shows an empty dot. Unlayered, so it wins over the color utility. */
 .filter-toggle[aria-pressed="false"] .filter-dot { background: var(--color-surface); }

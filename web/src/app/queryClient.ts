@@ -14,6 +14,8 @@ export const queryClient = new QueryClient({
 export const playerKey = (playerId: string) => ['player', playerId] as const
 export const leaderboardKey = ['leaderboard'] as const
 export const reportsKey = ['reports'] as const
+/** The City's accessibility records: a file in web/public/data, not an API route. */
+export const cityRecordsKey = ['city-records'] as const
 
 /** How often the header points and the leaderboard refresh. */
 export const POLL_MS = 4_000

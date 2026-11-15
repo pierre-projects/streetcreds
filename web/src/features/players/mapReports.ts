@@ -1,6 +1,11 @@
 // Small pure helpers for showing reports on the map and on the board. No React in here.
 import type { Category, PublicReport, Severity } from '../../../../shared/types'
 
+/** The smallest area a finger hits reliably. Every pin on the map is at least this big to touch. */
+export const TAP_PX = 44
+/** Width of a popup's content. With its border it fits a 320 px wide phone. */
+export const POPUP_WIDTH = 256
+
 /** A report that has a place, so it can be drawn. */
 export type PinnedReport = PublicReport & { lat: number; lng: number }
 
@@ -45,6 +50,25 @@ export function bySeriousness(a: PublicReport, b: PublicReport): number {
     reportCount(b) - reportCount(a) ||
     reportedAt(b).localeCompare(reportedAt(a))
   )
+}
+
+/** Sort order for watching reports come in: the newest first. */
+export function byNewest(a: PublicReport, b: PublicReport): number {
+  return reportedAt(b).localeCompare(reportedAt(a))
+}
+
+/** Sort order for finding what bothers the most people: the most reported first, then the most serious. */
+export function byMostReported(a: PublicReport, b: PublicReport): number {
+  return reportCount(b) - reportCount(a) || bySeriousness(a, b)
+}
+
+/**
+ * How many whole minutes ago a report was made. Null when that is not a usable answer: the time
+ * cannot be read, or it is in the future because two clocks disagree.
+ */
+export function ageMinutes(report: PublicReport, now: number): number | null {
+  const minutes = Math.floor((now - Date.parse(reportedAt(report))) / 60_000)
+  return Number.isFinite(minutes) && minutes >= 0 ? minutes : null
 }
 
 /** The most serious severity among the reports. `low` for an empty list. */

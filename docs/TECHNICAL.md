@@ -27,6 +27,7 @@ Pin the major versions below. Several of these had major releases recently, so e
 | Map | Leaflet + react-leaflet | 1.9, 5.x | OpenStreetMap tiles, no API key |
 | API framework | Hono | 4.x | One Lambda, adapter `hono/aws-lambda` |
 | Validation | zod | 4.x | API side only |
+| Nickname filter | obscenity | 0.4.x | API side only, `api/src/players/nickname.ts`. Runs locally, no outside service |
 | AWS SDK | AWS SDK for JavaScript v3 | 3.x | `client-dynamodb`, `lib-dynamodb`, `client-s3`, `s3-request-presigner` |
 | AI | `@google/genai`, Interactions API | 3.x | Model `gemini-3.8-flash` (image input, structured output, free tier) |
 | Chain | `@solana/web3.js` + `@solana/spl-token` | **1.x** and 0.4.x | Devnet. See the warning below |
@@ -70,6 +71,8 @@ streetcreds/
         players/                    (Pierre)
           JoinScreen.tsx  HomeScreen.tsx  LeaderboardScreen.tsx  MapScreen.tsx
           cityReport.ts             builds the "Copy city report" text
+          cityRecords.ts            the City's accessibility records: loading, layers, matching to reports
+          CityRecordsLayer.tsx  CityLayerToggles.tsx
         quests/                     (Sarah)
           ReportScreen.tsx          capture, labeling, confirm, reward
           resizeImage.ts
@@ -404,7 +407,7 @@ Routes 3 and 7 are not in the PRD's first API table. They exist because the home
 
 **2. `POST /players`**
 Request: `{ "nickname": string, "neighborhood": NeighborhoodId }`.
-Steps: trim the nickname and check 2 to 20 characters; check the neighborhood id; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`.
+Steps: trim the nickname and check 2 to 20 characters; refuse an offensive nickname with `400 validation_failed` and the message "Pick a different nickname." (`isBlockedNickname` in `api/src/players/nickname.ts`); check the neighborhood id; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`.
 Response: `201 { "player": Player }`.
 
 **3. `GET /players/:id`** returns `200 { "player": Player }` or `404 not_found`.
@@ -597,6 +600,9 @@ Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods pres
 | `/` | Redirect: to `/board` on a screen 1024 px wide or more, otherwise to `/join` or `/home` | Pierre | screen width, stored player id |
 | `/board` | Live board for a big screen: map, neighborhood standings, list of open reports. No joining needed | Pierre | routes 4 and 8 |
 | `/join` | Nickname and neighborhood | Pierre | `POST /players` |
+| `/privacy` | Privacy Policy; public, outside Layout, no joining needed | Pierre | Static legal copy |
+| `/terms` | Terms; public, outside Layout, no joining needed | Pierre | Static legal copy |
+| `/about` | About & contact; public, outside Layout, no joining needed | Pierre | Static legal copy |
 | `/home` | Points, neighborhood rank, quest cards | Pierre | `GET /players/:id`, `GET /leaderboard` |
 | `/report` | Report quest, one screen with steps | Sarah | routes 5, 6, 7 |
 | `/council` | List of council items | Sarah | route 9 |
@@ -639,10 +645,25 @@ Camera capture and geolocation need HTTPS or `localhost`. They do not work on `h
 - **Filters.** `ReportFilters.tsx` draws a switch for each severity (they are also the color key), a menu of types and a line such as "Showing 15 of 60 open reports" with "Show all". The phone uses its short form: severity switches only. The filter applies to the pins and, on the board, to the list.
 - The map itself is `ReportsMap.tsx`, used by both `MapScreen.tsx` (the phone screen) and `BoardScreen.tsx`. `mapReports.ts` holds the pure helpers they share: sorting, counting, filtering and grouping (has a test).
 
+### City accessibility records (Pierre)
+
+The map also shows what the City of Tempe's own ADA Transition Plan survey (2016 to 2020) found and still lists as awaiting repair: bus stops that do not meet the ADA, corners with no curb ramp, and sidewalk hazards (slabs lifted an inch or more, obstructions, gaps). This is public City data. It is not part of the API or the contract: nothing in `shared/`, no route, no table.
+
+- **The file.** `web/public/data/city-records.json` holds `{ copiedAt, sources, records }`. It is committed, and the web app fetches it once per visit. The record shape is `CityRecord` in `web/src/features/players/cityRecords.ts`, written a second time in `api/scripts/lib/cityRecords.ts` because `shared/` is the fixed contract. Change both together.
+- **Copying the records.** Run `npm run city-records` in `api/`. It reads nine pages of City data, listed as `PAGES` in `api/scripts/lib/cityRecords.ts`. The City's map server (`gis.tempe.gov`) refuses requests that do not come from a web browser, so the script prints the address of each page it could not get: open each in a browser, save it into `api/city-raw/` (git ignores that folder) and run the script again. Saved files are recognized by their contents, so their names do not matter.
+- **What is kept.** Only rows with repair status `AW` (awaiting). The City keeps several rows for some stops and corners, one per repair, so a stop or corner is kept only when every one of its rows is still awaiting repair. Driveway and surface-material findings are left out, and so is anything about a person: the queries never ask for surveyor or contact fields. A page with the wrong coordinate system, a cut-off page, a repeated row or a point outside Tempe stops the script.
+- **Bus stop heat.** A bus stop gets the surface temperature of the nearest stop within 40 m in the City's "bus stops without a shelter" layer. That layer has no description: the unit (°F) and the years (2015 to 2020) are read from its field name `mean_LST`, its layer name and its values (103 to 126).
+- **On the map.** `CityRecordsLayer.tsx` draws every record as a small dot on a canvas, which cannot be tapped. From zoom 16, with at most 150 records in view, the records in view also get a square, black-on-white pin with a letter (B, R or S) in a 44 px touch area, drawn under the report pins. Its popup shows the place, what the survey found, the City's proposed fix, and for bus stops the shelter, bench, shade and surface temperature. It always ends with the survey date and "It may have been fixed since."
+- **Helpful places.** The same file also holds places from the City's open data on ArcGIS Online, which answers a script, so these pages download without any saving by hand: drinking fountains in parks (with ADA access, bottle filler and chilled water), restrooms in parks (the City's one row per door becomes one record per building, with rooms, hours and lighting) and places to get food (food pantries and meals, produce pickups and Farm Express bus stops that are marked active; gardens, compost and seed libraries are left out, and so are rows outside Tempe). `isBarrier()` tells the two sorts apart. A helpful place is a white dot and, zoomed in, a diamond pin with W or F. It never matches a report.
+- **Switches.** `CityLayerToggles.tsx` has two rows: bus stops, curb ramps and sidewalk under "Barriers awaiting repair", and water and restrooms and food help under "Helpful places". They start off on the phone's map, below the map, and on on the board.
+- **Matching reports.** `matchReports()` gives each `blocked-sidewalk` or `other` report the nearest City record within 30 m. That report's popup then says the City's survey recorded the spot too, "Copy city report" gains a line, the City's pin is filled with the accent color, and the board counts the matches. Other report types never match: a pothole beside a bus stop is not the bus stop's problem.
+- **Links.** A barrier's popup has two links: "Tell Tempe 311", which opens the City's service request form (`TEMPE_311_FORM_URL` in `cityRecords.ts`) in a new tab, and "Report: +50 pts", which goes to the report quest at `/report`. A player report's popup has "Open the form" beside "Copy city report", to the same City form. The City's records carry no public link of their own: the survey's report links point at `gisapp.tempe.gov`, which does not answer from outside the City's network.
+- **If the file does not load**, the switches are disabled with a plain message and the rest of the map works as before.
+
 ### Live board (Pierre)
 
 - `/board` is the view for a big screen: a projector during the game, a judge's laptop, or someone at the city looking at where the street problems are. It needs no player, so nobody has to join to see it.
-- From 1024 px wide it fills the window: the neighborhood standings in a strip across the top (route 4, every 4 seconds), `ReportsMap` on the left, and on the right a panel with the filters and every open report (route 8, every 10 seconds), most serious first, then most reported, then newest. Only the list scrolls. It shows 20 rows at a time, with a "Show 20 more" button. Narrower, the same parts stack.
+- From 1024 px wide it fills the window: the neighborhood standings in a strip across the top (route 4, every 4 seconds), `ReportsMap` on the left, and on the right a panel with the filters and every open report (route 8, every 10 seconds), most serious first, then most reported, then newest. Only the list scrolls. It shows 20 rows at a time, with a "Show 20 more" button, and a menu changes its order to newest or most reported. Each row has the photo, a colored edge for the severity, how long ago it was made, and a tag when the spot is also in the City survey. `photoUrls.ts` keeps one photo address per report while the page is open, so photos are not downloaded again on every refresh. Narrower, the same parts stack.
 - Picking a report in the list opens its popup on the map, zooming in first if the report is inside a group. Opening a pin marks its row in the list. "Copy city report" is in the popup, as on the phone.
 - On a wide screen `/` opens the board. The phone layout shows a "Live board" link in the empty space beside the column, and the board has a "Play" button back to `/join` or `/home`.
 - `cityReport.ts` builds the clipboard text (pure function, has a test):
@@ -655,6 +676,12 @@ Location: 33.42150, -111.93400 (https://www.google.com/maps?q=33.42150,-111.9340
 Reports: 3
 Photo: {photoUrl} (link expires in about an hour)
 Reported with StreetCreds on 2026-11-14
+```
+
+For a report at a spot the City's survey recorded too, one line is added after `Location`:
+
+```
+City ADA survey: This corner has no curb ramp. S MILL AVE & W BROADWAY RD, SW corner. Record 260515171717, surveyed 2017-05-19, listed as awaiting repair.
 ```
 
 ### Look and feel
@@ -739,7 +766,7 @@ The Solana CLI is not required. `api/scripts/solana-setup.ts` does the same job 
 1. **Scaffold (Pierre).**
    - `npm create vite@latest web -- --template react-ts`
    - In `web/`: `npm i react-router @tanstack/react-query leaflet react-leaflet` and `npm i -D tailwindcss @tailwindcss/vite @types/leaflet vitest`
-   - In `api/`: `npm init -y`, then `npm i hono zod @google/genai @solana/web3.js@1 @solana/spl-token @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @aws-sdk/client-s3 @aws-sdk/s3-request-presigner` and `npm i -D typescript tsx esbuild vitest @hono/node-server @types/node @types/aws-lambda`
+   - In `api/`: `npm init -y`, then `npm i hono zod obscenity @google/genai @solana/web3.js@1 @solana/spl-token @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @aws-sdk/client-s3 @aws-sdk/s3-request-presigner` and `npm i -D typescript tsx esbuild vitest @hono/node-server @types/node @types/aws-lambda`
    - Add `shared/`, `.gitignore` (section 3), the `amplify.yml` above, and the npm scripts in `AGENTS.md`.
    - Create the API's shared core: `api/src/index.ts` with `GET /health` and the error handler, `api/src/local.ts`, and `api/src/lib/env.ts`, `db.ts` and `errors.ts`. Pierre writes these once; after the first checkpoint they change only by agreement.
    - Write `api/template.yaml` in full from section 8, with the three tables and the bucket, so the first deploy creates everything Sarah needs.
@@ -770,10 +797,11 @@ Unit tests (Vitest) are required for these pure functions and nothing else:
 
 | Function | Package | Cases that must be covered |
 | --- | --- | --- |
-| `aggregateLeaderboard` | api | Empty input, ties, a neighborhood with no players |
+| `aggregateLeaderboard` | api | Empty input, ties, a neighborhood with no players, an offensive nickname shown as "Player" |
+| `isBlockedNickname` | api | Ordinary names pass; real names that contain a bad word pass; leetspeak and spaced-out letters are caught |
 | `haversineMeters` | api | Same point is 0; two points about 30 m apart; about 1 km apart |
 | `checkReportLimit` (the rate-limit helper) | api | Times older than one hour are dropped; the fifth passes, the sixth fails |
-| Request schemas | api | Nickname of 1, 2, 20 and 21 characters; an unknown neighborhood |
+| Request schemas | api | Nickname of 1, 2, 20 and 21 characters; an offensive nickname; an unknown neighborhood |
 | `buildCityReport` | web | Output matches the format in section 7 |
 | Resize size math | web | Landscape, portrait, and an image already under 1280 px |
 
@@ -814,6 +842,8 @@ The acceptance checks for each feature are in section 13. Run them on a real pho
 | Awards stay `pending` | Devnet is slow, the treasury is out of SOL, or the free public Solana address is refusing requests (`429 Too Many Requests` in the logs) | Check the treasury balance. For the 429, switch to a dedicated address (see "Deploying and logs"). Points still count either way |
 | `interactions` is undefined on the Gemini client | `@google/genai` is older than 2.3.0 | Update the package |
 | Lambda times out at 29 s | Gemini or Solana hung | Check the per-call limits in section 6 are in place |
+| An offensive nickname is on the live board | The filter missed it | Delete that player's item from the `streetcreds-players` table in the DynamoDB console; it leaves the board on the next refresh. Then add the word to `EXTRA_BLOCKED_WORDS` in `api/src/players/nickname.ts` and redeploy, so it is refused at join and masked on the board from then on |
+| A real name is refused at join | The filter matched part of it | Add the name, lowercase, to `ALLOWED_NAMES` in `api/src/players/nickname.ts` |
 
 ## 10. Build order
 
@@ -867,6 +897,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 **F1. Join (P0)**
 - Opening the URL on a phone shows the join screen in under 3 seconds.
 - Nickname (2 to 20 characters) and neighborhood are required. No email or password.
+- An offensive nickname is refused with "Pick a different nickname." A real name such as Dickson is accepted.
 - The player id is stored on the phone, so a refresh keeps the player signed in.
 - With `SOLANA_MODE=per-player`, the new player has a `walletAddress`. The player never sees a seed phrase.
 
@@ -897,6 +928,10 @@ A feature is done when its checks pass on a real phone against the deployed site
 - The map shows one pin per open report, sized by `count`.
 - "Copy city report" puts category, description, location and photo link on the clipboard.
 - P2: a new report with the same category within about 30 meters of an open one is merged into it and raises its count.
+- City records: with a group switched on, the map shows the City's records as dots, and zoomed in as square pins whose popup names the place, the finding and the survey date.
+- City records: a `blocked-sidewalk` or `other` report within 30 meters of a City record says so in its popup, and its copied city report has the `City ADA survey` line.
+- City records: with a "Helpful places" group switched on, drinking fountains, restrooms and food sites show as white dots, and zoomed in as diamond pins whose popup gives the place and what the City says about it.
+- City records: with `web/public/data/city-records.json` missing, the switches are disabled with a plain message and the reports still show.
 
 **F7. Stretch (P2, only when asked)**
 - Budget quest with one "your $100 in taxes" question from the published city budget.

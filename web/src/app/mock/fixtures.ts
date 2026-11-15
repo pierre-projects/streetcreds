@@ -102,6 +102,23 @@ export const mockReports: PublicReport[] = [
     createdAt: '2026-11-14T18:40:00.000Z',
     submittedAt: '2026-11-14T18:41:12.000Z',
   },
+  {
+    // A few meters from a real City record (a corner with no curb ramp on S Myrtle Ave, in
+    // web/public/data/city-records.json), so mock mode shows a report matched to the City's survey.
+    id: 'mock-report-4',
+    playerId: 'mock-player-5',
+    photoKey: 'reports/mock-player-5/mock-4.jpg',
+    photoUrl: MOCK_PHOTO_URL,
+    lat: 33.4265,
+    lng: -111.93825,
+    category: 'blocked-sidewalk',
+    severity: 'high',
+    description: 'The sidewalk ends at a full-height curb at the corner, with no ramp down to the street.',
+    count: 2,
+    status: 'open',
+    createdAt: '2026-11-14T19:05:00.000Z',
+    submittedAt: '2026-11-14T19:06:20.000Z',
+  },
 ]
 
 /** What Gemini "says" about every photo in mock mode. */

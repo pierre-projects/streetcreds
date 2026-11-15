@@ -116,6 +116,8 @@ Do not change the awardPoints signature or return shape. Stop when done and give
 - [x] 10 test mints in a row all arrive (`mint-test.ts 10`).
 - [x] One-slide architecture diagram drafted.
 - [x] `npm run check` passes.
+- [ ] City accessibility records: `npm run city-records` has written `web/public/data/city-records.json`, and the map and board show them (added after the plan, see `docs/TECHNICAL.md` section 7).
+- [ ] City accessibility records: a blocked-sidewalk report next to a City record says so in its popup and in "Copy city report", checked on a phone.
 
 Prompt:
 

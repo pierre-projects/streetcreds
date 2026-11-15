@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { NEIGHBORHOODS, POINTS } from '../../../../shared/constants'
 import type { NeighborhoodId } from '../../../../shared/types'
 import { api } from '../../app/api'
+import { LegalFooter } from '../../app/legal/LegalLinks'
 import { usePlayer } from '../../app/player'
 import { leaderboardKey, POLL_MS } from '../../app/queryClient'
 import { explorerAddressUrl } from '../../app/solana'
@@ -36,12 +37,15 @@ export function HomeScreen() {
   })
 
   if (player.isPending) {
-    return <p className="text-muted">{strings.home.loading}</p>
+    return <div className="space-y-6"><p className="text-muted">{strings.home.loading}</p><LegalFooter /></div>
   }
 
   if (player.isError || !player.data) {
     return (
-      <ErrorNotice message={player.error?.message} fallback={strings.errors.playerLoad} onRetry={() => void player.refetch()} retryLabel={strings.home.retry} />
+      <div className="space-y-6">
+        <ErrorNotice message={player.error?.message} fallback={strings.errors.playerLoad} onRetry={() => void player.refetch()} retryLabel={strings.home.retry} />
+        <LegalFooter />
+      </div>
     )
   }
 
@@ -101,6 +105,7 @@ export function HomeScreen() {
           />
         </div>
       </section>
+      <LegalFooter />
     </div>
   )
 }

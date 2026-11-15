@@ -3,11 +3,12 @@
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { Link, Navigate, useNavigate } from 'react-router'
 import { NEIGHBORHOODS, NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
 import type { NeighborhoodId } from '../../../../shared/types'
 import { api } from '../../app/api'
 import { BoardLink } from '../../app/BoardLink'
+import { legalLinkClass } from '../../app/legal/LegalLinks'
 import { getStoredPlayerId, storePlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
 import { Button, ErrorNotice, LogoMark, OptionCard, ScreenHeader, TextField } from '../../app/ui'
@@ -78,6 +79,15 @@ export function JoinScreen() {
           <Button type="submit" disabled={join.isPending}>
             {join.isPending ? strings.join.submitting : strings.join.submit}
           </Button>
+          <p className="mt-3 text-center text-sm leading-relaxed text-muted">
+            {strings.legal.joinPrefix}{' '}
+            <Link to="/terms" className={legalLinkClass}>{strings.legal.pages.terms.label}</Link>{' '}
+            {strings.legal.joinAnd}{' '}
+            <Link to="/privacy" className={legalLinkClass}>{strings.legal.privacyPolicy}</Link>
+          </p>
+          <div className="flex justify-center">
+            <Link to="/about" className={legalLinkClass}>{strings.legal.pages.about.label}</Link>
+          </div>
         </div>
       </form>
     </main>
