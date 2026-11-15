@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.aws-sam/
+*.tsbuildinfo
+
+# Secrets: never commit these
+.env
+.env.*
+!.env.example
+samconfig.toml
+*treasury*.json
+*.pem
+*.key
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test output
+coverage/
+
+# Editor and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

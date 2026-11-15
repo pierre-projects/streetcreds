@@ -1,0 +1,98 @@
+// StreetCreds shared contract: data fields.
+// Player, Report and Award are stored in DynamoDB exactly as written here:
+// the attribute names are the field names. See TECHNICAL.md section 4.
+// Agreed between Sarah and Pierre. Change only after both say yes.
+
+import type { CATEGORIES, NEIGHBORHOODS, POINTS, SEVERITIES } from './constants';
+
+export type NeighborhoodId = (typeof NEIGHBORHOODS)[number]['id'];
+export type Category = (typeof CATEGORIES)[number];
+export type Severity = (typeof SEVERITIES)[number];
+export type QuestType = keyof typeof POINTS;
+
+export type ReportStatus = 'draft' | 'open' | 'merged';
+export type ChainStatus = 'off' | 'sent' | 'pending';
+
+/** Table streetcreds-players. Key: id. */
+export interface Player {
+  /** uuid, made by the server. */
+  id: string;
+  /** 2 to 20 characters, trimmed. */
+  nickname: string;
+  neighborhood: NeighborhoodId;
+  /** Running total. Changed only by awardPoints, with an atomic add. */
+  points: number;
+  /** Solana devnet public key. Null unless SOLANA_MODE is per-player. */
+  walletAddress: string | null;
+  /** ISO times of reports submitted in the last hour, for the rate limit. */
+  recentReportTimes: string[];
+  /** ISO 8601 UTC. */
+  createdAt: string;
+}
+
+/** Table streetcreds-reports. Key: id. */
+export interface Report {
+  id: string;
+  /** The player who took the photo. */
+  playerId: string;
+  /** S3 key: reports/{playerId}/{uuid}.jpg */
+  photoKey: string;
+  /** Null while the report is a draft. */
+  lat: number | null;
+  lng: number | null;
+  /** From Gemini; the player may correct it when submitting. */
+  category: Category;
+  severity: Severity;
+  /** One sentence from Gemini. */
+  description: string;
+  /** 1, plus one for each duplicate merged into this report. */
+  count: number;
+  status: ReportStatus;
+  createdAt: string;
+  /** Null while the report is a draft. */
+  submittedAt: string | null;
+}
+
+/** Table streetcreds-awards. Key: id. */
+export interface Award {
+  /** `${questType}#${refId}#${playerId}`. Deterministic, so an award is paid once. */
+  id: string;
+  playerId: string;
+  questType: QuestType;
+  points: number;
+  /** Solana devnet transaction signature, once the mint is sent. */
+  txSignature: string | null;
+  chainStatus: ChainStatus;
+  createdAt: string;
+}
+
+/** Kept in api/src/quests/council.json, not in the database. */
+export interface CouncilItem {
+  id: string;
+  title: string;
+  /** Three sentences, plain language, checked by a person. */
+  summary: string;
+  question: string;
+  /** Three or four answers. */
+  options: string[];
+  /** Index of the right answer. Never sent to the client. */
+  answerIndex: number;
+  /** The official agenda page. */
+  sourceUrl: string;
+}
+
+// Shapes that only exist in API responses.
+
+/** A report as the map receives it: with a temporary link to its photo. */
+export type PublicReport = Report & { photoUrl: string };
+
+/** A council item as the client receives it: no answer, plus whether this player has earned it. */
+export type CouncilItemView = Omit<CouncilItem, 'answerIndex'> & { answered: boolean };
+
+export interface LeaderboardRow {
+  neighborhood: NeighborhoodId;
+  points: number;
+  playerCount: number;
+  /** Up to 3, highest first. Nicknames only. */
+  topPlayers: { nickname: string; points: number }[];
+}
