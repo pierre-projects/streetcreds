@@ -83,14 +83,14 @@ Install @solana/web3.js@1, never version 3. Type-check as you go.
 
 ## Phase 2. Core loop (about 30%)
 
-- [ ] Each new player gets a wallet address on join.
-- [ ] Real `awardPoints`: the award is written once, points are added, the mint goes to devnet, the transaction link is saved.
-- [ ] Points still count when devnet is slow or down; the award stays "pending".
-- [ ] Shared-wallet mode works as the fallback.
-- [ ] Signature and return shape of `awardPoints` unchanged from the stub.
-- [ ] Leaderboard screen: four neighborhoods, top 3 players each, refreshing every 4 seconds, my neighborhood highlighted.
+- [x] Each new player gets a wallet address on join.
+- [x] Real `awardPoints`: the award is written once, points are added, the mint goes to devnet, the transaction link is saved.
+- [x] Points still count when devnet is slow or down; the award stays "pending".
+- [x] Shared-wallet mode works as the fallback.
+- [x] Signature and return shape of `awardPoints` unchanged from the stub.
+- [x] Leaderboard screen: four neighborhoods, top 3 players each, refreshing every 4 seconds, my neighborhood highlighted.
 - [ ] Deployed, and the midpoint checkpoint tested on a phone with Sarah.
-- [ ] `npm run check` passes.
+- [x] `npm run check` passes.
 
 Prompt:
 
@@ -109,13 +109,13 @@ Do not change the awardPoints signature or return shape. Stop when done and give
 
 ## Phase 3. Map (about 20%)
 
-- [ ] Map screen shows a pin for every open report, sized by count and colored by severity.
-- [ ] Pin popup shows the photo and details.
-- [ ] "Copy city report" puts category, description, location and photo link on the clipboard.
+- [x] Map screen shows a pin for every open report, sized by count and colored by severity.
+- [x] Pin popup shows the photo and details.
+- [x] "Copy city report" puts category, description, location and photo link on the clipboard.
 - [ ] Rate-limit helper `checkReportLimit` written and tested in `api/src/players/rateLimit.ts`; Sarah has added it to her route.
 - [ ] 10 test mints in a row all arrive (`mint-test.ts 10`).
-- [ ] One-slide architecture diagram drafted.
-- [ ] `npm run check` passes.
+- [x] One-slide architecture diagram drafted.
+- [x] `npm run check` passes.
 
 Prompt:
 
