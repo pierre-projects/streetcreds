@@ -6,7 +6,7 @@ Where things stand on 2026-11-14: the project skeleton is built and live. The si
 
 | What | Address |
 | --- | --- |
-| Live site | https://main.d2wmqqpl5d9dv2.amplifyapp.com |
+| Live site | https://streetcreds.app (also at https://main.d2wmqqpl5d9dv2.amplifyapp.com) |
 | Live API | https://4aw3zczoo8.execute-api.us-east-2.amazonaws.com |
 | Repo | https://github.com/pierre-projects/streetcreds |
 

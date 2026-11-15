@@ -37,7 +37,7 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 - [x] First deploy with Solana off, so the API URL, the tables and the bucket exist. Save the answers in `samconfig.toml` (git-ignored).
 - [x] Connect Amplify hosting to the repo, app root `web`, and set `VITE_API_URL`.
 - [x] Add the Amplify URL to the allowed origins and redeploy.
-- [ ] Start the `streetcreds.app` custom domain in Amplify. DNS can take hours.
+- [x] Start the `streetcreds.app` custom domain in Amplify. DNS can take hours.
 - [ ] Send Sarah the API URL and bucket name for her `.env`.
 
 Prompt:

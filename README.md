@@ -9,7 +9,7 @@ StreetCreds turns city participation into a phone game. Players earn points for 
 
 Every point is minted as a token on Solana devnet, so each award has its own explorer link. Nothing to install and no login: scan a QR code, pick a nickname and a neighborhood, and play.
 
-Built at [sunhacks 2026](https://sunhacks-2026.devpost.com/) at Arizona State University. The site is planned to live at [streetcreds.app](https://streetcreds.app).
+Built at [sunhacks 2026](https://sunhacks-2026.devpost.com/) at Arizona State University. The site is live at [streetcreds.app](https://streetcreds.app).
 
 ## Status
 
