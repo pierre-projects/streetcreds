@@ -8,6 +8,7 @@ StreetCreds is a phone-first web game built at sunhacks 2026 by two people, Sara
 | --- | --- | --- |
 | `TECHNICAL.md` | Stack, data models, API contract, core functions, setup, build order, acceptance checks | Any implementation question |
 | `CONTRIBUTING.md` | GitHub rules: branches, commits, pull requests, what never to commit, what agents may do with Git | Any Git or GitHub question |
+| `SARAH-PHASES.md`, `PIERRE-PHASES.md` | Each person's checklist for every phase. Work on the items of the person you are working for, and never tick a box yourself | What to build next |
 | `PRD.md` | Export of the product doc: scope, user flow, demo script, risks. May be missing; `TECHNICAL.md` is enough to build from | Any "should this exist" question |
 | `AGENTS.md` (this file) | Rules for working in this repo | Any conflict about how to work |
 

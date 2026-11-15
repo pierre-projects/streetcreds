@@ -80,7 +80,7 @@ When an AI agent wrote most of a commit, keep the co-author line it adds. It is 
 ## Pull requests
 
 - **Title:** same style as a commit message.
-- **Description, three lines:** what it does, how to test it, and which boxes in [PHASES.md](PHASES.md) it completes.
+- **Description, three lines:** what it does, how to test it, and which boxes in your phases file ([SARAH-PHASES.md](SARAH-PHASES.md) or [PIERRE-PHASES.md](PIERRE-PHASES.md)) it completes.
 - **Size:** aim for something the other person can read in five minutes. If it's bigger, split it.
 - **Review:** the other person skims it and approves. This is a quick sanity check, not a debate. If they are busy for more than 15 minutes and the change is only in your own folders, merge it yourself and tell them.
 - **Merge with "Squash and merge"**, so `main` gets one clean commit per pull request.
@@ -94,7 +94,7 @@ A pull request **must** wait for the other person's yes when it touches any of t
 - `api/template.yaml` or `amplify.yml`
 - this file, `AGENTS.md` or `TECHNICAL.md`
 
-**Docs-only exception:** ticking boxes in `PHASES.md`, adding a line to the README Credits, or fixing a typo can be committed straight to `main`. Pull first.
+**Docs-only exception:** ticking boxes in `PHASES.md`, `SARAH-PHASES.md` or `PIERRE-PHASES.md`, adding a line to the README Credits, or fixing a typo can be committed straight to `main`. Pull first.
 
 ## Who owns what
 
