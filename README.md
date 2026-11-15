@@ -116,6 +116,9 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The player routes, the leaderboard, `awardPoints`, the rate-limit helper, the deploy-secrets script and the join, home, leaderboard and map screens were generated with Claude Code (Anthropic).
 - Map tiles are from OpenStreetMap contributors, shown with Leaflet and react-leaflet.
 
+- The temporary design system (`web/src/app/ui/`, `/design`) was generated with Codex (OpenAI), following the StreetCreds landing page.
+- Russo One by Jovanny Lemonad, under the SIL Open Font License (see `web/public/fonts/OFL.txt`).
+
 ## License
 
 No license chosen yet.

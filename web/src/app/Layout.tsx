@@ -5,6 +5,7 @@ import { Navigate, NavLink, Outlet } from 'react-router'
 import { HomeIcon, LeaderboardIcon, MapIcon } from './icons'
 import { getStoredPlayerId, usePlayer } from './player'
 import { strings } from './strings'
+import { Badge, LogoMark } from './ui'
 
 const NAV_ITEMS: { to: string; label: string; icon: ReactNode }[] = [
   { to: '/home', label: strings.nav.home, icon: <HomeIcon /> },
@@ -24,16 +25,16 @@ function Frame() {
   const { data: player, isError } = usePlayer()
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col">
-      <header className="sticky top-0 z-10 flex min-h-14 items-center justify-between gap-3 border-b border-line bg-surface px-4">
-        <span className="text-lg font-bold tracking-tight text-ink">{strings.appName}</span>
+    <div className="app-column flex flex-col">
+      <header className="app-header">
+        <span className="app-brand"><LogoMark />{strings.appName}</span>
         <div className="flex min-w-0 items-center gap-2 text-sm" aria-live="polite">
           {player ? (
             <>
               <span className="truncate text-muted">{player.nickname}</span>
-              <span className="shrink-0 rounded-full bg-accent px-3 py-1 font-semibold tabular-nums text-on-accent">
+              <Badge>
                 {strings.header.points(player.points)}
-              </span>
+              </Badge>
             </>
           ) : (
             <span className="text-muted">{isError ? strings.errors.playerLoad : strings.header.loading}</span>
@@ -48,18 +49,14 @@ function Frame() {
 
       <nav
         aria-label={strings.nav.label}
-        className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]"
+        className="app-nav"
       >
         <ul className="mx-auto flex max-w-[480px]">
           {NAV_ITEMS.map((item) => (
             <li key={item.to} className="flex-1">
               <NavLink
                 to={item.to}
-                className={({ isActive }) =>
-                  `flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
-                    isActive ? 'text-accent' : 'text-muted'
-                  }`
-                }
+                className="app-nav-link"
               >
                 {item.icon}
                 {item.label}

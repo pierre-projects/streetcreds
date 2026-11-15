@@ -1,6 +1,5 @@
 // Home: the player's points, where their neighborhood stands, and the two quests.
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router'
 import { NEIGHBORHOODS, POINTS } from '../../../../shared/constants'
 import type { NeighborhoodId } from '../../../../shared/types'
 import { api } from '../../app/api'
@@ -8,6 +7,7 @@ import { usePlayer } from '../../app/player'
 import { leaderboardKey, POLL_MS } from '../../app/queryClient'
 import { explorerAddressUrl } from '../../app/solana'
 import { strings } from '../../app/strings'
+import { Badge, Card, ErrorNotice, Eyebrow, LinkCard } from '../../app/ui'
 
 function neighborhoodName(id: NeighborhoodId): string {
   return NEIGHBORHOODS.find((n) => n.id === id)?.name ?? id
@@ -15,15 +15,15 @@ function neighborhoodName(id: NeighborhoodId): string {
 
 function QuestCard({ to, title, body, points }: { to: string; title: string; body: string; points: number }) {
   return (
-    <Link to={to} className="flex min-h-11 items-start justify-between gap-3 rounded-2xl border border-line bg-surface p-4">
+    <LinkCard to={to}>
       <span>
-        <span className="block text-base font-semibold text-ink">{title}</span>
+        <span className="block text-base text-ink">{title}</span>
         <span className="mt-1 block text-sm text-muted">{body}</span>
       </span>
-      <span className="shrink-0 rounded-full bg-accent px-3 py-1 text-sm font-semibold tabular-nums text-on-accent">
+      <Badge>
         {strings.home.reward(points)}
-      </span>
-    </Link>
+      </Badge>
+    </LinkCard>
   )
 }
 
@@ -41,18 +41,7 @@ export function HomeScreen() {
 
   if (player.isError || !player.data) {
     return (
-      <section className="rounded-2xl border border-line bg-surface p-5">
-        <p role="alert" className="text-base text-severity-high">
-          {player.error?.message ?? strings.errors.playerLoad}
-        </p>
-        <button
-          type="button"
-          onClick={() => void player.refetch()}
-          className="mt-4 flex min-h-11 w-full items-center justify-center rounded-xl border border-line px-4 font-semibold text-accent"
-        >
-          {strings.home.retry}
-        </button>
-      </section>
+      <ErrorNotice message={player.error?.message} fallback={strings.errors.playerLoad} onRetry={() => void player.refetch()} retryLabel={strings.home.retry} />
     )
   }
 
@@ -63,40 +52,40 @@ export function HomeScreen() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-2xl border border-line bg-surface p-5">
-        <p className="text-sm font-medium text-muted">{strings.home.pointsLabel}</p>
-        <p className="mt-1 text-5xl font-bold tabular-nums tracking-tight text-ink">{me.points}</p>
+      <Card tone="dark">
+        <Eyebrow tone="dark">{strings.home.pointsLabel}</Eyebrow>
+        <p className="points-total mt-1">{me.points}</p>
 
-        <div className="mt-4 border-t border-line pt-4 text-sm" aria-live="polite">
+        <div className="dark-detail mt-4" aria-live="polite">
           {myRow ? (
             <>
-              <p className="font-semibold text-ink">
+              <p className="text-on-ink">
                 {strings.home.rank(neighborhoodName(me.neighborhood), rankIndex + 1, rows.length)}
               </p>
-              <p className="mt-0.5 text-muted">{strings.home.neighborhoodPoints(myRow.points)}</p>
+              <p className="mt-0.5 text-on-ink/70">{strings.home.neighborhoodPoints(myRow.points)}</p>
             </>
           ) : (
-            <p className="text-muted">{leaderboard.isError ? strings.home.rankError : strings.home.rankLoading}</p>
+            <p className="text-on-ink/70">{leaderboard.isError ? strings.home.rankError : strings.home.rankLoading}</p>
           )}
         </div>
 
         {me.walletAddress !== null && (
-          <p className="mt-4 border-t border-line pt-4 text-sm text-muted">
+          <p className="dark-detail mt-4">
             {strings.home.walletNote}{' '}
             <a
               href={explorerAddressUrl(me.walletAddress)}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-11 items-center font-semibold text-accent underline"
+              className="wallet-link"
             >
               {strings.home.walletLink}
             </a>
           </p>
         )}
-      </section>
+      </Card>
 
       <section>
-        <h2 className="text-lg font-semibold text-ink">{strings.home.questsTitle}</h2>
+        <h2 className="section-title">{strings.home.questsTitle}</h2>
         <div className="mt-3 grid gap-3">
           <QuestCard
             to="/report"

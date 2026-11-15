@@ -1,23 +1,48 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 /* Every color in the app is defined here once. Use the utilities they create
    (bg-page, bg-surface, text-ink, text-muted, bg-accent, text-severity-high, ...)
    and never a raw color in a component. */
-@theme {
-  --color-page: #f4f6f1;
+@font-face {
+  font-family: "Russo One";
+  src: url('/fonts/RussoOne-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme static {
+  --color-*: initial;
+  --color-page: #ffffff;
   --color-surface: #ffffff;
-  --color-line: #dfe5dc;
-  --color-ink: #16211b;
-  --color-muted: #55635a;
-  --color-accent: #0f7a4f;
-  --color-on-accent: #ffffff;
-  --color-severity-low: #2f7d32;
-  --color-severity-medium: #b26a00;
+  --color-line: rgb(10 10 10 / .5);
+  --color-ink: #0a0a0a;
+  --color-muted: #545454;
+  --color-accent: #ff6700;
+  --color-on-accent: #0a0a0a;
+  --color-on-ink: #ffffff;
+  --color-severity-low: #2e7d32;
+  --color-severity-medium: #9a5b00;
   --color-severity-high: #c62828;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Russo One", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius-control: 0;
+  --radius-card: 0;
+  --shadow-hard: 3px 3px 0 var(--color-ink);
+  --text-display: 4rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -.05em;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.1;
+  --text-title--letter-spacing: -.03em;
+  --text-label: .75rem;
+  --text-label--line-height: 1.5;
+  --text-label--letter-spacing: .01em;
 }
 
 html {
+  font-synthesis: none;
   background: var(--color-page);
   color: var(--color-ink);
   -webkit-text-size-adjust: 100%;
@@ -27,6 +52,41 @@ body {
   margin: 0;
   min-height: 100dvh;
 }
+
+/* Screen compositions stay here so restyling only touches CSS and app/ui. */
+@layer components {
+  .app-column { @apply mx-auto min-h-dvh w-full max-w-[480px] min-[480px]:border-x min-[480px]:border-dotted min-[480px]:border-line; }
+  .app-header { @apply sticky top-0 z-10 flex min-h-16 items-center justify-between gap-3 border-b border-dotted border-line bg-surface px-4; }
+  .app-brand { @apply flex shrink-0 items-center gap-2 text-base tracking-tight text-ink; }
+  .app-nav { @apply fixed inset-x-0 bottom-0 z-10 border-t border-dotted border-line bg-surface pb-[env(safe-area-inset-bottom)]; }
+  .app-nav-link { @apply flex min-h-14 flex-col items-center justify-center gap-0.5 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-ink; }
+  .app-nav-link[aria-current="page"] { @apply bg-ink text-accent outline-accent; }
+  .app-nav-link:not([aria-current="page"]) { @apply text-muted; }
+  .points-total { @apply text-display text-accent; overflow-wrap: anywhere; }
+  .dark-detail { @apply border-t border-dotted border-on-ink/50 pt-4 text-sm text-on-ink/70; }
+  .wallet-link { @apply inline-flex min-h-11 items-center text-on-ink underline focus-visible:outline-2 focus-visible:outline-offset-4; }
+  .section-title { @apply text-lg uppercase text-ink; }
+  .map-frame { @apply relative isolate z-0 h-[58dvh] min-h-80 overflow-hidden rounded-card border border-ink bg-surface; }
+}
+
+/* Leaflet ships unlayered CSS, so these overrides are unlayered too. */
+.leaflet-container { font-family: var(--font-sans); background: var(--color-page); }
+.leaflet-container a { color: var(--color-ink); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-ink);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-hard);
+}
+.leaflet-popup-content-wrapper { padding: 44px 16px 16px; }
+.leaflet-popup-content, .leaflet-popup-content p { margin: 0; }
+.leaflet-container a.leaflet-popup-close-button { width: 44px; height: 44px; line-height: 44px; color: var(--color-ink); }
+.leaflet-touch .leaflet-bar a, .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; background: var(--color-surface); color: var(--color-ink); }
+.leaflet-touch .leaflet-bar, .leaflet-bar, .leaflet-bar a:first-child, .leaflet-bar a:last-child { border-radius: var(--radius-control); }
+.leaflet-container a:focus-visible { outline: 2px solid var(--color-ink); outline-offset: -2px; }
+.leaflet-control-attribution { max-width: 100%; }
+.leaflet-control-attribution a { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* Map pins. Leaflet draws them as SVG and sets its own blue; these rules replace it with the
    severity colors above. The class names are set in features/players/MapScreen.tsx. */
