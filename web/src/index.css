@@ -413,8 +413,8 @@ body {
 .map-frame .leaflet-tile-pane,
 .board-map .leaflet-tile-pane,
 .map-frame-radar .leaflet-tile-pane {
-  /* A dark map from the light OpenStreetMap tiles, so the pins and the chrome stand out. */
-  filter: invert(1) hue-rotate(180deg) grayscale(0.55) brightness(0.85) contrast(0.95);
+  /* CARTO dark tiles (OpenStreetMap data) are dark already. */
+  filter: none;
 }
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
