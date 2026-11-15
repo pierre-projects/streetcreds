@@ -1,77 +1,50 @@
-// Phase 0 placeholder. It proves the pieces are wired together: the web app loads, it can import
-// the contract in shared/, and it can reach the API. Phase 1 replaces this with the real routes.
-import { useEffect, useState } from 'react'
-import type { LeaderboardResponse } from '../../../shared/api'
-import { APP_NAME, NEIGHBORHOODS } from '../../../shared/constants'
+// Every path in the app. The list matches docs/TECHNICAL.md section 7.
+//
+// Screens that are not built yet show <ComingSoon />. To put a real screen in, import it and
+// replace the `element` on its line. Sarah: the three lines marked "Sarah" are yours to change.
+import { createBrowserRouter, Navigate } from 'react-router'
+import { RouterProvider } from 'react-router/dom'
+import { ComingSoon } from './ComingSoon'
+import { Layout } from './Layout'
+import { getStoredPlayerId } from './player'
+import { strings } from './strings'
 
-type Check =
-  | { state: 'loading' }
-  | { state: 'ok'; data: LeaderboardResponse }
-  | { state: 'error'; message: string }
-
-const API_URL = import.meta.env.VITE_API_URL ?? ''
-
-function neighborhoodName(id: string): string {
-  return NEIGHBORHOODS.find((n) => n.id === id)?.name ?? id
+/** `/` sends a joined player home and everyone else to the join screen. */
+function Start() {
+  return <Navigate to={getStoredPlayerId() === null ? '/join' : '/home'} replace />
 }
 
-export function App() {
-  const [check, setCheck] = useState<Check>(() =>
-    API_URL === ''
-      ? { state: 'error', message: 'VITE_API_URL is not set. Copy web/.env.example to web/.env.' }
-      : { state: 'loading' },
-  )
-
-  useEffect(() => {
-    if (API_URL === '') return
-    const controller = new AbortController()
-    fetch(`${API_URL}/leaderboard`, { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`The API answered with status ${response.status}.`)
-        }
-        const data = (await response.json()) as LeaderboardResponse
-        setCheck({ state: 'ok', data })
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        const reason = error instanceof Error ? error.message : 'Unknown error.'
-        setCheck({ state: 'error', message: `Could not reach the API at ${API_URL}. ${reason}` })
-      })
-    return () => controller.abort()
-  }, [])
-
+/** Until the join screen exists. It has no navigation, because nobody has joined yet. */
+function JoinPlaceholder() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col gap-6 px-4 py-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-ink">{APP_NAME}</h1>
-        <p className="mt-1 text-base text-muted">Earn points for making your neighborhood better.</p>
-      </header>
-
-      <section className="rounded-2xl border border-line bg-surface p-4" aria-live="polite">
-        <h2 className="text-lg font-semibold text-ink">Neighborhoods</h2>
-
-        {check.state === 'loading' && <p className="mt-3 text-muted">Loading the leaderboard…</p>}
-
-        {check.state === 'error' && (
-          <p className="mt-3 text-severity-high" role="alert">
-            {check.message}
-          </p>
-        )}
-
-        {check.state === 'ok' && (
-          <ul className="mt-2 divide-y divide-line">
-            {check.data.neighborhoods.map((row) => (
-              <li key={row.neighborhood} className="flex min-h-11 items-center justify-between gap-3 py-2">
-                <span className="text-ink">{neighborhoodName(row.neighborhood)}</span>
-                <span className="font-semibold tabular-nums text-ink">{row.points} pts</span>
-              </li>
-            ))}
-          </ul>
-        )}
+    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col gap-2 px-4 py-8">
+      <h1 className="text-3xl font-bold tracking-tight text-ink">{strings.appName}</h1>
+      <p className="text-base text-muted">{strings.tagline}</p>
+      <section className="mt-4 rounded-2xl border border-line bg-surface p-5">
+        <h2 className="text-lg font-semibold text-ink">{strings.comingSoon.join}</h2>
+        <p className="mt-2 text-muted">{strings.comingSoon.joinBody}</p>
       </section>
-
-      <p className="text-sm text-muted">The game is being built at sunhacks 2026. Quests open soon.</p>
     </main>
   )
+}
+
+const router = createBrowserRouter([
+  { path: '/', element: <Start /> },
+  { path: '/join', element: <JoinPlaceholder /> },
+  {
+    element: <Layout />,
+    children: [
+      { path: '/home', element: <ComingSoon title={strings.comingSoon.home} /> },
+      { path: '/report', element: <ComingSoon title={strings.comingSoon.report} /> }, // Sarah
+      { path: '/council', element: <ComingSoon title={strings.comingSoon.council} /> }, // Sarah
+      { path: '/council/:itemId', element: <ComingSoon title={strings.comingSoon.council} /> }, // Sarah
+      { path: '/leaderboard', element: <ComingSoon title={strings.comingSoon.leaderboard} /> },
+      { path: '/map', element: <ComingSoon title={strings.comingSoon.map} /> },
+    ],
+  },
+  { path: '*', element: <Navigate to="/" replace /> },
+])
+
+export function App() {
+  return <RouterProvider router={router} />
 }

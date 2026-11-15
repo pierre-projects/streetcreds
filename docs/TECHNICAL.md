@@ -62,10 +62,10 @@ streetcreds/
       app/                          (Pierre)
         App.tsx                     all eight routes; placeholders until Sarah's screens exist
         Layout.tsx                  header with points, bottom nav
-        api.ts                      fetch helper and typed endpoint functions
+        api.ts                      the `api` object: one typed function per route, plus mock mode
         player.ts                   stored player id, usePlayer()
-        strings.ts                  every user-facing string, keyed
-        mock/                       one JSON fixture per route, all ten
+        strings.ts                  user-facing strings for the shell and player screens
+        mock/                       typed example data and a stand-in API for all ten routes
       features/
         players/                    (Pierre)
           JoinScreen.tsx  HomeScreen.tsx  LeaderboardScreen.tsx  MapScreen.tsx
@@ -606,9 +606,10 @@ Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods pres
 ### Shared pieces (Pierre builds first)
 
 - **`app/App.tsx`**: registers all eight paths from the start. Until Sarah's screens exist, `/report`, `/council` and `/council/:itemId` render a placeholder; she swaps in her screens by changing those route lines.
-- **`app/api.ts`**: one `request<T>(path, init)` helper that prefixes `VITE_API_URL`, parses JSON, and throws `ApiError { status, code, message }` for non-2xx responses. One typed function per route, for all ten routes: Pierre writes Sarah's six as well, in Phase 1, so her screens can start on mocks. When `VITE_USE_MOCKS` is `true`, the functions return fixtures from `app/mock/` after a short delay. There is one fixture per route, and Sarah may change the ones for her routes.
+- **`app/api.ts`**: one `request<T>(path, init)` helper that prefixes `VITE_API_URL`, parses JSON, and throws `ApiError { status, code, message }` for non-2xx responses. It exports one object, `api`, with one typed function per route for all ten routes (Pierre writes Sarah's six as well, so her screens can start on mocks), plus `api.uploadPhoto(uploadUrl, blob)` for the direct `PUT` to the bucket. Screens call `api.createReport(...)` and so on, and never call `fetch` themselves. When `VITE_USE_MOCKS` is `true`, the same functions answer from `app/mock/` after a short delay. The mock keeps a little state while the tab is open (points, submitted reports, answered council items) and resets on reload. Its example data is typed TypeScript in `app/mock/fixtures.ts`, so a contract change breaks the build instead of letting the examples drift; Sarah may change the report and council examples. To see an error state, change `MOCK_REPORT_RESULT` at the top of `app/mock/index.ts`.
 - **`app/player.ts`**: the player id is stored in `localStorage` under `streetcreds.playerId`. `usePlayer()` loads the player with TanStack Query and refetches every 4 seconds. On `404`, clear the id and go to `/join`.
-- **`app/strings.ts`**: every user-facing string, in one object keyed by name. Screens read from it. This is what makes the P2 Spanish toggle a small job.
+- **`app/strings.ts`**: every user-facing string for the shell and the player screens, in one object keyed by name. Quest screens keep theirs in `features/quests/strings.ts`, in the same shape, so Sarah never has to edit Pierre's file. Screens read their text from these files. This is what makes the P2 Spanish toggle a small job.
+- **`app/queryClient.ts`**: the one TanStack Query client, the query keys, and the 4-second polling interval.
 - **`app/Layout.tsx`**: header with nickname and points, content area, bottom navigation (Home, Leaderboard, Map).
 - After any response that contains `player`, write it into the query cache so the header updates without waiting for the next poll.
 
