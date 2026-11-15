@@ -2,23 +2,65 @@ import { locationFixError, locationMessages, MAX_ACCURACY_METERS, type LocationP
 import type { LocationFix } from '../../../shared/types'
 import { strings } from './strings'
 
+/** A fix the player can follow, as numbered steps. */
+export interface LocationHelp {
+  title: string
+  steps: string[]
+  /** Whether trying again on this page can work once the steps are done. */
+  canRetry: boolean
+}
+
 /**
- * What to tell a player whose browser refused the request. The page sees one error for three
- * different causes, and each needs a different fix:
+ * The browser refused the request. `message` is the whole fix in one paragraph, for a screen
+ * that shows only text. `help` is the same fix as steps, when there are steps to give.
+ */
+export class LocationBlockedError extends Error {
+  readonly help: LocationHelp | null
+  constructor(message: string, help: LocationHelp | null = null) {
+    super(message)
+    this.name = 'LocationBlockedError'
+    this.help = help
+  }
+}
+
+// Browsers on an iPhone that name themselves, and their line in the Location Services list.
+// Anything else that still calls itself Safari is treated as Safari.
+const IOS_BROWSERS: [RegExp, string][] = [
+  [/CriOS/, 'Chrome'],
+  [/FxiOS/, 'Firefox'],
+  [/EdgiOS/, 'Edge'],
+  [/DuckDuckGo/, 'DuckDuckGo'],
+  [/GSA\//, 'Google'],
+]
+
+/**
+ * What to tell a player whose browser refused the request. The page sees one error for several
+ * causes, and each needs a different fix:
  *
  * - the page was not loaded over https, where no browser gives a position;
  * - on an iPhone or iPad, the browser app itself has no location permission. iOS then refuses
  *   without ever asking, even with Location Services on, and the switch is in the Settings app,
- *   not in the browser;
+ *   not in the browser. A page cannot open the Settings app, so it gives the steps;
+ * - the page is open inside another app on an iPhone, which uses that app's permission;
  * - the player said no to this site.
  */
-export function blockedMessage(): string {
-  if (globalThis.isSecureContext === false) return strings.location.notSecure
+export function locationBlock(): LocationBlockedError {
+  if (globalThis.isSecureContext === false) return new LocationBlockedError(strings.location.notSecure)
   const nav = globalThis.navigator
   const userAgent = nav?.userAgent ?? ''
   // An iPad reports itself as a Mac, so it is told apart by its touch screen.
   const appleMobile = /iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && (nav?.maxTouchPoints ?? 0) > 1)
-  return appleMobile ? strings.location.blockedOnIphone : locationMessages.denied
+  if (!appleMobile) return new LocationBlockedError(locationMessages.denied)
+
+  const { blocked, inApp, safari } = strings.location
+  const named = IOS_BROWSERS.find(([pattern]) => pattern.test(userAgent))?.[1]
+  // Safari and the browsers above end their name with "Safari/". A page shown inside another app does not.
+  if (named === undefined && !/Safari\//.test(userAgent)) {
+    return new LocationBlockedError(inApp.text, { title: inApp.title, steps: [...inApp.steps], canRetry: false })
+  }
+  const app = named ?? safari.app
+  const row = named ?? safari.row
+  return new LocationBlockedError(blocked.text(app, row), { title: blocked.title(app), steps: blocked.steps(row), canRetry: true })
 }
 
 /**
@@ -53,12 +95,13 @@ export function readCurrentLocation(purpose: LocationPurpose = 'report'): Promis
     let watch: number | undefined
     let timer: ReturnType<typeof setTimeout> | undefined
 
-    function finish(outcome: LocationFix | string) {
+    function finish(outcome: LocationFix | string | Error) {
       if (done) return
       done = true
       clearTimeout(timer)
       if (watch !== undefined) geolocation.clearWatch(watch)
       if (typeof outcome === 'string') reject(new Error(outcome))
+      else if (outcome instanceof Error) reject(outcome)
       else resolve(outcome)
     }
 
@@ -84,7 +127,7 @@ export function readCurrentLocation(purpose: LocationPurpose = 'report'): Promis
       },
       (error) => {
         // Blocked: waiting will not change that.
-        if (error.code === 1) finish(blockedMessage())
+        if (error.code === 1) finish(locationBlock())
         // The browser's own limit for a first reading. Ours matches it, so this is the end.
         else if (error.code === 3) finish(refused ?? locationMessages.timeout)
         // No position right now. With nothing received yet, say so at once. After a rough

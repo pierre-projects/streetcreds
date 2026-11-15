@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { locationMessages } from '../../../shared/location'
-import { LOCATION_WAIT_MS, readCurrentLocation } from './location'
+import { LOCATION_WAIT_MS, LocationBlockedError, readCurrentLocation } from './location'
 import { strings } from './strings'
 
 beforeEach(() => { vi.useFakeTimers() })
@@ -103,15 +103,53 @@ describe('reading the device location for one action', () => {
     expect(device.clearWatch).toHaveBeenCalledExactlyOnceWith(WATCH_ID)
   })
 
-  it('gives an iPhone the steps for the Settings app when location is blocked', async () => {
+  // What an iPhone browser calls itself. The start and the end are what tell them apart.
+  const iphone = (end: string) => `Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) ${end}`
+
+  /** The error a blocked request gives in a browser with this name. */
+  async function blockedIn(userAgent: string) {
+    const device = fakeDevice()
+    vi.stubGlobal('navigator', { ...globalThis.navigator, userAgent })
+    const outcome = readCurrentLocation().catch((error: unknown) => error)
+    device.fails(1)
+    const error = await outcome
+    expect(error).toBeInstanceOf(LocationBlockedError)
+    return error as LocationBlockedError
+  }
+
+  it('gives Safari on an iPhone the steps for the Settings app', async () => {
+    const error = await blockedIn(iphone('Version/18.0 Mobile/15E148 Safari/604.1'))
+    expect(error.help).toEqual({ title: 'Turn on location for Safari', steps: strings.location.blocked.steps('Safari Websites'), canRetry: true })
+    expect(error.message).toBe(strings.location.blocked.text('Safari', 'Safari Websites'))
+  })
+
+  it('names the browser in the steps when it is not Safari', async () => {
+    const error = await blockedIn(iphone('CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1'))
+    expect(error.help?.title).toBe('Turn on location for Chrome')
+    expect(error.help?.steps[2]).toBe('Tap Chrome and pick While Using the App.')
+  })
+
+  it('sends a page opened inside another app to Safari', async () => {
+    const error = await blockedIn(iphone('Mobile/15E148 Instagram 350.0.0.0'))
+    expect(error.help).toEqual({ title: strings.location.inApp.title, steps: strings.location.inApp.steps, canRetry: false })
+  })
+
+  it('treats an iPad, which calls itself a Mac, like an iPhone', async () => {
     const device = fakeDevice()
     vi.stubGlobal('navigator', {
       ...globalThis.navigator,
-      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+      maxTouchPoints: 5,
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
     })
-    const outcome = expect(readCurrentLocation()).rejects.toThrow(strings.location.blockedOnIphone)
+    const outcome = expect(readCurrentLocation()).rejects.toThrow(strings.location.blocked.text('Safari', 'Safari Websites'))
     device.fails(1)
     await outcome
+  })
+
+  it('gives other devices the general message and no steps', async () => {
+    const error = await blockedIn('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36')
+    expect(error.message).toBe(locationMessages.denied)
+    expect(error.help).toBeNull()
   })
 
   it('says the address is the problem when the page is not on https', async () => {

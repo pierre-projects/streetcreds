@@ -87,9 +87,35 @@ export const strings = {
   // What to do when the browser refuses to give a position. The general wording is in
   // shared/location.ts; these are the cases where the player needs exact steps.
   location: {
-    blockedOnIphone:
-      'Location is blocked for this browser. In iPhone Settings, go to Privacy & Security, then Location Services, then Safari Websites (or the app you opened this page in), and pick While Using the App. Then reload this page and tap Allow.',
     notSecure: 'Location only works on a secure address. Open the app from its https:// link and try again.',
+    // An iPhone or iPad whose browser app has no location permission. A web page cannot open the
+    // Settings app, so the steps have to be easy to follow from memory. `app` is the browser's
+    // name and `row` is its line in the Location Services list.
+    blocked: {
+      title: (app: string) => `Turn on location for ${app}`,
+      steps: (row: string) => [
+        'Open the Settings app.',
+        'Tap Privacy & Security, then Location Services.',
+        `Tap ${row} and pick While Using the App.`,
+        'Come back here and tap Try again. Tap Allow if it asks.',
+      ],
+      // The same fix as one paragraph, for a screen that shows only text.
+      text: (app: string, row: string) =>
+        `Location is blocked for ${app}. In the Settings app, tap Privacy & Security, then Location Services, then ${row}, and pick While Using the App. Then come back and try again.`,
+      hint: 'Still blocked? Reload this page and try once more.',
+      retry: 'Try again',
+    },
+    // A page opened inside another app (a chat or social app) uses that app's permission.
+    inApp: {
+      title: 'Open this page in Safari',
+      steps: [
+        'This page is open inside another app, which cannot share your location.',
+        'Tap the menu or share icon and pick Open in Safari. Or copy the link and paste it into Safari.',
+        'Join from there.',
+      ],
+      text: 'This page is open inside another app, which cannot share your location. Open it in Safari and try again.',
+    },
+    safari: { app: 'Safari', row: 'Safari Websites' },
   },
 
   home: {

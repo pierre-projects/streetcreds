@@ -12,7 +12,8 @@ import { api, ApiError } from '../../app/api'
 import { BoardLink } from '../../app/BoardLink'
 import { GOOGLE_SIGN_IN_ON } from '../../app/google'
 import { legalLinkClass } from '../../app/legal/LegalLinks'
-import { readCurrentLocation } from '../../app/location'
+import { LocationBlockedError, readCurrentLocation, type LocationHelp as Help } from '../../app/location'
+import { LocationHelp } from '../../app/LocationHelp'
 import { completeSignIn, getStoredPlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
 import { Button, ErrorNotice, LogoMark, ScreenHeader, TextField } from '../../app/ui'
@@ -25,6 +26,8 @@ export function JoinScreen() {
   const [nickname, setNickname] = useState('')
   const [locating, setLocating] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
+  // The steps to unblock location, when the browser refused and there are steps to give.
+  const [locationHelp, setLocationHelp] = useState<Help | null>(null)
   // Google's ID token for someone who signed in but has no saved player yet. The form finishes the job.
   const [credential, setCredential] = useState<string | null>(null)
 
@@ -62,6 +65,7 @@ export function JoinScreen() {
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (busy) return
+    setLocationHelp(null)
     const trimmed = nickname.trim()
     if (trimmed.length < NICKNAME_MIN || trimmed.length > NICKNAME_MAX) {
       setProblem(strings.join.nicknameInvalid(NICKNAME_MIN, NICKNAME_MAX))
@@ -76,7 +80,9 @@ export function JoinScreen() {
       setLocating(false)
       join.mutate({ nickname: trimmed, location, ...(credential === null ? {} : { credential }) })
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : strings.join.locationError)
+      // Blocked with a known fix: show the steps. The button below them tries again, nickname kept.
+      if (error instanceof LocationBlockedError && error.help !== null) setLocationHelp(error.help)
+      else setProblem(error instanceof Error ? error.message : strings.join.locationError)
       setLocating(false)
     }
   }
@@ -84,6 +90,7 @@ export function JoinScreen() {
   function onGoogle(googleCredential: string) {
     if (busy) return
     setProblem(null)
+    setLocationHelp(null)
     join.reset()
     signIn.mutate(googleCredential)
   }
@@ -135,9 +142,19 @@ export function JoinScreen() {
         </section>
 
         <div className="mt-auto">
-          {message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>}
+          {locationHelp !== null ? (
+            <div className="mb-3"><LocationHelp help={locationHelp} /></div>
+          ) : (
+            message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>
+          )}
           <Button type="submit" disabled={busy}>
-            {locating ? strings.join.locating : join.isPending ? strings.join.submitting : strings.join.submit}
+            {locating
+              ? strings.join.locating
+              : join.isPending
+                ? strings.join.submitting
+                : locationHelp?.canRetry
+                  ? strings.location.blocked.retry
+                  : strings.join.submit}
           </Button>
           <p className="mt-3 text-center text-sm leading-relaxed text-muted">
             {strings.legal.joinPrefix}{' '}
