@@ -27,6 +27,15 @@ describe('CreatePlayerSchema', () => {
     expect(parse(' A ').success).toBe(false);
   });
 
+  it('rejects an offensive nickname with a message a player can read', () => {
+    const result = parse('sh1t');
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('Pick a different nickname.');
+    }
+    expect(parse('Dickson').success).toBe(true);
+  });
+
   it('rejects an unknown neighborhood', () => {
     expect(parse('Sam', 'mesa').success).toBe(false);
   });

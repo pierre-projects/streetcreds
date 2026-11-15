@@ -53,4 +53,16 @@ describe('aggregateLeaderboard', () => {
     ]);
     expect(rows[0]?.playerCount).toBe(4);
   });
+
+  it('shows an offensive nickname as Player and keeps its points', () => {
+    const rows = aggregateLeaderboard([
+      { nickname: 'sh1t', neighborhood: 'asu-campus', points: 90 },
+      { nickname: 'Sam', neighborhood: 'asu-campus', points: 50 },
+    ]);
+    expect(rows[0]).toMatchObject({ points: 140, playerCount: 2 });
+    expect(rows[0]?.topPlayers).toEqual([
+      { nickname: 'Player', points: 90 },
+      { nickname: 'Sam', points: 50 },
+    ]);
+  });
 });
