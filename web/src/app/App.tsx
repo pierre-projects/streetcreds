@@ -5,10 +5,13 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { BoardScreen } from '../features/players/BoardScreen'
+import { DealDetailScreen } from '../features/players/DealDetailScreen'
+import { DealsScreen } from '../features/players/DealsScreen'
 import { HomeScreen } from '../features/players/HomeScreen'
 import { LeaderboardScreen } from '../features/players/LeaderboardScreen'
 import { MapScreen } from '../features/players/MapScreen'
 import { JoinScreen } from '../features/players/JoinScreen'
+import { ReportScreen } from '../features/quests/ReportScreen'
 import { ComingSoon } from './ComingSoon'
 import { Layout } from './Layout'
 import { AboutPage } from './legal/AboutPage'
@@ -45,9 +48,11 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: '/home', element: <HomeScreen /> },
-      { path: '/report', element: <ComingSoon title={strings.comingSoon.report} /> }, // Sarah
+      { path: '/report', element: <ReportScreen /> }, // Sarah
       { path: '/council', element: <ComingSoon title={strings.comingSoon.council} /> }, // Sarah
       { path: '/council/:itemId', element: <ComingSoon title={strings.comingSoon.council} /> }, // Sarah
+      { path: '/deals', element: <DealsScreen /> },
+      { path: '/deals/:partnerId', element: <DealDetailScreen /> },
       { path: '/leaderboard', element: <LeaderboardScreen /> },
       { path: '/map', element: <MapScreen /> },
     ],

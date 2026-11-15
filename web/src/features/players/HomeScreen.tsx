@@ -1,5 +1,5 @@
 // Home: map-first radar HUD. Brand, CIVIC points and neighborhood live in the shell header;
-// this screen is the full-bleed map with Report / Council dock over the pins.
+// this screen is the full-bleed map with Report / Council / Deals dock over the pins.
 import { useQuery } from '@tanstack/react-query'
 import type L from 'leaflet'
 import { useCallback, useMemo, useRef } from 'react'
@@ -14,6 +14,27 @@ import { hasPlace } from './mapReports'
 import { ReportsMap } from './ReportsMap'
 
 const HOME_ZOOM = 14
+
+/** Tag / deal glyph for the Local Deals dock control. */
+function DealsIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+      <path d="M2 17 12 22 22 17" />
+      <path d="M2 12 12 17 22 12" />
+    </svg>
+  )
+}
 
 export function HomeScreen() {
   const mapRef = useRef<L.Map | null>(null)
@@ -51,11 +72,23 @@ export function HomeScreen() {
         <span className="radar-locus" aria-hidden="true" />
       </div>
 
+      <button
+        type="button"
+        className="radar-dock-btn absolute right-3 top-3 z-[1000]"
+        aria-label={strings.home.recenter}
+        onClick={recenter}
+      >
+        <NavigateIcon />
+      </button>
+
       <div className="radar-dock">
         <div className="radar-dock-inner">
-          <button type="button" className="radar-dock-btn" aria-label={strings.home.recenter} onClick={recenter}>
-            <NavigateIcon />
-          </button>
+          <div className="flex w-11 shrink-0 flex-col items-center">
+            <Link to="/deals" className="radar-dock-btn" aria-label={strings.home.dealsTitle}>
+              <DealsIcon />
+            </Link>
+            <span className="radar-dock-caption" aria-hidden="true">{strings.home.dealsShort}</span>
+          </div>
           <Link to="/report" className="radar-dock-primary">
             <span>{strings.home.reportCta}</span>
             <span className="radar-dock-plus" aria-hidden="true"><PlusIcon /></span>

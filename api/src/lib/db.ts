@@ -14,4 +14,6 @@ export const TABLES = {
   players: env.TABLE_PLAYERS,
   reports: env.TABLE_REPORTS,
   awards: env.TABLE_AWARDS,
+  dealUnlocks: env.TABLE_DEAL_UNLOCKS,
+  dealRedemptions: env.TABLE_DEAL_REDEMPTIONS,
 } as const;
