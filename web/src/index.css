@@ -408,6 +408,20 @@ body {
   .leaderboard-top-name { @apply min-w-0 truncate text-ink; }
   .leaderboard-top-place { @apply mr-2 tabular-nums text-muted; }
   .leaderboard-top-points { @apply shrink-0 font-medium tabular-nums text-muted; }
+  /* Beside the smaller numbers the coin is smaller too. */
+  .leaderboard-top-points svg { @apply size-4; }
+  /* The switch between the neighborhoods board and the players board. */
+  .leaderboard-switch { @apply grid grid-cols-2 gap-1 rounded-pill bg-ink/5 p-1; }
+  .leaderboard-switch-option {
+    @apply min-h-11 rounded-pill px-3 text-sm font-medium text-muted focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
+  }
+  .leaderboard-switch-option[aria-pressed="true"] { @apply bg-accent font-bold text-on-accent shadow-sm; }
+  /* One player on the players board: place, nickname over neighborhood, points. */
+  .leaderboard-player { @apply flex min-h-12 items-center gap-3 py-1.5; }
+  .leaderboard-player + .leaderboard-player { @apply border-t border-ink/10; }
+  .leaderboard-player-place { @apply w-7 shrink-0 text-base font-bold tabular-nums text-muted; }
+  .leaderboard-player-name { @apply truncate text-base font-medium text-ink; }
+  .leaderboard-player-team { @apply truncate text-xs text-muted; }
 }
 
 /* Leaflet ships unlayered CSS, so these overrides are unlayered too. */

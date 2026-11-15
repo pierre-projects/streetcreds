@@ -55,7 +55,7 @@ export function ProfileScreen() {
     <div className="space-y-5">
       <ScreenHeader title={strings.profile.title} />
 
-      {/* Who you are and your points, in the same raised, orange-edged card as Home's rank card. */}
+      {/* Who you are, your points and Share, in the same raised, orange-edged card as Home's rank card. */}
       <section className="profile-hero" aria-labelledby="profile-name">
         <div className="flex items-center gap-4">
           <span className="profile-initial" aria-hidden="true">
@@ -87,11 +87,12 @@ export function ProfileScreen() {
             </a>
           </p>
         )}
-      </section>
 
-      <Card>
-        <ShareCard player={me} />
-      </Card>
+        {/* Share sits in the same card (Pierre's #34), so who you are and your points are said once. */}
+        <div className="mt-5 border-t border-ink/10 pt-4">
+          <ShareCard player={me} preview={false} />
+        </div>
+      </section>
 
       <OwnReports playerId={me.id} neighborhood={me.neighborhood} />
 

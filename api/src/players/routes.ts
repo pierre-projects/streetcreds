@@ -9,7 +9,7 @@ import { ApiError } from '../lib/errors';
 import { deleteAccount, googleAccountKey, putNewAccount } from './accounts';
 import { requirePlayer } from './auth';
 import { verifyGoogleCredential } from './google';
-import { aggregateLeaderboard } from './leaderboard';
+import { aggregateLeaderboard, topPlayersOverall } from './leaderboard';
 import { requirePlayLocation } from './location';
 import { ownReports, scanReportsByPlayer, withPhotoUrls } from './playerReports';
 import { CreatePlayerSchema } from './schemas';
@@ -77,8 +77,10 @@ playerRoutes.get('/players/:id/reports', async (c) => {
 });
 
 playerRoutes.get('/leaderboard', async (c) => {
+  const players = await scanPlayers();
   const body: LeaderboardResponse = {
-    neighborhoods: aggregateLeaderboard(await scanPlayers()),
+    neighborhoods: aggregateLeaderboard(players),
+    players: topPlayersOverall(players),
     updatedAt: new Date().toISOString(),
   };
   return c.json(body);

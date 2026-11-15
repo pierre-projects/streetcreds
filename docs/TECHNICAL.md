@@ -246,6 +246,13 @@ export interface LeaderboardRow {
   playerCount: number;
   topPlayers: { nickname: string; points: number }[]; // up to 3
 }
+
+// One player on the players board, which ranks people from every neighborhood together.
+export interface TopPlayer {
+  nickname: string;
+  points: number;
+  neighborhood: NeighborhoodId; // where the player joined
+}
 ```
 
 `shared/api.ts` holds one request type and one response type per route (`CreatePlayerRequest`, `SubmitReportResponse` and so on), plus `ERROR_CODES` and `ApiErrorBody`. The API handlers and `web/src/app/api.ts` both import them, so the two sides cannot drift apart.
@@ -473,8 +480,8 @@ Steps: `requirePlayer`; scan the reports table for that `playerId`; drop drafts 
 Response: `200 { "reports": PublicReport[] }`.
 
 **4. `GET /leaderboard`**
-Response: `200 { "neighborhoods": LeaderboardRow[], "updatedAt": string }`.
-Steps: scan all players; aggregate with the pure function `aggregateLeaderboard(players)`; always return all four neighborhoods, zeros included; sort by points descending, then by name.
+Response: `200 { "neighborhoods": LeaderboardRow[], "players": TopPlayer[], "updatedAt": string }`.
+Steps: scan all players; aggregate with the pure function `aggregateLeaderboard(players)`; always return all four neighborhoods, zeros included; sort by points descending, then by name. From the same scan, `topPlayersOverall(players)` fills `players`: up to 10 players who have points, from any neighborhood, by points descending, then by nickname. `players` was added on 2026-11-15, so a client must treat it as possibly missing until the API has been deployed with it.
 
 **5. `GET /upload-url?playerId={id}`**
 Steps: `404` if the player does not exist; build the key `reports/{playerId}/{uuid}.jpg`; presign a `PutObject` for that key with `ContentType: 'image/jpeg'`, expiring in 300 seconds.
@@ -670,6 +677,8 @@ Scan `open` reports with the same category; return the nearest one within `DUPLI
 
 Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods present, top 3 players each, sorted as in route 4. Has tests.
 
+`topPlayersOverall(players)`, in the same file, is the players board: pure, from `Player[]` to at most 10 `TopPlayer`s. It leaves out players with no points, and shows an offensive nickname as "Player", as the neighborhood rows do. A player can report anywhere in the city and their points count for the neighborhood they joined in, so this board ranks people on everything they earned. Has tests.
+
 ## 7. Frontend
 
 ### Screens
@@ -686,7 +695,7 @@ Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods pres
 | `/report` | Report quest, one screen with steps | Sarah | routes 5, 6, 7 |
 | `/council` | List of council items | Sarah | route 9 |
 | `/council/:itemId` | Summary, question, result | Sarah | routes 9, 10 |
-| `/leaderboard` | Neighborhood ranking | Pierre | route 4, every 4 seconds |
+| `/leaderboard` | Neighborhood ranking, and behind a switch the ten players with the most points | Pierre | route 4, every 4 seconds |
 | `/map` | Pins for open reports | Pierre | route 8 |
 | `/profile` | The player on this device: nickname, neighborhood, points, their own reports on a map and in a list, the street cred card, and "Save your player" or "Sign out". Private: it never shows another player | Pierre | routes 3, 4, 13, 14, 15 |
 
@@ -793,7 +802,7 @@ City ADA survey: This corner has no curb ramp. S MILL AVE & W BROADWAY RD, SW co
 
 ### Street cred card (in `features/quests/share/`, built by Pierre with Sarah's agreement)
 
-- `ShareCard` shows on the reward step (`<ShareCard player earned photoUrl emphasis="secondary" />`) and on the profile (`<ShareCard player />`). It works the same for a guest and a signed-in player.
+- `ShareCard` shows on the reward step (`<ShareCard player earned photoUrl emphasis="secondary" />`) and on the profile (`<ShareCard player preview={false} />`: the profile's own card already shows the logo, nickname, points and neighborhood, so the heading and the picture are left out and only Share and its one-line note show). It works the same for a guest and a signed-in player.
 - `shareCred.ts` (pure, has a test) builds what the card says from the player and the leaderboard: nickname, points, neighborhood and its rank, and what was just earned. Nothing more exact than the neighborhood, and nothing the public leaderboard does not already show.
 - `drawShareCard.ts` draws a 1080 by 1350 PNG on a canvas with the app's token colors and font. `photoUrl` must be a picture already on the device (an object URL): a photo from another site would stop the canvas being saved.
 - The picture is drawn when the card appears, not when Share is pressed, because a phone only opens its share sheet straight from a tap. Share tries, in order: the phone's share sheet with the picture, the share sheet with text and link, then saving the picture and copying the text.
@@ -913,6 +922,7 @@ Unit tests (Vitest) are required for these pure functions and nothing else:
 | Function | Package | Cases that must be covered |
 | --- | --- | --- |
 | `aggregateLeaderboard` | api | Empty input, ties, a neighborhood with no players, an offensive nickname shown as "Player" |
+| `topPlayersOverall` | api | Nobody with points, ties, more than 10 players, more than 3 from one neighborhood, an offensive nickname shown as "Player" |
 | `isBlockedNickname` | api | Ordinary names pass; real names that contain a bad word pass; leetspeak and spaced-out letters are caught |
 | `haversineMeters` | api | Same point is 0; two points about 30 m apart; about 1 km apart |
 | `checkReportLimit` (the rate-limit helper) | api | Times older than one hour are dropped; the fifth passes, the sixth fails |
@@ -1039,6 +1049,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 - Shows each neighborhood's total points and its top 3 players.
 - Updates within 5 seconds of a new award.
 - The player's own neighborhood is highlighted.
+- "Players" on the switch shows up to ten players from every neighborhood, most points first, each with the neighborhood they joined in. Players with no points are not listed.
 
 **F5. Council quest (P1)**
 - At least 3 real items from a current Tempe City Council agenda, summarized ahead of time and checked by a person.

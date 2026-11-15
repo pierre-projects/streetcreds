@@ -1,7 +1,7 @@
 // The street cred card: a picture of the player's points and neighborhood that they can send
 // to anyone. It works the same for a guest and a signed-in player.
 //
-//   <ShareCard player={player} />                                  on the profile
+//   <ShareCard player={player} preview={false} />                  on the profile, under its own card
 //   <ShareCard player={player} earned={...} photoUrl={previewUrl} />   right after a report
 //
 // The picture is drawn as soon as the card appears, not when Share is pressed: a phone only
@@ -26,6 +26,11 @@ interface ShareCardProps {
   photoUrl?: string | null
   /** 'secondary' where the screen already has its one primary action. */
   emphasis?: 'primary' | 'secondary'
+  /**
+   * False where the screen already shows the same facts, as the profile's own card does. The
+   * heading and the picture are left out, so nothing is said twice. Share still sends the picture.
+   */
+  preview?: boolean
 }
 
 function download(url: string, name: string) {
@@ -37,7 +42,7 @@ function download(url: string, name: string) {
   link.remove()
 }
 
-export function ShareCard({ player, earned, photoUrl = null, emphasis = 'primary' }: ShareCardProps) {
+export function ShareCard({ player, earned, photoUrl = null, emphasis = 'primary', preview = true }: ShareCardProps) {
   const text = questStrings.share
   // The same leaderboard the rest of the app polls, for the neighborhood's rank.
   const leaderboard = useQuery({ queryKey: leaderboardKey, queryFn: api.getLeaderboard, refetchInterval: POLL_MS })
@@ -110,22 +115,28 @@ export function ShareCard({ player, earned, photoUrl = null, emphasis = 'primary
 
   return (
     <div>
-      <h2 className="section-title">{text.title}</h2>
-      <p className="mt-1 text-sm leading-relaxed text-muted">{text.hint}</p>
-      {card ? (
-        <img
-          src={card.url}
-          alt={`${text.previewAlt}: ${buildShareText(cred)}`}
-          width={CARD_WIDTH}
-          height={CARD_HEIGHT}
-          className="mx-auto mt-4 h-auto w-44 rounded-control border border-ink/10"
-        />
-      ) : (
-        <p role="status" className="mt-4 text-sm text-muted">{text.preparing}</p>
+      {preview && (
+        <>
+          <h2 className="section-title">{text.title}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{text.hint}</p>
+          {card ? (
+            <img
+              src={card.url}
+              alt={`${text.previewAlt}: ${buildShareText(cred)}`}
+              width={CARD_WIDTH}
+              height={CARD_HEIGHT}
+              className="mx-auto mt-4 h-auto w-44 rounded-control border border-ink/10"
+            />
+          ) : (
+            <p role="status" className="mt-4 text-sm text-muted">{text.preparing}</p>
+          )}
+        </>
       )}
-      <Button variant={emphasis} className="mt-4" onClick={() => void share()}>
+      <Button variant={emphasis} className={preview ? 'mt-4' : undefined} onClick={() => void share()}>
         {text.button}
       </Button>
+      {/* Without the picture on screen, what Share sends is said under the button. */}
+      {!preview && <p className="mt-3 text-center text-sm leading-relaxed text-muted">{text.hint}</p>}
       <p role="status" className="mt-3 min-h-5 text-sm text-muted">{outcome === null ? '' : text[outcome]}</p>
     </div>
   )

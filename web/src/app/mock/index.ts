@@ -184,7 +184,15 @@ export const mockApi: Api = {
           : row,
       )
       .sort((a, b) => b.points - a.points)
-    return { neighborhoods, updatedAt: new Date().toISOString() }
+    // The players board. The fixtures only name each neighborhood's top three, which is enough to fill it.
+    const players = [
+      ...mockLeaderboard.flatMap((row) => row.topPlayers.map((top) => ({ ...top, neighborhood: row.neighborhood }))),
+      { nickname: player.nickname, points: player.points, neighborhood: player.neighborhood },
+    ]
+      .filter((entry) => entry.points > 0)
+      .sort((a, b) => b.points - a.points || a.nickname.localeCompare(b.nickname))
+      .slice(0, 10)
+    return { neighborhoods, players, updatedAt: new Date().toISOString() }
   },
 
   async getUploadUrl(playerId) {
