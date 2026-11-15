@@ -1,11 +1,14 @@
 import { useRef, useState } from 'react'
-import { CATEGORIES } from '../../../../shared/constants'
-import type { Award, Category, DealUnlockView, LocationFix, Player, Report } from '../../../../shared/types'
+import { CATEGORIES, POINTS } from '../../../../shared/constants'
+import type { Award, Category, DealUnlockView, LocationFix, Player, Report, Severity } from '../../../../shared/types'
 import { api, ApiError } from '../../app/api'
 import { readCurrentLocation } from '../../app/location'
 import { usePlayer } from '../../app/player'
-import { Button, Card, ErrorNotice, OptionCard, ScreenHeader } from '../../app/ui'
+import { Badge, Button, Card, ErrorNotice, OptionCard } from '../../app/ui'
 import { CityHandoff } from '../players/CityHandoff'
+import { MayorSays } from './MayorSays'
+import { QuestHeader } from './QuestHeader'
+import { CameraIcon } from './QuestIcons'
 import { resizeImage } from './resizeImage'
 import { RewardCard } from './RewardCard'
 import { ShareCard } from './share/ShareCard'
@@ -22,6 +25,40 @@ type Phase =
   | 'submitting'
   | 'reward'
   | 'error'
+
+const TOTAL_STEPS = 3
+
+/** Step 1 is the photo, step 2 is checking the label, step 3 is the location and the send. */
+function stepFor(phase: Phase): number {
+  if (phase === 'confirm') return 2
+  if (phase === 'locating' || phase === 'location-error' || phase === 'submitting' || phase === 'reward') return 3
+  return 1
+}
+
+const SEVERITY_BADGE: Record<Severity, string> = {
+  low: 'bg-severity-low text-on-accent',
+  medium: 'bg-severity-medium text-on-accent',
+  high: 'bg-severity-high text-on-quest',
+}
+
+/** The photo, or the dashed frame that waits for one. */
+function PhotoFrame({ previewUrl }: { previewUrl: string | null }) {
+  if (previewUrl) {
+    return (
+      <img
+        src={previewUrl}
+        alt={questStrings.report.photoAlt}
+        className="aspect-[4/3] w-full rounded-card border border-ink/10 object-cover"
+      />
+    )
+  }
+  return (
+    <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-card border-2 border-dashed border-ink/20 text-muted">
+      <CameraIcon />
+      <p className="text-sm">{questStrings.report.photoPlaceholder}</p>
+    </div>
+  )
+}
 
 export function ReportScreen() {
   const playerQuery = usePlayer()
@@ -115,7 +152,7 @@ export function ReportScreen() {
   }
 
   if (playerQuery.isPending) {
-    return <p className="text-muted">{questStrings.report.resizing}</p>
+    return <p className="text-muted" role="status">{questStrings.report.resizing}</p>
   }
   if (playerQuery.isError || !playerQuery.data) {
     return (
@@ -128,17 +165,61 @@ export function ReportScreen() {
     )
   }
 
+  const busy =
+    phase === 'resizing' || phase === 'uploading' || phase === 'labeling' || phase === 'locating' || phase === 'submitting'
+  const busyText =
+    phase === 'resizing'
+      ? questStrings.report.resizing
+      : phase === 'uploading'
+        ? questStrings.report.uploading
+        : phase === 'labeling'
+          ? questStrings.mayor.looking
+          : phase === 'locating'
+            ? questStrings.mayor.locating
+            : questStrings.mayor.submitting
+
+  if (phase === 'reward' && award && player) {
+    return (
+      <div className="space-y-5">
+        <RewardCard award={award} player={player} unlock={unlock} />
+        {/* The street cred card, with the photo that is still on this phone. */}
+        {report ? (
+          <Card>
+            <ShareCard
+              player={player}
+              earned={{ points: award.points, category: report.category }}
+              photoUrl={previewUrl}
+              emphasis="secondary"
+            />
+          </Card>
+        ) : null}
+        {/* Passing the report on to the City's own form. The photo is the one still on this phone. */}
+        {report ? (
+          <Card>
+            <CityHandoff report={report} photoHref={previewUrl} emphasis="secondary" />
+          </Card>
+        ) : null}
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      <ScreenHeader title={questStrings.report.title} />
+    <div className="space-y-5">
+      <QuestHeader title={questStrings.report.title} step={stepFor(phase)} total={TOTAL_STEPS} />
+
+      <PhotoFrame previewUrl={previewUrl} />
 
       {phase === 'idle' ? (
-        <div className="space-y-3">
-          <p className="text-sm text-muted">{questStrings.report.captureHint}</p>
-          <Button onClick={() => cameraRef.current?.click()}>{questStrings.report.takePhoto}</Button>
-          <Button variant="secondary" onClick={() => galleryRef.current?.click()}>
-            {questStrings.report.chooseGallery}
-          </Button>
+        <>
+          <MayorSays>
+            <p className="text-base text-ink">{questStrings.mayor.capture}</p>
+          </MayorSays>
+          <div className="grid gap-3">
+            <Button onClick={() => cameraRef.current?.click()}>{questStrings.report.takePhoto}</Button>
+            <Button variant="secondary" onClick={() => galleryRef.current?.click()}>
+              {questStrings.report.chooseGallery}
+            </Button>
+          </div>
           <input
             ref={cameraRef}
             type="file"
@@ -154,74 +235,63 @@ export function ReportScreen() {
             className="hidden"
             onChange={(e) => void onFile(e.target.files?.[0])}
           />
-        </div>
+        </>
       ) : null}
 
-      {phase === 'resizing' || phase === 'uploading' || phase === 'labeling' || phase === 'locating' || phase === 'submitting' ? (
-        <p className="text-muted" role="status">
-          {phase === 'resizing'
-            ? questStrings.report.resizing
-            : phase === 'uploading'
-              ? questStrings.report.uploading
-              : phase === 'labeling'
-                ? questStrings.report.labeling
-                : phase === 'locating'
-                  ? questStrings.report.locating
-                  : questStrings.report.submitting}
-        </p>
+      {busy ? (
+        <MayorSays live>
+          <p className="text-base text-ink" role="status">
+            {busyText}
+          </p>
+        </MayorSays>
       ) : null}
 
       {phase === 'confirm' && report ? (
-        <div className="space-y-4">
-          <p className="text-base text-ink">{questStrings.report.confirmTitle}</p>
-          {previewUrl ? <img src={previewUrl} alt="" className="w-full rounded-control border border-ink" /> : null}
-          <p className="text-sm text-ink">{report.description}</p>
-          <p className="text-sm text-muted">
-            {questStrings.report.severityLabel}: {questStrings.severities[report.severity]}
-          </p>
-          <fieldset className="space-y-2">
-            <legend className="text-sm text-ink">{questStrings.report.categoryLabel}</legend>
-            {CATEGORIES.map((id) => (
-              <OptionCard
-                key={id}
-                name="report-category"
-                value={id}
-                checked={category === id}
-                onChange={setCategory}
-                label={questStrings.categories[id]}
-              />
-            ))}
+        <>
+          <MayorSays>
+            <p className="text-base text-ink">{report.description}</p>
+            <p className="mt-3 flex flex-wrap items-center gap-2">
+              <Badge className={SEVERITY_BADGE[report.severity]}>
+                {questStrings.report.severityBadge(questStrings.severities[report.severity])}
+              </Badge>
+              <span className="text-sm text-muted">{questStrings.severityNotes[report.severity]}</span>
+            </p>
+          </MayorSays>
+
+          <fieldset className="space-y-3">
+            <legend className="mb-3 text-sm font-semibold text-muted">{questStrings.report.categoryLabel}</legend>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((id) => (
+                <OptionCard
+                  key={id}
+                  name="report-category"
+                  value={id}
+                  checked={category === id}
+                  onChange={setCategory}
+                  label={questStrings.categories[id]}
+                  look="chip"
+                />
+              ))}
+            </div>
           </fieldset>
-          <p className="text-sm leading-relaxed text-muted">{questStrings.report.locationRequired}</p>
-          <Button onClick={() => void requestLocation()}>{questStrings.report.submit}</Button>
-        </div>
+
+          <div className="space-y-3 pt-2">
+            <p className="text-center text-xs leading-relaxed text-muted">{questStrings.report.locationHint}</p>
+            <Button variant="quest" onClick={() => void requestLocation()}>
+              {questStrings.report.submitFor(POINTS['report-new'])}
+            </Button>
+          </div>
+        </>
       ) : null}
 
       {phase === 'location-error' ? (
         <div className="space-y-3">
           <ErrorNotice message={error} fallback={questStrings.report.locationRequired} />
           <Button onClick={() => void requestLocation()}>{questStrings.report.retryLocation}</Button>
-          <Button variant="secondary" onClick={reset}>{questStrings.report.tryAnother}</Button>
+          <Button variant="secondary" onClick={reset}>
+            {questStrings.report.tryAnother}
+          </Button>
         </div>
-      ) : null}
-
-      {phase === 'reward' && award && player ? <RewardCard award={award} player={player} unlock={unlock} /> : null}
-      {/* The street cred card, with the photo that is still on this phone. */}
-      {phase === 'reward' && award && player && report ? (
-        <Card>
-          <ShareCard
-            player={player}
-            earned={{ points: award.points, category: report.category }}
-            photoUrl={previewUrl}
-            emphasis="secondary"
-          />
-        </Card>
-      ) : null}
-      {/* Passing the report on to the City's own form. The photo is the one still on this phone. */}
-      {phase === 'reward' && report ? (
-        <Card>
-          <CityHandoff report={report} photoHref={previewUrl} emphasis="secondary" />
-        </Card>
       ) : null}
 
       {phase === 'error' ? (

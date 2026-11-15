@@ -5,51 +5,51 @@
    (bg-page, bg-surface, text-ink, text-muted, bg-accent, text-severity-high, ...)
    and never a raw color in a component. */
 @font-face {
-  font-family: "Outfit";
-  src: url('/fonts/Outfit-400.woff2') format('woff2');
+  font-family: "Inter";
+  src: url('/fonts/Inter-var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Russo One";
+  src: url('/fonts/RussoOne-400.woff2') format('woff2');
   font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Outfit";
-  src: url('/fonts/Outfit-500.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Outfit";
-  src: url('/fonts/Outfit-700.woff2') format('woff2');
-  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @theme static {
   --color-*: initial;
-  --color-page: #ffffff;
-  --color-surface: #ffffff;
-  --color-line: rgb(10 10 10 / .5);
-  --color-ink: #0a0a0a;
-  --color-muted: #545454;
-  --color-accent: #ff6700;
-  --color-on-accent: #0a0a0a;
-  --color-on-ink: #ffffff;
-  /* The CIVIC coin. Amber is too light for text on white, so it is only ever the coin's own color. */
+  /* Light game palette: white surfaces, warm dark ink; Blaze orange, Signal red, Coin amber accents. */
+  --color-page: #FAF7F4;
+  --color-surface: #FFFFFF;
+  --color-raised: #F3EDE7;
+  --color-line: rgb(26 18 16 / .5);
+  --color-ink: #1A1210;
+  --color-muted: #6B5E55;
+  --color-accent: #FF7A1A;
+  --color-accent-soft: #FF7A1A;
+  --color-on-accent: #1A1210;
+  --color-on-ink: #FFFFFF;
+  --color-quest: #D62828;
+  --color-on-quest: #FFF4EC;
   --color-coin: #FFB02E;
+  /* Coin amber is too light for text on white, so numbers use a deeper amber. The coin itself stays #FFB02E. */
+  --color-coin-ink: #B86E00;
   --color-on-coin: #1A1210;
-  --color-severity-low: #2e7d32;
-  --color-severity-medium: #9a5b00;
-  --color-severity-high: #c62828;
-  --font-sans: "Outfit", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --color-severity-low: #4CAF50;
+  --color-severity-medium: #F2A900;
+  --color-severity-high: #D62828;
+  --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --font-display: "Russo One", "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --radius-control: 14px;
+  --radius-control: 12px;
   --radius-card: 16px;
   --radius-pill: 9999px;
-  --shadow-float: 0 8px 28px rgb(10 10 10 / .12);
-  --surface-frost: rgb(255 255 255 / .82);
-  --surface-frost-strong: rgb(255 255 255 / .92);
+  --shadow-float: 0 6px 22px rgb(26 18 16 / .10);
+  --surface-frost: rgb(255 255 255 / .85);
+  --surface-frost-strong: rgb(255 255 255 / .94);
   --blur-frost: 18px;
   --text-display: 4rem;
   --text-display--line-height: 1;
@@ -120,7 +120,7 @@ body {
     justify-content: space-between;
     gap: 0.75rem;
     border-radius: var(--radius-pill);
-    border: 1px solid rgb(10 10 10 / .08);
+    border: 1px solid rgb(26 18 16 / .08);
     background: var(--surface-frost);
     padding: 0.5rem 0.85rem 0.5rem 0.65rem;
     box-shadow: var(--shadow-float);
@@ -180,9 +180,9 @@ body {
   .app-main-radar { @apply absolute inset-0 flex flex-col p-0; }
   /* A screen fades in when the player moves to it, so one screen does not snap into the next. */
   .screen-enter { animation: fade-in 0.16s ease-out backwards; }
-  .points-total { @apply text-display font-bold text-accent; overflow-wrap: anywhere; }
-  .dark-detail { @apply border-t border-on-ink/30 pt-4 text-sm text-on-ink/70; }
-  .wallet-link { @apply inline-flex min-h-11 items-center text-on-ink underline focus-visible:outline-2 focus-visible:outline-offset-4; }
+  .points-total { @apply font-display text-display text-coin-ink; overflow-wrap: anywhere; }
+  .dark-detail { @apply border-t border-ink/10 pt-4 text-sm text-muted; }
+  .wallet-link { @apply inline-flex min-h-11 items-center text-ink underline focus-visible:outline-2 focus-visible:outline-offset-4; }
   .section-title { @apply text-lg font-bold text-ink; }
   /* Heights inside a scrolling page use svh, not dvh: dvh changes while the phone's address bar
      slides away during a scroll, and the map would change height under the player's finger. */
@@ -319,13 +319,56 @@ body {
     @apply fixed left-6 top-3 z-20 hidden min-h-11 items-center gap-2 rounded-pill border border-ink/10 bg-surface/90 px-4 text-sm text-ink shadow-float backdrop-blur-md hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink lg:inline-flex;
   }
 
+  /* ---- The game design (Night / Card / Raised, Russo One titles, flat bars) ---- */
+  .app-header-wrap { @apply static px-4; padding-top: max(1rem, env(safe-area-inset-top)); }
+  .app-header {
+    @apply rounded-none border-0 bg-transparent px-0 py-0 shadow-none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .coin-pill {
+    @apply inline-flex min-h-10 items-center gap-2 rounded-control border border-ink/10 bg-surface px-3 font-display text-lg tabular-nums text-ink;
+  }
+  .app-nav { @apply bottom-0 px-0; }
+  .app-nav-inner {
+    @apply max-w-[480px] gap-0 rounded-none border-0 border-t border-ink/10 bg-page p-0 shadow-none;
+    padding-bottom: env(safe-area-inset-bottom);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .app-nav-link {
+    @apply min-h-16 rounded-none border-t-2 border-transparent font-display text-[11px] uppercase tracking-[0.1em];
+  }
+  .app-nav-link[aria-current="page"] { @apply border-accent bg-transparent text-ink; }
+  .app-main { @apply pb-24 pt-4; }
+  .app-main-quest { @apply pb-8; padding-top: max(1rem, env(safe-area-inset-top)); }
+  .rank-card {
+    @apply flex min-h-11 items-center gap-4 rounded-card border border-accent bg-raised p-4 focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink motion-safe:transition-transform motion-safe:active:scale-[0.99];
+  }
+  .rank-tile {
+    @apply flex size-11 shrink-0 items-center justify-center rounded-control bg-coin font-display text-xl text-on-coin;
+  }
+  .quest-row {
+    @apply flex min-h-11 items-center gap-4 rounded-card border border-ink/10 bg-surface p-4 text-ink hover:border-ink/25 focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink motion-safe:transition-transform motion-safe:active:scale-[0.99];
+  }
+  .quest-row.is-locked { @apply opacity-70 hover:border-ink/10 active:scale-100; }
+  .quest-icon { @apply flex size-12 shrink-0 items-center justify-center rounded-control; }
+  .quest-points { @apply flex shrink-0 items-center gap-1.5 font-display text-lg tabular-nums text-coin-ink; }
+  .profile-hero { @apply rounded-card border border-accent bg-raised p-5; }
+  .profile-initial {
+    @apply flex size-16 shrink-0 items-center justify-center rounded-full bg-accent font-display text-3xl text-on-accent ring-1 ring-accent ring-offset-2 ring-offset-raised;
+  }
+  .team-tile {
+    @apply flex min-h-12 items-center justify-center rounded-control border border-ink/10 bg-raised px-3 text-center text-sm font-bold text-ink;
+  }
+
   /* Leaderboard: frost rows that read as a live board, not a dense table. */
   .leaderboard { @apply flex flex-col gap-4; }
   .leaderboard-status { @apply text-sm text-muted; }
   .leaderboard-list { @apply flex flex-col gap-3; }
   .leaderboard-row {
     border-radius: var(--radius-card);
-    border: 1px solid rgb(10 10 10 / .08);
+    border: 1px solid rgb(26 18 16 / .08);
     background: var(--surface-frost-strong);
     padding: 1rem;
     box-shadow: var(--shadow-float);
@@ -339,7 +382,7 @@ body {
   .leaderboard-row:nth-child(4) { animation-delay: 0.16s; }
   .leaderboard-row.is-yours {
     border-color: transparent;
-    background: color-mix(in srgb, var(--color-accent) 10%, white);
+    background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
     box-shadow: var(--shadow-float);
   }
   .leaderboard-row-main { @apply flex items-start justify-between gap-3; }
@@ -372,7 +415,7 @@ body {
   .leaderboard-switch-option {
     @apply min-h-11 rounded-pill px-3 text-sm font-medium text-muted focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
   }
-  .leaderboard-switch-option[aria-pressed="true"] { @apply bg-ink text-on-ink; }
+  .leaderboard-switch-option[aria-pressed="true"] { @apply bg-accent font-bold text-on-accent shadow-sm; }
   /* One player on the players board: place, nickname over neighborhood, points. */
   .leaderboard-player { @apply flex min-h-12 items-center gap-3 py-1.5; }
   .leaderboard-player + .leaderboard-player { @apply border-t border-ink/10; }
@@ -390,12 +433,13 @@ body {
 .map-frame .leaflet-tile-pane,
 .board-map .leaflet-tile-pane,
 .map-frame-radar .leaflet-tile-pane {
-  filter: grayscale(0.55) contrast(1.05) brightness(0.96);
+  /* Esri light gray tiles: quiet, so the pins stand out. */
+  filter: none;
 }
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
   border-radius: var(--radius-card);
-  border: 1px solid rgb(10 10 10 / .12);
+  border: 1px solid rgb(26 18 16 / .12);
   background: var(--color-surface);
   color: var(--color-ink);
   box-shadow: var(--shadow-float);
@@ -407,7 +451,7 @@ body {
   right: 0;
   width: 44px;
   height: 44px;
-  border: 1px solid rgb(10 10 10 / .12);
+  border: 1px solid rgb(26 18 16 / .12);
   border-radius: 0 var(--radius-card) 0 var(--radius-control);
   background: var(--color-surface);
   color: var(--color-ink);
@@ -415,7 +459,7 @@ body {
 }
 
 .leaflet-touch .leaflet-bar, .leaflet-bar {
-  border: 1px solid rgb(10 10 10 / .12);
+  border: 1px solid rgb(26 18 16 / .12);
   border-radius: var(--radius-control);
   box-shadow: var(--shadow-float);
   overflow: hidden;
@@ -425,7 +469,7 @@ body {
   height: 44px;
   line-height: 44px;
   border-radius: var(--radius-control);
-  border-bottom-color: rgb(10 10 10 / .12);
+  border-bottom-color: rgb(26 18 16 / .12);
   background: var(--surface-frost-strong);
   color: var(--color-ink);
 }

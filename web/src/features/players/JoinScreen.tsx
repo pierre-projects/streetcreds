@@ -15,7 +15,7 @@ import { legalLinkClass } from '../../app/legal/LegalLinks'
 import { readCurrentLocation } from '../../app/location'
 import { completeSignIn, getStoredPlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
-import { Button, ErrorNotice, LogoMark, TextField } from '../../app/ui'
+import { Button, ErrorNotice, MayorAvatar, MayorSays, TextField, Wordmark } from '../../app/ui'
 import { GoogleSignInButton } from './GoogleSignInButton'
 
 const isCode = (error: unknown, code: ApiError['code']) => error instanceof ApiError && error.code === code
@@ -96,16 +96,23 @@ export function JoinScreen() {
     problem ||
     (joinFailed ? join.error.message || strings.errors.generic : null) ||
     (signInFailed ? signIn.error.message || strings.auth.failed : null)
+  const game = strings.game.join
 
   return (
-    <main className="app-column flex flex-col px-4 pb-6 pt-6">
+    <main className="app-column flex flex-col px-5 pb-6 pt-8">
       <BoardLink />
-      {/* The name once, as the screen's title, under the mark. */}
-      <header className="flex flex-col items-center gap-3 text-center">
-        <LogoMark className="size-14" />
-        <h1 className="text-4xl font-bold tracking-tight text-ink">{strings.appName}</h1>
-        <p className="text-balance text-base text-muted">{strings.tagline}</p>
-      </header>
+      <div className="flex flex-col items-center gap-4 text-center">
+        <MayorAvatar size="large" />
+        <h1>
+          <Wordmark className="text-5xl" />
+        </h1>
+      </div>
+
+      <div className="mt-5">
+        <MayorSays avatar={false}>
+          <p className="text-center text-base text-ink">{game.mayor}</p>
+        </MayorSays>
+      </div>
 
       {GOOGLE_SIGN_IN_ON && (
         <section className="mt-6 space-y-2">
@@ -122,7 +129,7 @@ export function JoinScreen() {
 
       <form onSubmit={submit} noValidate className="mt-6 flex flex-1 flex-col gap-6">
         <TextField
-          label={strings.join.nicknameLabel}
+          label={game.nickname}
           hint={strings.join.nicknameHint(NICKNAME_MIN, NICKNAME_MAX)}
           name="nickname" type="text" value={nickname}
           onChange={(event) => setNickname(event.target.value)}
@@ -130,30 +137,27 @@ export function JoinScreen() {
         />
 
         <section aria-labelledby="join-location" className="space-y-3">
-          <h2 id="join-location" className="text-base font-medium text-ink">{strings.join.neighborhoodLabel}</h2>
+          <h2 id="join-location" className="text-sm font-semibold text-muted">{strings.join.neighborhoodLabel}</h2>
           {/* The four teams. Your location picks yours when you join, so these are not buttons. */}
-          <ul className="grid grid-cols-2 gap-2" aria-label={strings.join.teamsLabel}>
+          <ul className="grid grid-cols-2 gap-2" aria-label={game.teams}>
             {NEIGHBORHOODS.map((n) => (
-              <li key={n.id} className="flex min-h-10 items-center justify-center rounded-control bg-ink/5 px-3 text-center text-sm font-medium text-ink">
-                {n.name}
-              </li>
+              <li key={n.id} className="team-tile">{n.name}</li>
             ))}
           </ul>
           <p className="text-sm leading-relaxed text-muted">{strings.join.locationHint}</p>
           <Link to="/board" className={legalLinkClass}>{strings.join.watchBoard}</Link>
         </section>
 
-        {/* Stays at the bottom of the screen while the rest scrolls under it, so the button to join
-            (and what went wrong, if anything) is in view on a short phone too. */}
+        {/* Pierre: stays at the bottom while the rest scrolls, so Join is in view on a short phone. */}
         <div className="sticky bottom-0 mt-auto bg-page py-3">
           {message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>}
           <Button type="submit" disabled={busy}>
-            {locating ? strings.join.locating : join.isPending ? strings.join.submitting : strings.join.submit}
+            {locating ? strings.join.locating : join.isPending ? strings.join.submitting : game.start}
           </Button>
         </div>
-
-        <div className="-mt-6">
-          <p className="text-center text-sm leading-relaxed text-muted">
+        <div>
+          <p className="mt-3 text-center text-xs leading-relaxed text-muted">{game.finePrint}</p>
+          <p className="mt-1 text-center text-xs leading-relaxed text-muted">
             {strings.legal.joinPrefix}{' '}
             <Link to="/terms" className={legalLinkClass}>{strings.legal.pages.terms.label}</Link>{' '}
             {strings.legal.joinAnd}{' '}

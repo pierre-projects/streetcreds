@@ -2,5 +2,5 @@
 import type { HTMLAttributes } from 'react'
 import { cx } from './cx'
 export function Badge({ className, ...props }: HTMLAttributes<HTMLSpanElement>) {
-  return <span {...props} className={cx('inline-flex shrink-0 items-center rounded-pill border border-transparent bg-accent px-3 py-1 font-mono text-xs font-semibold tabular-nums text-on-accent', className)} />
+  return <span {...props} className={cx('inline-flex shrink-0 items-center rounded-pill border border-transparent bg-accent px-3 py-1 text-xs font-bold tabular-nums text-on-accent', className)} />
 }

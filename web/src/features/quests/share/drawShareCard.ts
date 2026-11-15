@@ -8,7 +8,7 @@ export const CARD_WIDTH = 1080
 export const CARD_HEIGHT = 1350
 
 const MARGIN = 84
-const FONT = '"Outfit", "Helvetica Neue", Helvetica, Arial, sans-serif'
+const FONT = '"Inter", "Helvetica Neue", Helvetica, Arial, sans-serif'
 const PHOTO_HEIGHT = 430
 const PHOTO_RADIUS = 36
 /** The brand mark from the logo pack, the same file LogoMark shows. */
@@ -77,9 +77,9 @@ function drawCover(
  */
 export async function drawShareCard(cred: ShareCred, photoUrl?: string | null): Promise<Blob> {
   const text = questStrings.share
-  const ink = token('--color-ink', '#0a0a0a')
+  const ink = token('--color-page', '#0D0B0A')
   const accent = token('--color-accent', '#ff6700')
-  const light = token('--color-on-ink', '#ffffff')
+  const light = token('--color-ink', '#FFF4EC')
   const soft = 'rgb(255 255 255 / .7)'
   const inner = CARD_WIDTH - MARGIN * 2
 

@@ -1,6 +1,22 @@
 import type { Category, Severity } from '../../../../shared/types'
 
 export const questStrings = {
+  // Mayor Patch, the mascot who talks the player through each quest.
+  mayor: {
+    name: 'Mayor Patch',
+    capture: 'Snap the problem, not the people. I will take it from there.',
+    looking: 'Hang on, let me take a look…',
+    locating: 'Now, where exactly is this? Checking your location…',
+    submitting: 'Sending it to the board…',
+    councilList: 'Read one real item from Tempe City Council and answer one question. Easy points.',
+    councilItem: 'Read this, then tell me what you think the answer is.',
+    councilWrong: 'Not quite. Read it again and pick another answer.',
+    councilDone: 'You already earned points for this one.',
+  },
+  steps: {
+    of: (step: number, total: number) => `Step ${step} of ${total}`,
+    cancel: 'Cancel',
+  },
   council: {
     listTitle: 'Council quest',
     listSubtitle: 'Read a short summary of a real Tempe City Council item and answer one question.',
@@ -13,24 +29,32 @@ export const questStrings = {
     answered: 'Done',
     alreadyEarned: 'You already earned points for this item.',
     source: 'Official agenda',
+    questionLabel: 'Your question',
     submit: 'Check answer',
+    submitFor: (points: number) => `Check answer for ${points} points`,
     submitting: 'Checking…',
     wrong: 'Not quite. Pick another answer and try again.',
     submitError: 'Could not check that answer. Try again.',
     retry: 'Try again',
+    points: (points: number) => `+${points}`,
   },
   report: {
-    title: 'Report a street problem',
+    title: 'Report quest',
     captureHint: 'Take a clear photo of the problem, not of people.',
+    photoPlaceholder: 'Your photo shows here',
+    photoAlt: 'Your photo of the street problem',
     takePhoto: 'Take a photo',
     chooseGallery: 'Choose from gallery',
     resizing: 'Preparing your photo…',
     uploading: 'Uploading…',
     labeling: 'Checking the photo…',
     confirmTitle: 'Does this look right?',
-    categoryLabel: 'What kind of problem?',
+    categoryLabel: 'Did I get the category right?',
     severityLabel: 'How serious?',
+    severityBadge: (severity: string) => `${severity} severity`,
     submit: 'Submit report',
+    submitFor: (points: number) => `Submit for ${points} points`,
+    locationHint: 'We will ask for your location next, so the city knows where it is. You need to be in Tempe.',
     locating: 'Finding your location…',
     locationRequired: 'Your report uses your current location. Location access is required, and you must be in Tempe.',
     retryLocation: 'Retry location and submit',
@@ -39,6 +63,7 @@ export const questStrings = {
     retry: 'Try again',
   },
   reward: {
+    title: 'Quest complete',
     eyebrow: 'Points earned',
     total: (points: number) => `${points} pts total`,
     pending: 'On-chain confirmation pending',
@@ -90,5 +115,11 @@ export const questStrings = {
     low: 'Low',
     medium: 'Medium',
     high: 'High',
+  } satisfies Record<Severity, string>,
+  /** The short line beside the severity badge, under the mascot's description. */
+  severityNotes: {
+    low: 'Worth a look',
+    medium: 'Should be fixed soon',
+    high: 'Safety hazard right now',
   } satisfies Record<Severity, string>,
 }
