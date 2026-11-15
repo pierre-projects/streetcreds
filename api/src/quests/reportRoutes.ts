@@ -1,6 +1,6 @@
 // Report quest routes (Sarah): upload URL, create draft, submit, list.
 import { randomUUID } from 'node:crypto';
-import { PutObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Hono } from 'hono';
 import type {
@@ -12,20 +12,16 @@ import type {
 import { POINTS } from '../../../shared/constants';
 import type { PublicReport, Report } from '../../../shared/types';
 import { checkDealUnlock } from '../deals/checkDealUnlock';
-import { env, requireEnv } from '../lib/env';
 import { ApiError } from '../lib/errors';
 import { getPlayer } from '../players/store';
 import { checkReportLimit } from '../players/rateLimit';
 import { awardPoints } from '../points/awardPoints';
 import { labelPhoto } from './labelPhoto';
 import { getReport, publishReport, putReport, scanOpenReports, setRecentReportTimes } from './reportStore';
+import { photoBucket, s3 } from './s3';
 import { CreateReportSchema, SubmitReportSchema } from './schemas';
 
 export const reportRoutes = new Hono();
-
-function s3(): S3Client {
-  return new S3Client({ region: env.AWS_REGION });
-}
 
 reportRoutes.get('/upload-url', async (c) => {
   const playerId = c.req.query('playerId');
@@ -33,12 +29,11 @@ reportRoutes.get('/upload-url', async (c) => {
   const player = await getPlayer(playerId);
   if (!player) throw new ApiError('not_found', 'We could not find that player.');
 
-  const bucket = requireEnv('PHOTO_BUCKET');
   const photoKey = `reports/${playerId}/${randomUUID()}.jpg`;
   const uploadUrl = await getSignedUrl(
-    s3(),
+    s3,
     new PutObjectCommand({
-      Bucket: bucket,
+      Bucket: photoBucket(),
       Key: photoKey,
       ContentType: 'image/jpeg',
     }),
@@ -123,7 +118,6 @@ reportRoutes.post('/reports/:id/submit', async (c) => {
     console.error(JSON.stringify({ level: 'error', where: 'checkDealUnlock', message: String(error) }));
   }
 
-  // Re-read player in case unlock path did nothing; awardedPlayer already has new points.
   const body: SubmitReportResponse = {
     report: published,
     award,
@@ -135,14 +129,14 @@ reportRoutes.post('/reports/:id/submit', async (c) => {
 });
 
 reportRoutes.get('/reports', async (c) => {
-  const bucket = requireEnv('PHOTO_BUCKET');
+  const bucket = photoBucket();
   const open = await scanOpenReports();
   open.sort((a, b) => (b.submittedAt ?? b.createdAt).localeCompare(a.submittedAt ?? a.createdAt));
   const sliced = open.slice(0, 200);
   const reports: PublicReport[] = await Promise.all(
     sliced.map(async (report) => {
       const photoUrl = await getSignedUrl(
-        s3(),
+        s3,
         new GetObjectCommand({ Bucket: bucket, Key: report.photoKey }),
         { expiresIn: 3600 },
       );

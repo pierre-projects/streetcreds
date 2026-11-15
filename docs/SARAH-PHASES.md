@@ -2,7 +2,7 @@
 
 Sarah owns the **report quest** and the **council quest**, from the screen down to the database. This file is her checklist and her prompts, phase by phase.
 
-It was rewritten on the evening of 2026-11-14 to match what is now built. If you read an earlier version, read this one from the top.
+It was rewritten on the morning of 2026-11-15 to match what is now built. If you read an earlier version, read this one from the top.
 
 - **Her folders:** `web/src/features/quests/`, `api/src/quests/`, and the scripts `generate-council.ts` and `label-photos.ts` in `api/scripts/`
 - **Hands-off without a yes from Pierre:** `shared/`, Pierre's folders, `api/src/index.ts`, `api/src/lib/`, `api/template.yaml`, `package.json` and the other project config files
@@ -11,20 +11,28 @@ It was rewritten on the evening of 2026-11-14 to match what is now built. If you
 
 ## Where things stand
 
-Pierre's half is built and live at https://streetcreds.app. A player can join, see their points, open the leaderboard and open the map.
+Pierre's half is built and live at https://streetcreds.app. The **report quest code is also on `main`** (API routes 5–8 and the report screen). What is left for the cut line is verifying it end to end and getting Pierre to **deploy the API**.
 
-Two things on the live site are waiting for the quests:
+On the live site right now:
 
-- **Nobody can earn points.** The Report and Council cards on the home screen lead to a "still being built" page.
-- **The map has no pins.** It reads `GET /reports`, which does not exist yet, so it shows "Could not load the reports".
+- **Report screen exists** at `/report` (wired in `App.tsx`).
+- **Map still errors** until Pierre deploys: it calls `GET /reports`, and the live Lambda may still be an older build that returns "That address does not exist." After deploy, an empty map (`{ "reports": [] }`) is success; pins appear once someone submits a report.
+- **Council is still ComingSoon.** That is Phase 3.
 
-Nothing you need from Pierre is missing. Everything in this table is on `main` and tested:
+Nothing you need from Pierre's helpers is missing. Reuse this table instead of rebuilding:
 
 | You need | It exists as | Where |
 | --- | --- | --- |
 | A way to throw an error the phone understands | `throw new ApiError('not_found')`, and the other codes | `api/src/lib/errors.ts` |
 | The database and table names | `db`, `TABLES` | `api/src/lib/db.ts` |
 | The bucket name and the Gemini key | `requireEnv('PHOTO_BUCKET')`, `requireEnv('GEMINI_API_KEY')` | `api/src/lib/env.ts` |
+| Shared S3 client and photo bucket | `s3`, `photoBucket()` | `api/src/quests/s3.ts` |
+| Upload URL, create/submit/list reports | `reportRoutes` (mounted in `index.ts`) | `api/src/quests/reportRoutes.ts` |
+| Report DynamoDB helpers | `putReport`, `getReport`, `publishReport`, `scanOpenReports`, `setRecentReportTimes` | `api/src/quests/reportStore.ts` |
+| Gemini labeling | `labelPhoto`, `labelJpegBase64` | `api/src/quests/labelPhoto.ts` |
+| Report request schemas | `CreateReportSchema`, `SubmitReportSchema` | `api/src/quests/schemas.ts` |
+| Label-photos script | folder of `.jpg` → table of labels | `api/scripts/label-photos.ts` |
+| Report screen (mock or live) | `ReportScreen`, `LocationPicker`, `RewardCard`, `resizeImage` | `web/src/features/quests/` |
 | To look up a player | `getPlayer(playerId)` | `api/src/players/store.ts` |
 | To tell that a "only once" write was refused | `isConditionalCheckFailed(error)` | `api/src/players/store.ts` |
 | To award points (it also mints on Solana) | `awardPoints(playerId, points, questType, refId)` | `api/src/points/awardPoints.ts` |
@@ -42,11 +50,9 @@ Nothing you need from Pierre is missing. Everything in this table is on `main` a
 
 ## The fastest path
 
-The whole team is waiting on one thing: **photo, to label, to points, to leaderboard, working on a phone.** That is the end of Phase 2, and it is the cut line. Go straight for it.
+The cut line is still: **photo, to label, to points, to leaderboard, working on a phone.** That is the end of Phase 2.
 
-Phases 1 and 2 are each split into an A half (the API) and a B half (the screen). **A and B touch different folders, so you can run them in two agent chats at the same time.** That roughly halves the time to the cut line.
-
-The council quest is Phase 3. If time runs short, it is the first thing to drop.
+Skip rebuilding 1A / 1B / 2A from scratch. Use the **verify** prompts below, then go straight to **Phase 2B** (real flow) and tell Pierre to deploy. Council is Phase 3; drop it first if time runs short.
 
 ## How to use this file
 
@@ -54,7 +60,7 @@ The council quest is Phase 3. If time runs short, it is the first thing to drop.
 2. Paste the prompt. If the agent stops to ask something that this file or `docs/TECHNICAL.md` answers, point it there.
 3. Try what it built, then paste the wrap-up prompt.
 4. Open a small pull request for each prompt's work. Do not save it all up.
-5. Tick the boxes here yourself and commit the file (ticking boxes may go straight to `main`, see [CONTRIBUTING.md](CONTRIBUTING.md)).
+5. Tick the boxes here yourself and commit the file (ticking boxes may go straight to `main`, see [CONTRIBUTING.md](CONTRIBUTING.md)). Agents must not tick boxes.
 
 **To test on your phone:** the camera and location only work over HTTPS, so use the live site. Web changes go live a few minutes after they merge to `main`. API changes go live when Pierre runs `npm run deploy`, so tell him each time an API pull request merges.
 
@@ -67,11 +73,11 @@ I'm Sarah, working on StreetCreds. Read AGENTS.md, docs/TECHNICAL.md, docs/CONTR
 
 I own the quests: web/src/features/quests/, api/src/quests/, and the scripts generate-council.ts and label-photos.ts in api/scripts/. Work only in those. The one exception is wiring my own work: you may add the line in api/src/index.ts that mounts my routes, the route lines marked "Sarah" in web/src/app/App.tsx, and the example data for my own routes in web/src/app/mock/. Apart from that, do not change shared/, Pierre's folders, package.json or the deploy template. If a task needs a change there, describe the change and stop.
 
-Pierre's half is already built. Before you write anything, read these files so you reuse them instead of rebuilding them: api/src/lib/env.ts, api/src/lib/db.ts, api/src/lib/errors.ts, api/src/players/routes.ts, api/src/players/store.ts, api/src/players/rateLimit.ts, api/src/points/awardPoints.ts, api/src/points/withLimit.ts, web/src/app/api.ts, web/src/app/mock/index.ts, web/src/app/player.ts, web/src/app/strings.ts, web/src/app/solana.ts, web/src/index.css, every file in web/src/app/ui/, and web/src/features/players/MapScreen.tsx.
+The report API and report screen already exist. Before you write anything, read these and reuse them — do not rebuild from scratch: api/src/quests/s3.ts, reportRoutes.ts, reportStore.ts, labelPhoto.ts, schemas.ts, api/scripts/label-photos.ts, web/src/features/quests/ReportScreen.tsx, LocationPicker.tsx, RewardCard.tsx, resizeImage.ts, strings.ts. Also reuse Pierre's helpers: api/src/lib/env.ts, api/src/lib/db.ts, api/src/lib/errors.ts, api/src/players/store.ts, api/src/players/rateLimit.ts, api/src/points/awardPoints.ts, api/src/points/withLimit.ts, web/src/app/api.ts, web/src/app/mock/index.ts, web/src/app/player.ts, web/src/app/strings.ts, web/src/app/solana.ts, web/src/index.css, every file in web/src/app/ui/, and web/src/features/players/MapScreen.tsx.
 
-Rules that are easy to miss: build every screen from the components in web/src/app/ui/ and the tokens in web/src/index.css; do not write your own button, card or input styles, and do not use raw colors. The AWS region is us-east-2. Never run sam build, sam deploy or npm run deploy. The code samples in docs/TECHNICAL.md were never compiled, so type-check against the installed packages. Do not write unit tests that call Gemini, Solana or AWS.
+Rules that are easy to miss: build every screen from the components in web/src/app/ui/ and the tokens in web/src/index.css; do not write your own button, card or input styles, and do not use raw colors. The AWS region is us-east-2. Never run sam build, sam deploy or npm run deploy. The code samples in docs/TECHNICAL.md were never compiled, so type-check against the installed packages. Do not write unit tests that call Gemini, Solana or AWS. Do not tick boxes in docs/SARAH-PHASES.md.
 
-Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) the routes and functions I am responsible for, (3) which of the files above I will reuse and for what, (4) anything in the docs that looks unclear or contradictory. Do not write code yet.
+Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) what is already built in my folders vs what this phase still needs, (3) which files I will reuse and for what, (4) anything in the docs that looks unclear or contradictory. Do not write code yet.
 ```
 
 ## Phase 0. Setup (about 30 minutes)
@@ -89,9 +95,11 @@ Follow [SARAH-SETUP.md](SARAH-SETUP.md). It has every command.
 
 ## Phase 1. The two foundations
 
-Run 1A and 1B at the same time if you can.
+Code for 1A and 1B is on `main`. Use the verify prompts; only fill gaps.
 
 ### 1A. Upload link and photo labeling (API)
+
+Code present: `api/src/quests/s3.ts`, `labelPhoto.ts`, `reportRoutes.ts` (`GET /upload-url`), `api/scripts/label-photos.ts`.
 
 - [ ] `GET /upload-url` returns a presigned S3 upload link and the photo key.
 - [ ] `labelPhoto` sends a photo to Gemini and gets back whether it is a street problem, a category, a severity and a description.
@@ -99,21 +107,22 @@ Run 1A and 1B at the same time if you can.
 - [ ] Prompt tuned with `label-photos.ts` until all 10 photos come back right.
 - [ ] `npm run check` and `npm run build` pass in `api/`.
 
-Prompt 1A:
+Prompt 1A (verify + tune — do not rebuild):
 
 ```text
-Do Phase 1A from docs/SARAH-PHASES.md, following docs/TECHNICAL.md sections 5 and 6.
+Do Phase 1A from docs/SARAH-PHASES.md as a verify-and-tune pass, following docs/TECHNICAL.md sections 5 and 6. The code already exists: api/src/quests/s3.ts, labelPhoto.ts, reportRoutes.ts (GET /upload-url), and api/scripts/label-photos.ts. Do not recreate those files from scratch.
 
-1. Create api/src/quests/s3.ts: one S3 client for the region in env.AWS_REGION, with the bucket name from requireEnv('PHOTO_BUCKET').
-2. Build GET /upload-url (route 5) in api/src/quests/reportRoutes.ts as a Hono app named reportRoutes, written the way api/src/players/routes.ts is. Check that the player exists with getPlayer from api/src/players/store.ts. Then add the one line in api/src/index.ts that mounts it.
-3. Build labelPhoto in api/src/quests/labelPhoto.ts with the Gemini Interactions API, as section 6 shows. Split it in two: one function takes a base64 JPEG, calls Gemini and validates the answer with zod; labelPhoto(photoKey) reads the object from S3 and calls that function. Load @google/genai with await import() inside the function, the way api/src/points/awardPoints.ts loads the Solana library, so routes that never label are not slowed by it. Give the Gemini call a 12 second limit with withLimit from api/src/points/withLimit.ts. On any failure throw ApiError('label_failed').
-4. Write api/scripts/label-photos.ts. It runs the Gemini function on every .jpg in a folder I name and prints a table: file, isStreetProblem, category, severity, description, seconds. I run it from api/ with: npx tsx --env-file-if-exists=.env scripts/label-photos.ts <folder>
-5. Run npm run check, then npm run build, in api/. The build confirms the Lambda bundle still works with the new library.
+1. Read the files above and confirm they match the contract (player check on upload-url, key shape reports/{playerId}/{uuid}.jpg, PutObject ContentType image/jpeg expiring in 300 s, Gemini via await import('@google/genai'), 12 s withLimit, ApiError('label_failed'), labelJpegBase64 exported for the script). Fix only real gaps.
+2. Confirm reportRoutes is mounted in api/src/index.ts. If it is missing, add only that one wiring line.
+3. Run npm run check, then npm run build, in api/.
+4. Tell me how to try GET /upload-url with curl against my local API, and how to run: npx tsx --env-file-if-exists=.env scripts/label-photos.ts <folder>
 
-Stop when done. Tell me how to try GET /upload-url with curl against my local API, and how to run the script on my test photos.
+Stop when done. Do not invent test photos. I will collect the 10 photos and tune the LABEL_PROMPT myself; if the script or Gemini call is broken, fix that only.
 ```
 
 ### 1B. The report screen, on example data (web)
+
+Code present: `web/src/features/quests/ReportScreen.tsx`, `LocationPicker.tsx`, `RewardCard.tsx`, `resizeImage.ts`, `strings.ts`; `/report` already shows `ReportScreen`.
 
 - [ ] Report screen built, showing every state: capture, resizing, uploading, labeling, confirm, locating, submitting, reward, error.
 - [ ] Camera opens from the main button; a "Choose from gallery" option exists as the fallback.
@@ -124,33 +133,30 @@ Stop when done. Tell me how to try GET /upload-url with curl against my local AP
 - [ ] The `/report` line in `web/src/app/App.tsx` shows the new screen.
 - [ ] `npm run check` and `npm run lint` pass in `web/`.
 
-Prompt 1B:
+Prompt 1B (verify + gaps — do not rebuild):
 
 ```text
-Do Phase 1B from docs/SARAH-PHASES.md, following the "Report quest" part of docs/TECHNICAL.md section 7. Work in mock mode only: VITE_USE_MOCKS=true in web/.env.
+Do Phase 1B from docs/SARAH-PHASES.md as a verify-and-gap pass, following the "Report quest" part of docs/TECHNICAL.md section 7. Work in mock mode: VITE_USE_MOCKS=true in web/.env.
 
-Build the whole report quest in web/src/features/quests/:
+The report UI already exists in web/src/features/quests/ (ReportScreen.tsx, LocationPicker.tsx, RewardCard.tsx, resizeImage.ts, strings.ts) and /report already shows ReportScreen. Do not rewrite the screen from scratch.
 
-- ReportScreen.tsx: one screen driven by a state value: idle, resizing, uploading, labeling, confirm, locating, submitting, reward, error.
-- resizeImage.ts: longest side at most 1280 px, exported as JPEG at quality 0.8. Keep the size math in a pure function and unit-test it for a landscape photo, a portrait photo and one already under 1280 px.
-- LocationPicker.tsx: a small map the player taps to place a pin, shown when location is denied or takes longer than 10 seconds. Set Leaflet up the way web/src/features/players/MapScreen.tsx does: the CSS import, a fixed height, and the isolate wrapper.
-- RewardCard.tsx: the points earned, the new total, and by award.chainStatus: "sent" shows a link built with explorerTxUrl from web/src/app/solana.ts, "pending" shows "On-chain confirmation pending", "off" shows nothing.
-- strings.ts: every piece of text, shaped like web/src/app/strings.ts. For category and severity names use strings.categories and strings.severities from web/src/app/strings.ts.
+1. Read those files and the /report line in web/src/app/App.tsx. List which Phase 1B checklist boxes already hold and which do not.
+2. Fill only real gaps. In particular, if resizeImage size math has no unit test yet, add one for landscape, portrait, and already-under-1280 px. Keep calling the API only through web/src/app/api.ts; keep using web/src/app/ui/ and tokens in web/src/index.css; no raw colors.
+3. To see each error state, change MOCK_REPORT_RESULT at the top of web/src/app/mock/index.ts, then change it back.
+4. Run npm run check and npm run lint in web/.
 
-Rules: call the API only through the api object in web/src/app/api.ts (getUploadUrl, uploadPhoto, createReport, submitReport); never write your own fetch. Get the player from usePlayer() in web/src/app/player.ts. Build the screens from the components in web/src/app/ui/ (import them from '../../app/ui'): Button for every action (one primary per step, secondary for the rest), Card and Eyebrow for the reward card, OptionCard for the category picker, ScreenHeader for the title, ErrorNotice with onRetry for errors. Use only the tokens in web/src/index.css, never a raw color or your own rounded, ring or bold classes. The components already make every button at least 44 px tall. For an error, pass the ApiError's message to ErrorNotice.
-
-Then change the /report line marked "Sarah" in web/src/app/App.tsx to show ReportScreen.
-
-To see each error state, change MOCK_REPORT_RESULT at the top of web/src/app/mock/index.ts, and change it back when you are done. Run npm run check and npm run lint in web/. Stop when done and tell me how to click through every state.
+Stop when done and tell me how to click through every state in mock mode.
 ```
 
 **Checkpoint:** on your laptop in mock mode, you can go from the Report card to the reward card. With a real photo, `label-photos.ts` labels it correctly.
 
 ## Phase 2. The core loop
 
-This is the cut line. 2A can start as soon as 1A is merged.
+This is the cut line. API code for 2A is on `main`; 2B is the remaining agent work for the cut line.
 
 ### 2A. The report routes (API)
+
+Code present: `POST /reports`, `POST /reports/:id/submit`, `GET /reports` in `reportRoutes.ts`, plus `reportStore.ts` and `schemas.ts` (with tests).
 
 - [ ] `POST /reports` labels the photo and saves a draft. No points yet.
 - [ ] A sixth report within an hour is refused, using Pierre's `checkReportLimit`.
@@ -160,20 +166,18 @@ This is the cut line. 2A can start as soon as 1A is merged.
 - [ ] `npm run check` and `npm run build` pass in `api/`.
 - [ ] Pull request merged, and Pierre told to deploy.
 
-Prompt 2A:
+Prompt 2A (verify — do not rebuild):
 
 ```text
-Do Phase 2A from docs/SARAH-PHASES.md, following docs/TECHNICAL.md section 5 (routes 6, 7 and 8) and the database rules in section 4.
+Do Phase 2A from docs/SARAH-PHASES.md as a verify pass, following docs/TECHNICAL.md section 5 (routes 6, 7 and 8) and the database rules in section 4.
 
-Add to api/src/quests/reportRoutes.ts:
+The routes already live in api/src/quests/reportRoutes.ts with reportStore.ts and schemas.ts. Do not rewrite them from scratch.
 
-1. POST /reports. Check the player with getPlayer. Refuse a photoKey that does not start with reports/{playerId}/. Apply the rate limit: call checkReportLimit(player.recentReportTimes, new Date()) from api/src/players/rateLimit.ts and throw ApiError('rate_limited') when allowed is false. Call labelPhoto. Throw ApiError('not_street_problem') when the photo is not one. Save the draft report.
-2. POST /reports/:id/submit. Follow route 7, skipping the P2 duplicate merge. Publish with a conditional update on the status still being draft, so a double tap cannot submit twice; use isConditionalCheckFailed from api/src/players/store.ts to recognize the refusal and throw ApiError('already_submitted'). Then call awardPoints from api/src/points/awardPoints.ts exactly as section 6 defines it. Then save the player's recentReportTimes as [...times, now], where times is what checkReportLimit returns.
-3. GET /reports. Open reports only, newest first, at most 200, each with a photoUrl that is a presigned GET link valid for 3600 seconds.
+1. Read those files and confirm: photoKey prefix check; checkReportLimit on create; labelPhoto with not_street_problem / label_failed; draft write; submit ownership + conditional draft→open (already_submitted via isConditionalCheckFailed); awardPoints('report-new'); recentReportTimes updated from checkReportLimit's times; GET /reports open only, newest first, max 200, photoUrl GetObject 3600 s; #status / #count aliased. Fix only real gaps. Skip P2 duplicate merge. Do not change awardPoints or Pierre's code. Submit may call checkDealUnlock as a bonus — leave that wiring alone unless it breaks the report award.
+2. Confirm schemas have player-readable messages and unit tests in schemas.test.ts; add only what is missing.
+3. Run npm run check and npm run build in api/.
 
-Put the request schemas in their own file with zod, give them messages a player can read, and unit-test them. Alias status and count in every DynamoDB expression; they are reserved words. Do not write your own awardPoints and do not change Pierre's.
-
-Run npm run check and npm run build in api/. Stop when done. Give me curl commands that walk the whole flow against my local API with one of my test photos, and tell me which rows it creates so I can delete them afterwards.
+Stop when done. Give me curl commands that walk upload-url → PUT JPEG → POST /reports → POST submit → GET /reports against my local API, and tell me which DynamoDB rows it creates so I can delete them afterwards. Also give me a two-line message to send Pierre asking him to npm run deploy so the live map stops 404ing on GET /reports.
 ```
 
 ### 2B. The real flow, end to end (web)
@@ -186,13 +190,13 @@ Run npm run check and npm run build in api/. Stop when done. Give me curl comman
 Prompt 2B:
 
 ```text
-Do Phase 2B from docs/SARAH-PHASES.md. Set VITE_USE_MOCKS=false in web/.env and make sure both dev servers are running.
+Do Phase 2B from docs/SARAH-PHASES.md. Set VITE_USE_MOCKS=false in web/.env and make sure both dev servers are running. Pierre must have a current API deploy (or you use the local API) so GET /reports is not a 404.
 
-Walk the report flow against my local API with a real photo from my test set, and fix whatever behaves differently from mock mode. Then check four failure cases: a photo that is not a street problem; a Gemini failure (tell me when to remove the key from api/.env for a moment); location denied; and a double tap on Submit.
+Walk the report flow against my local API with a real photo from my test set, and fix whatever behaves differently from mock mode in web/src/features/quests/ only. Then check four failure cases: a photo that is not a street problem; a Gemini failure (tell me when to remove the key from api/.env for a moment); location denied; and a double tap on Submit.
 
 After a successful report, check that the points appear in the header and on the Leaderboard tab, and that a pin with the photo appears on the Map tab. Those screens are Pierre's: if one of them is wrong, describe what you see and stop; do not change it.
 
-Stop when done. Give me a step-by-step phone test for acceptance check F2 in docs/TECHNICAL.md section 13, and a two-line message to send Pierre saying what merged and that the API needs a deploy.
+Stop when done. Give me a step-by-step phone test for acceptance check F2 in docs/TECHNICAL.md section 13, and a two-line message to send Pierre saying what merged and that the API needs a deploy (if he has not deployed yet).
 ```
 
 **Checkpoint (both), the cut line:** photo, to label, to points, to leaderboard works on a phone. If it does not, fix it together, drop the council quest and go straight to Phase 4.
@@ -279,7 +283,7 @@ Never add raw colors, your own rounded, ring, shadow or bold classes, or a style
 Wrap-up, at the end of every prompt's work:
 
 ```text
-Wrap up this work. Run npm run check in every package you touched, npm run lint in web/ and npm run build in api/ if you touched them, and fix failures. Then tell me: (1) what you built, file by file, (2) which docs/SARAH-PHASES.md boxes are done and which are not, (3) what I should now test by hand and how, (4) anything you assumed or skipped, (5) any file you changed outside my folders and why, (6) one line to add to the README Credits section if you followed a tutorial. Do not commit or push.
+Wrap up this work. Run npm run check in every package you touched, npm run lint in web/ and npm run build in api/ if you touched them, and fix failures. Then tell me: (1) what you built, file by file, (2) which docs/SARAH-PHASES.md boxes are done and which are not (list them — do not tick them yourself), (3) what I should now test by hand and how, (4) anything you assumed or skipped, (5) any file you changed outside my folders and why, (6) one line to add to the README Credits section if you followed a tutorial. Do not commit or push.
 ```
 
 ## If you finish early
