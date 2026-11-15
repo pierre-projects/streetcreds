@@ -130,12 +130,13 @@ export const strings = {
 
   leaderboard: {
     title: 'Leaderboard',
-    subtitle: 'Points earned by each neighborhood. Updates as people play.',
-    yours: 'Your neighborhood',
+    subtitle: 'Points by neighborhood. Updates as people play.',
+    yours: 'Yours',
     rank: (rank: number) => `#${rank}`,
     points: (points: number) => `${points} pts`,
     players: (count: number) => (count === 1 ? '1 player' : `${count} players`),
     noPlayers: 'Nobody here yet.',
+    empty: 'No neighborhoods to show yet.',
     loading: 'Loading the leaderboard…',
     error: 'Could not load the leaderboard.',
     retry: 'Try again',
