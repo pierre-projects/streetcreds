@@ -44,7 +44,8 @@ export function JoinScreen() {
     join.reset()
     setLocating(true)
     try {
-      const location = await readCurrentLocation()
+      // Joining only uses the reading to pick a team, so it accepts a rougher one than a report does.
+      const location = await readCurrentLocation('join')
       setLocating(false)
       join.mutate({ nickname: trimmed, location })
     } catch (error) {

@@ -15,7 +15,7 @@ export const playerRoutes = new Hono();
 
 playerRoutes.post('/players', async (c) => {
   const input = CreatePlayerSchema.parse(await c.req.json());
-  const neighborhood = await requirePlayLocation(input.location);
+  const neighborhood = await requirePlayLocation(input.location, 'join');
 
   // In per-player mode each player gets a devnet address of their own to hold their points.
   // The Solana library is loaded only here and in awardPoints, so other routes start quickly.
