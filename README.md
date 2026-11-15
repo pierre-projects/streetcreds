@@ -13,14 +13,14 @@ Built at [sunhacks 2026](https://sunhacks-2026.devpost.com/) at Arizona State Un
 
 ## Status
 
-In progress during the hackathon. So far a player can join with a nickname and a neighborhood, and see their points and where their neighborhood stands. The quests, the leaderboard screen and the map are still to build.
+In progress during the hackathon. So far a player can join with a nickname and a neighborhood, see their points, and watch the neighborhood leaderboard update. The quests and the map are still to build.
 
 | Part | State |
 | --- | --- |
 | Product plan, technical spec, agent rules | Done |
 | Shared contract (`shared/`): constants, data types, API types | Done |
 | API (`api/`) | Joining, loading a player and the leaderboard work against the database. `awardPoints` exists as a database-only stand-in. Quest routes are not built |
-| Web app (`web/`) | App shell, join screen and home screen. Quest, leaderboard and map screens are placeholders |
+| Web app (`web/`) | App shell, join screen, home screen and the live leaderboard screen. Quest and map screens are placeholders |
 | Solana points | Each new player gets a devnet address, and every award is minted as a CIVIC token with a link to the transaction. If devnet is slow the points still count and the award is marked pending |
 
 ## Documentation
@@ -113,7 +113,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The project scaffold (`web/`, `api/`, `api/template.yaml`, `amplify.yml`) was generated with Claude Code (Anthropic). `web/` started from the `create-vite` `react-ts` template.
 - The Solana setup script, `mintPoints` and the mint test (`api/scripts/`, `api/src/points/solana.ts`) were generated with Claude Code (Anthropic).
 - The web app shell (`web/src/app/`: routing, layout, API client and mock mode) was generated with Claude Code (Anthropic).
-- The player routes, the leaderboard, `awardPoints`, the deploy-secrets script and the join and home screens were generated with Claude Code (Anthropic).
+- The player routes, the leaderboard, `awardPoints`, the deploy-secrets script and the join, home and leaderboard screens were generated with Claude Code (Anthropic).
 
 ## License
 

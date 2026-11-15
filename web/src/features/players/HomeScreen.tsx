@@ -6,6 +6,7 @@ import type { NeighborhoodId } from '../../../../shared/types'
 import { api } from '../../app/api'
 import { usePlayer } from '../../app/player'
 import { leaderboardKey, POLL_MS } from '../../app/queryClient'
+import { explorerAddressUrl } from '../../app/solana'
 import { strings } from '../../app/strings'
 
 function neighborhoodName(id: NeighborhoodId): string {
@@ -78,6 +79,20 @@ export function HomeScreen() {
             <p className="text-muted">{leaderboard.isError ? strings.home.rankError : strings.home.rankLoading}</p>
           )}
         </div>
+
+        {me.walletAddress !== null && (
+          <p className="mt-4 border-t border-line pt-4 text-sm text-muted">
+            {strings.home.walletNote}{' '}
+            <a
+              href={explorerAddressUrl(me.walletAddress)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center font-semibold text-accent underline"
+            >
+              {strings.home.walletLink}
+            </a>
+          </p>
+        )}
       </section>
 
       <section>

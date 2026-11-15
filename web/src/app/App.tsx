@@ -5,6 +5,7 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { HomeScreen } from '../features/players/HomeScreen'
+import { LeaderboardScreen } from '../features/players/LeaderboardScreen'
 import { JoinScreen } from '../features/players/JoinScreen'
 import { ComingSoon } from './ComingSoon'
 import { Layout } from './Layout'
@@ -27,7 +28,7 @@ const router = createBrowserRouter([
       { path: '/report', element: <ComingSoon title={strings.comingSoon.report} /> }, // Sarah
       { path: '/council', element: <ComingSoon title={strings.comingSoon.council} /> }, // Sarah
       { path: '/council/:itemId', element: <ComingSoon title={strings.comingSoon.council} /> }, // Sarah
-      { path: '/leaderboard', element: <ComingSoon title={strings.comingSoon.leaderboard} /> },
+      { path: '/leaderboard', element: <LeaderboardScreen /> },
       { path: '/map', element: <ComingSoon title={strings.comingSoon.map} /> },
     ],
   },
