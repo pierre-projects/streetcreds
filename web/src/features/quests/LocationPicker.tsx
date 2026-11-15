@@ -4,7 +4,8 @@ import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
 import { MAP_CENTER } from '../../../../shared/constants'
 import { Button } from '../../app/ui'
 import { questStrings } from './strings'
-import 'leaflet/dist/leaflet.css'
+// Leaflet's stylesheet comes from index.css. Importing it here as well loads it a second time,
+// after the app's own rules, and undoes every popup, button and link style in index.css.
 
 function TapPin({
   position,

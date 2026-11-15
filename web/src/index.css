@@ -106,6 +106,8 @@ body {
     box-shadow: var(--shadow-float);
     backdrop-filter: blur(var(--blur-frost));
     -webkit-backdrop-filter: blur(var(--blur-frost));
+    /* A drag that starts here still scrolls the page, but a pinch or a double tap does not zoom it. */
+    touch-action: pan-x pan-y;
   }
   .app-header-wrap {
     @apply pointer-events-none sticky z-20 px-3;
@@ -147,6 +149,7 @@ body {
     box-shadow: var(--shadow-float);
     backdrop-filter: blur(var(--blur-frost));
     -webkit-backdrop-filter: blur(var(--blur-frost));
+    touch-action: pan-x pan-y;
   }
   .app-nav-link {
     @apply flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-pill px-2 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
@@ -185,6 +188,12 @@ body {
   .radar-dock-btn {
     @apply inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-ink text-on-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-accent;
   }
+  /* The recenter button: under the header, level with the map's zoom buttons on the other side.
+     The header ends 3.5rem below where it starts; the rest is the gap. */
+  .radar-recenter {
+    @apply absolute right-3 z-[1000];
+    top: calc(max(0.75rem, env(safe-area-inset-top)) + 4rem);
+  }
   .radar-dock-primary {
     @apply flex min-h-11 flex-1 items-center justify-center gap-2 rounded-pill bg-accent px-4 text-sm font-bold text-on-accent focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
   }
@@ -199,6 +208,10 @@ body {
   }
   .radar-ring {
     @apply pointer-events-none absolute left-1/2 top-1/2 z-[440] size-40 rounded-full border border-accent/40;
+    /* Where a ring rests before its pulse starts, and stays when motion is reduced: centered and
+       unseen. Without this the two later rings sat off center at full size until their turn. */
+    transform: translate(-50%, -50%) scale(0.35);
+    opacity: 0;
     animation: radar-pulse 2.8s ease-out infinite;
   }
   .radar-ring:nth-child(2) { animation-delay: 0.9s; }
@@ -315,6 +328,30 @@ body {
 }
 
 .leaflet-container:has(.leaflet-popup) .leaflet-control-zoom { visibility: hidden; }
+
+/* Home: the map fills the screen and the header, the dock and the navigation float over it.
+   Leaflet's own corners are moved out from under them: the zoom buttons start below the header
+   (Leaflet adds its own 10px margin), and the map credit sits just above the dock. */
+.map-frame-radar .leaflet-top { top: calc(max(0.75rem, env(safe-area-inset-top)) + 4rem - 10px); }
+.map-frame-radar .leaflet-bottom { bottom: calc(4.75rem + env(safe-area-inset-bottom) + 5.5rem); }
+
+/* Home, while a popup is open: the dock, the recenter button and the radar marks step aside, so
+   the popup has the room between the header and the navigation to itself. Their animations are
+   switched off for that time, because a finished entrance animation would keep them showing. */
+.app-main-radar:has(.leaflet-popup) :is(.radar-dock, .radar-recenter, .radar-ring, .radar-locus) {
+  visibility: hidden;
+  animation: none;
+}
+/* With the dock gone, the map credit drops to just above the navigation. Left where it was, it
+   would be drawn across the popup on a short phone. */
+.app-main-radar:has(.leaflet-popup) .leaflet-bottom { bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
+
+/* Home is one fixed screen and nothing on it scrolls. A pinch or a drag that starts on the
+   header, the dock or the navigation would zoom or pull the whole page instead of the map. */
+.app-column:has(.app-main-radar) :is(.app-header, .app-nav-inner),
+.radar-dock-inner,
+.radar-recenter { touch-action: none; }
+html:has(.app-main-radar) { overscroll-behavior: none; }
 
 .leaflet-control-attribution { max-width: 100%; }
 .leaflet-control-attribution a { position: relative; }
