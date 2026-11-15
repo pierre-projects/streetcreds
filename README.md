@@ -125,6 +125,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - Outfit by Rodrigo Fuenzalida / Smartsheet Inc (The Outfit Project Authors), under the SIL Open Font License (see `web/public/fonts/OFL.txt`).
 
 - The Privacy, Terms, About & contact pages and their navigation links were drafted and implemented with Codex (OpenAI).
+- The About, Privacy and Terms copy was revised with Codex (OpenAI) for clarity and current app behavior.
 - The council quest (`api/scripts/generate-council.ts`, `api/src/quests/council.json`, `councilRoutes.ts`, and the council screens) was implemented with Cursor Agent / Composer. Agenda text is from the City of Tempe Agenda Online portal (Regular City Council Meeting, Nov 5, 2026).
 
 ## License
