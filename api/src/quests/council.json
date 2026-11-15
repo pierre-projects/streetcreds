@@ -1,0 +1,39 @@
+[
+  {
+    "id": "2026-11-05-7b8-solar-group-buy",
+    "title": "7B8: Residential solar and energy storage group purchase",
+    "summary": "Council is asked to award a one-year contract, with four one-year renewal options, to Solar United Neighbors to run a Residential Solar and Energy Storage Group Purchasing Program. The program is meant to help Tempe homeowners get solar panels and optional battery storage at lower cost through group buying. The City estimates the contract value will exceed $100,000 over the term, but the City will not pay for equipment, installation, warranties, or financing and will not be a party to homeowner contracts.",
+    "question": "Who pays for the solar equipment and installation under this program?",
+    "options": [
+      "The City of Tempe pays the full cost",
+      "Homeowners, under their own agreements with installers",
+      "Arizona State University",
+      "A federal grant that requires a City match"
+    ],
+    "answerIndex": 1,
+    "sourceUrl": "https://tempe.hylandcloud.com/AgendaOnline/Meetings/ViewMeeting?id=1976&doctype=1"
+  },
+  {
+    "id": "2026-11-05-7c9-flash-bus",
+    "title": "7C9: Flash bus funding agreement with ASU",
+    "summary": "Council is asked to adopt a resolution authorizing the Mayor to sign Amendment One to an intergovernmental agreement with the Arizona Board of Regents, for Arizona State University, to fund Flash (Free Local Area Shuttle) bus service. For fiscal year 2026-27, ASU will pay a total of $491,406 for Flash operations. Of that total, $480,875 comes from ASU and $10,531 from Federal Preventive Maintenance Funds.",
+    "question": "How much will ASU pay in total for Flash bus service in FY 2026-27?",
+    "options": ["$10,531", "$150,000", "$491,406", "$3,508,491"],
+    "answerIndex": 2,
+    "sourceUrl": "https://tempe.hylandcloud.com/AgendaOnline/Meetings/ViewMeeting?id=1976&doctype=1"
+  },
+  {
+    "id": "2026-11-05-8a3-rio-salado-bridge",
+    "title": "8A3: Rio Salado Upstream Pedestrian Bridge design",
+    "summary": "Council is asked to award a professional services contract to T.Y. Lin International, Inc. for Project No. 6011191, the Rio Salado Upstream Pedestrian Bridge. The contract amount is $3,508,491.32. Funds for the contract and related costs are appropriated for fiscal year 2026/27 in Capital Improvement Project No. 6011191.",
+    "question": "What is this professional services contract for?",
+    "options": [
+      "Playground equipment for city parks",
+      "Powdered activated carbon for water treatment",
+      "The Rio Salado Upstream Pedestrian Bridge project",
+      "Two-way radios for public safety"
+    ],
+    "answerIndex": 2,
+    "sourceUrl": "https://tempe.hylandcloud.com/AgendaOnline/Meetings/ViewMeeting?id=1976&doctype=1"
+  }
+]

@@ -6,6 +6,7 @@ import type { HealthResponse } from '../../shared/api';
 import { dealRoutes } from './deals/routes';
 import { handleError, handleNotFound } from './lib/errors';
 import { playerRoutes } from './players/routes';
+import { councilRoutes } from './quests/councilRoutes';
 import { reportRoutes } from './quests/reportRoutes';
 
 export const app = new Hono();
@@ -38,6 +39,7 @@ app.get('/health', (c) => {
 // Route files. Add one line here to mount your own.
 app.route('/', playerRoutes);
 app.route('/', reportRoutes);
+app.route('/', councilRoutes);
 app.route('/', dealRoutes);
 
 app.notFound(handleNotFound);
