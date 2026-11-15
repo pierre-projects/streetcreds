@@ -145,9 +145,15 @@ export const strings = {
   leaderboard: {
     title: 'Leaderboard',
     subtitle: 'Points by neighborhood. Updates as people play.',
+    // The switch between the two boards, and what the players board says.
+    viewLabel: 'Choose a leaderboard',
+    views: { neighborhoods: 'Neighborhoods', players: 'Players' },
+    playersSubtitle: 'The ten players with the most points, from every neighborhood.',
+    playersEmpty: 'Nobody has points yet. Finish a quest to be the first on the board.',
     yours: 'Yours',
     rank: (rank: number) => `#${rank}`,
-    points: (points: number) => `${points} pts`,
+    // Points are drawn as a coin and a number. This is what a screen reader says in their place.
+    pointsSpoken: (points: number) => (points === 1 ? '1 point' : `${points} points`),
     players: (count: number) => (count === 1 ? '1 player' : `${count} players`),
     noPlayers: 'Nobody here yet.',
     empty: 'No neighborhoods to show yet.',

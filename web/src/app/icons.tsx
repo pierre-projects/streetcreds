@@ -96,3 +96,14 @@ export function CouncilIcon() {
     </Icon>
   )
 }
+
+/** The CIVIC coin: a circle with a star, in Coin amber. */
+export function CoinIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0 text-coin">
+      <circle cx="12" cy="12" r="10" fill="currentColor" />
+      <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-on-coin)" strokeOpacity=".35" strokeWidth="1.5" />
+      <path d="m12 6.8 1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5Z" fill="var(--color-on-coin)" />
+    </svg>
+  )
+}

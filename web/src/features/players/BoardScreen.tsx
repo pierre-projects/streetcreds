@@ -33,6 +33,7 @@ import { renewPhotoUrl, steadyPhotoUrl } from './photoUrls'
 import { ReportFilters } from './ReportFilters'
 import { ReportsMap } from './ReportsMap'
 import { CityLayerKeys } from './CityLayerKeys'
+import { Coins } from './Coins'
 import { CityLayerToggles } from './CityLayerToggles'
 import { ALL_LAYERS, type CityLayers, type CityRecord, inLayers, LAYER_OF, matchReports } from './cityRecords'
 import { useCityRecords } from './useCityRecords'
@@ -251,9 +252,7 @@ export function BoardScreen() {
                       <span className="mr-2 font-mono tabular-nums text-muted">{strings.leaderboard.rank(index + 1)}</span>
                       {neighborhoodName(row.neighborhood)}
                     </span>
-                    <span className="shrink-0 font-mono text-base tabular-nums text-ink">
-                      {strings.leaderboard.points(row.points)}
-                    </span>
+                    <Coins points={row.points} className="shrink-0 self-center font-mono text-base text-ink [&_svg]:size-4" />
                   </div>
                   {/* How far this neighborhood is behind the leader. Decoration: the numbers say the same. */}
                   <div className="mt-1 h-2 overflow-hidden rounded-pill border border-ink/15 bg-surface" aria-hidden="true">
