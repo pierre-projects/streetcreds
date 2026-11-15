@@ -23,6 +23,11 @@ app.use('*', async (c, next) => {
   );
 });
 
+// Preflight. Deployed, the HTTP API passes OPTIONS requests through the $default route to this app
+// and adds the CORS headers itself, so the app only has to answer with an empty 204. Without this,
+// the browser gets a 404 and blocks every POST. (Locally, cors() in local.ts answers first.)
+app.options('*', (c) => c.body(null, 204));
+
 app.get('/health', (c) => {
   const body: HealthResponse = { ok: true };
   return c.json(body);

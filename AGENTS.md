@@ -62,7 +62,8 @@ Run from the package folder named.
 | `api/` | `npm run check` | Type-check and unit tests |
 | `api/` | `npm run seed` | Load demo players and reports (asks before writing) |
 | `api/` | `npx tsx scripts/mint-test.ts [count]` | Send test mints to devnet and print the explorer links. Humans only, see rule 8 |
-| `api/` | `npm run deploy` | `sam build && sam deploy`. Humans only, see rule 8 |
+| `api/` | `npm run build` | Bundle the API into `api/dist/index.js` with esbuild. Safe to run any time |
+| `api/` | `npm run deploy` | `npm run build`, then `sam deploy`. Humans only, see rule 8. Never `sam build` |
 
 ## Definition of done
 

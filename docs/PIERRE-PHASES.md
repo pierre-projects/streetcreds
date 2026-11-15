@@ -31,7 +31,7 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 ## Phase 0. Setup (with Sarah, first 30 to 45 minutes)
 
 - [ ] Read `shared/` with Sarah once. It is the fixed contract.
-- [ ] Install Node.js 24, the AWS CLI and the AWS SAM CLI. Sign in with `aws login --region us-east-2`.
+- [ ] Install Node.js 24, the AWS CLI and the AWS SAM CLI. Sign in with `aws login --region us-east-2`, then save the region with `aws configure set region us-east-2`.
 - [ ] Scaffold `web/` and `api/` with the exact install commands in [TECHNICAL.md](TECHNICAL.md) section 9, step 1. This includes `api/src/index.ts` and `api/src/lib/`.
 - [ ] Deploy template written in full: the API, the three DynamoDB tables and the S3 bucket.
 - [ ] First deploy with Solana off, so the API URL, the tables and the bucket exist. Save the answers in `samconfig.toml` (git-ignored).
