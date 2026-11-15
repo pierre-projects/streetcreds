@@ -1,11 +1,12 @@
 // Labels a street-problem photo with Gemini. Sarah's POST /reports calls this.
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { z } from 'zod';
 import { CATEGORIES, SEVERITIES } from '../../../shared/constants';
 import type { Category, Severity } from '../../../shared/types';
 import { env, requireEnv } from '../lib/env';
 import { ApiError } from '../lib/errors';
 import { withLimit } from '../points/withLimit';
+import { photoBucket, s3 } from './s3';
 
 const LABEL_LIMIT_MS = 12_000;
 
@@ -84,10 +85,8 @@ export async function labelJpegBase64(base64Jpeg: string): Promise<PhotoLabel> {
 }
 
 export async function labelPhoto(photoKey: string): Promise<PhotoLabel> {
-  const bucket = requireEnv('PHOTO_BUCKET');
-  const s3 = new S3Client({ region: env.AWS_REGION });
   try {
-    const object = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: photoKey }));
+    const object = await s3.send(new GetObjectCommand({ Bucket: photoBucket(), Key: photoKey }));
     if (!object.Body) throw new ApiError('label_failed');
     const base64Jpeg = await streamToBase64(object.Body as { transformToString: (encoding: string) => Promise<string> });
     return labelJpegBase64(base64Jpeg);
