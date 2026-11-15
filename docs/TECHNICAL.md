@@ -2,7 +2,9 @@
 
 This file is the implementation spec for StreetCreds: stack, data models, API contract, core functions, setup and build order. Rules for coding agents are in `AGENTS.md` at the repo root. The product reasoning, demo script and risks are in the PRD (`docs/PRD.md`). Where this file and the PRD differ on an implementation detail, this file wins.
 
-**The product in four lines.** A phone web app, no install and no login. A player joins with a nickname and a neighborhood. They earn points by completing quests: photograph a street problem (Gemini labels it), or read a short summary of a real city council item and answer one question. Points are minted as a token on Solana devnet, and neighborhoods compete on a live leaderboard.
+**The product in four lines.** A phone web app, no install and no login. A player joins with a nickname; their location assigns a neighborhood. They earn points by completing quests: photograph a street problem (Gemini labels it), or read a short summary of a real city council item and answer one question. Points are minted as a token on Solana devnet, and neighborhoods compete on a live leaderboard.
+
+**Location update approved by Pierre on 2026-11-15:** joining and report submission require a current device location inside Tempe. The API assigns a new player's neighborhood and rejects remote reports. No manual neighborhood or report-pin selection. See [LOCATION-BASED-PLAY.md](LOCATION-BASED-PLAY.md) for game zones, limits, existing-player behavior and the browser-location limitation.
 
 **Priorities.** P0 must work for the demo, P1 is added once P0 works on a phone, P2 is built only when a human asks for it by name. Each route in section 5 and each milestone in section 10 carries its priority.
 
@@ -412,8 +414,8 @@ Routes 3 and 7 are not in the PRD's first API table. They exist because the home
 **1. `GET /health`** returns `200 { "ok": true }`. It is defined in `api/src/index.ts`, not in a routes file.
 
 **2. `POST /players`**
-Request: `{ "nickname": string, "neighborhood": NeighborhoodId }`.
-Steps: trim the nickname and check 2 to 20 characters; refuse an offensive nickname with `400 validation_failed` and the message "Pick a different nickname." (`isBlockedNickname` in `api/src/players/nickname.ts`); check the neighborhood id; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`.
+Request: `{ "nickname": string, "location": LocationFix }`, where `LocationFix` is `{ lat, lng, accuracyMeters, capturedAt }` and `capturedAt` is an ISO timestamp.
+Steps: trim the nickname and check 2 to 20 characters; refuse an offensive nickname with `400 validation_failed` and the message "Pick a different nickname." (`isBlockedNickname` in `api/src/players/nickname.ts`); validate location age (at most 60 seconds, at most 10 seconds ahead of server time), accuracy (at most 100 meters), and membership in the City's published polygon; assign the neighborhood from the game zones; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`. Do not store joining coordinates.
 Response: `201 { "player": Player }`.
 
 **3. `GET /players/:id`** returns `200 { "player": Player }` or `404 not_found`.
@@ -438,10 +440,11 @@ Steps:
 Response: `201 { "report": Report }`.
 
 **7. `POST /reports/:id/submit`** (the player confirmed; publish it and award points)
-Request: `{ "playerId": string, "lat": number, "lng": number, "category"?: Category }`.
+Request: `{ "playerId": string, "location": LocationFix, "category"?: Category }`.
 Steps:
+0. Validate the location's coordinates, age, accuracy and membership in Tempe before any writes or awards. This applies to existing player IDs too. Fail with `validation_failed` for an unusable/outside reading, or `internal` with a retry message if the City boundary cannot be loaded and no valid cached boundary exists.
 1. Load the report. `404` if missing or `playerId` differs. `409 already_submitted` if `status` is not `draft`.
-2. Check `lat` is within -90 to 90 and `lng` within -180 to 180. If `category` is present, it replaces Gemini's.
+2. Use `location.lat` and `location.lng` as the report's coordinates; top-level pin coordinates are not accepted as a location reading. If `category` is present, it replaces Gemini's.
 3. P2 only: `findDuplicate(report)`. If it returns an open report `R`: set this report to `merged`, add 1 to `R.count`, and award `report-confirm` with `refId = R.id`. Respond with `R` and `"merged": true`. Until P2 is built, skip this step.
 4. Set `status: 'open'`, `submittedAt` to now. Use a condition that `status` is still `draft` so a double tap cannot submit twice.
 5. `awardPoints(playerId, POINTS['report-new'], 'report-new', report.id)`.
@@ -623,7 +626,7 @@ Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods pres
 | --- | --- | --- | --- |
 | `/` | Redirect: to `/board` on a screen 1024 px wide or more, otherwise to `/join` or `/home` | Pierre | screen width, stored player id |
 | `/board` | Live board for a big screen: map, neighborhood standings, list of open reports. No joining needed | Pierre | routes 4 and 8 |
-| `/join` | Nickname and neighborhood | Pierre | `POST /players` |
+| `/join` | Nickname and location-assigned neighborhood | Pierre | `POST /players` |
 | `/privacy` | Privacy Policy; public, outside Layout, no joining needed | Pierre | Static legal copy |
 | `/terms` | Terms; public, outside Layout, no joining needed | Pierre | Static legal copy |
 | `/about` | About & contact; public, outside Layout, no joining needed | Pierre | Static legal copy |
@@ -653,7 +656,7 @@ One screen driven by a state value: `idle`, `resizing`, `uploading`, `labeling`,
 3. **Upload.** `GET /upload-url`, then `fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: blob })`.
 4. **Label.** `POST /reports`. Show a progress message; this takes a few seconds. On `not_street_problem`, show the message and offer "Try another photo".
 5. **Confirm.** Show the photo, description, severity and a category picker preselected with Gemini's answer.
-6. **Locate.** On "Submit", call `navigator.geolocation.getCurrentPosition` with `{ enableHighAccuracy: true, timeout: 10000 }`. If it is denied or times out, show `LocationPicker` (a small Leaflet map; tap to place the pin).
+6. **Locate.** On "Submit", use `app/location.ts` to call `navigator.geolocation.getCurrentPosition` with `{ enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }`. If it is denied, times out or is inaccurate, keep the draft and offer a location retry. There is no manual pin fallback. The server checks the same freshness/accuracy limits and the City's polygon before publishing.
 7. **Submit.** `POST /reports/:id/submit`.
 8. **Reward** (`RewardCard`): points earned, new total, and by `award.chainStatus`: `sent` shows the explorer link, `pending` shows "On-chain confirmation pending", `off` shows nothing. Under it, the "Send to Tempe 311" panel for the report just filed (see "Send to Tempe 311" below).
 
@@ -849,7 +852,7 @@ Unit tests (Vitest) are required for these pure functions and nothing else:
 | `isBlockedNickname` | api | Ordinary names pass; real names that contain a bad word pass; leetspeak and spaced-out letters are caught |
 | `haversineMeters` | api | Same point is 0; two points about 30 m apart; about 1 km apart |
 | `checkReportLimit` (the rate-limit helper) | api | Times older than one hour are dropped; the fifth passes, the sixth fails |
-| Request schemas | api | Nickname of 1, 2, 20 and 21 characters; an offensive nickname; an unknown neighborhood |
+| Request schemas and location | api | Nickname of 1, 2, 20 and 21 characters; an offensive nickname; missing/malformed, stale, inaccurate and out-of-area location; arbitrary-pin requests |
 | `buildCityReport`, `cityLocationText` | web | Output matches the format in section 7; no `Photo` line without a photo link |
 | `tempe311Url`, `tempe311Target`, `tempe311RecordTarget` | web | Each category and each kind of City record opens the page in section 7 |
 | Resize size math | web | Landscape, portrait, and an image already under 1280 px |
@@ -858,7 +861,7 @@ Do not write tests that call Gemini, Solana or AWS. Check those by hand:
 
 ```bash
 curl -s $API/health
-curl -s -X POST $API/players -H 'content-type: application/json' -d '{"nickname":"Test","neighborhood":"asu-campus"}'
+# Join through the browser with location permission; manually selected neighborhoods are refused.
 curl -s $API/leaderboard
 ```
 
@@ -946,7 +949,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 
 **F1. Join (P0)**
 - Opening the URL on a phone shows the join screen in under 3 seconds.
-- Nickname (2 to 20 characters) and neighborhood are required. No email or password.
+- Nickname (2 to 20 characters) and location access are required. The server assigns a neighborhood only for a fresh, accurate position inside Tempe. No email or password.
 - An offensive nickname is refused with "Pick a different nickname." A real name such as Dickson is accepted.
 - The player id is stored on the phone, so a refresh keeps the player signed in.
 - With `SOLANA_MODE=per-player`, the new player has a `walletAddress`. The player never sees a seed phrase.
@@ -956,7 +959,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 - The photo is resized on the phone (longest side about 1280 px) before upload.
 - `POST /reports` returns category, severity and description in under 8 seconds.
 - The player can change the category before submitting.
-- If location is denied, the player can pick the spot on a map.
+- If location is denied, unavailable, inaccurate or outside Tempe, the player sees a clear message and can retry without uploading the photo again. Manual pin placement is unavailable. The server rejects old arbitrary-pin requests before publication or awards.
 - If Gemini fails or says the photo is not a street problem, the player sees a clear message and no points are awarded.
 - After a report is submitted, the reward screen shows "Send to Tempe 311" under the reward: the location and details to copy, "Save photo", and a link that opens the City's form in a new tab on the page for the report's final category.
 

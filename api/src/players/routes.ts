@@ -7,6 +7,7 @@ import type { Player } from '../../../shared/types';
 import { env } from '../lib/env';
 import { ApiError } from '../lib/errors';
 import { aggregateLeaderboard } from './leaderboard';
+import { requirePlayLocation } from './location';
 import { CreatePlayerSchema } from './schemas';
 import { getPlayer, putNewPlayer, scanPlayers } from './store';
 
@@ -14,6 +15,7 @@ export const playerRoutes = new Hono();
 
 playerRoutes.post('/players', async (c) => {
   const input = CreatePlayerSchema.parse(await c.req.json());
+  const neighborhood = await requirePlayLocation(input.location);
 
   // In per-player mode each player gets a devnet address of their own to hold their points.
   // The Solana library is loaded only here and in awardPoints, so other routes start quickly.
@@ -26,7 +28,7 @@ playerRoutes.post('/players', async (c) => {
   const player: Player = {
     id: randomUUID(),
     nickname: input.nickname,
-    neighborhood: input.neighborhood,
+    neighborhood,
     points: 0,
     walletAddress,
     recentReportTimes: [],

@@ -13,6 +13,14 @@ export type QuestType = keyof typeof POINTS;
 export type ReportStatus = 'draft' | 'open' | 'merged';
 export type ChainStatus = 'off' | 'sent' | 'pending';
 
+/** A one-time device reading. Joining locations are validated but never stored. */
+export interface LocationFix {
+  lat: number;
+  lng: number;
+  accuracyMeters: number;
+  capturedAt: string;
+}
+
 /** Table streetcreds-players. Key: id. */
 export interface Player {
   /** uuid, made by the server. */
