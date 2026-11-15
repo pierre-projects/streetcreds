@@ -1,12 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useParams } from 'react-router'
+import { POINTS } from '../../../../shared/constants'
 import type { Award, Player } from '../../../../shared/types'
 import { api, ApiError } from '../../app/api'
 import { usePlayer } from '../../app/player'
-import { Button, ButtonLink, ErrorNotice, OptionCard, ScreenHeader } from '../../app/ui'
+import { Button, ButtonLink, Card, ErrorNotice, Eyebrow, OptionCard } from '../../app/ui'
+import { MayorSays } from './MayorSays'
+import { QuestHeader } from './QuestHeader'
 import { RewardCard } from './RewardCard'
 import { questStrings } from './strings'
+
+function SourceLink({ href }: { href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex min-h-11 items-center text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink"
+    >
+      {questStrings.council.source}
+    </a>
+  )
+}
 
 export function CouncilItemScreen() {
   const { itemId = '' } = useParams()
@@ -23,8 +39,7 @@ export function CouncilItemScreen() {
   })
 
   const answer = useMutation({
-    mutationFn: (answerIndex: number) =>
-      api.answerCouncilItem({ playerId: player.data!.id, itemId, answerIndex }),
+    mutationFn: (answerIndex: number) => api.answerCouncilItem({ playerId: player.data!.id, itemId, answerIndex }),
     onSuccess: async (result) => {
       if (!result.correct || !result.award) {
         setWrongHint(true)
@@ -37,7 +52,7 @@ export function CouncilItemScreen() {
   })
 
   if (player.isPending || council.isPending) {
-    return <p className="text-muted">{questStrings.council.loading}</p>
+    return <p className="text-muted" role="status">{questStrings.council.loading}</p>
   }
   if (player.isError || !player.data) {
     return (
@@ -73,24 +88,26 @@ export function CouncilItemScreen() {
   }
 
   if (reward) {
-    return (
-      <div className="space-y-6">
-        <ScreenHeader title={item.title} />
-        <RewardCard award={reward.award} player={reward.player} />
-      </div>
-    )
+    return <RewardCard award={reward.award} player={reward.player} />
   }
+
+  const summary = (
+    <Card>
+      <Eyebrow>{questStrings.council.listTitle}</Eyebrow>
+      <h2 className="mt-1 text-lg font-bold text-ink">{item.title}</h2>
+      <p className="mt-2 text-base leading-relaxed text-ink">{item.summary}</p>
+      <SourceLink href={item.sourceUrl} />
+    </Card>
+  )
 
   if (item.answered) {
     return (
-      <div className="space-y-6">
-        <ScreenHeader title={item.title} subtitle={questStrings.council.alreadyEarned} />
-        <p className="text-base text-ink">{item.summary}</p>
-        <p className="text-sm">
-          <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="underline">
-            {questStrings.council.source}
-          </a>
-        </p>
+      <div className="space-y-5">
+        <QuestHeader title={questStrings.council.listTitle} cancelTo="/council" />
+        <MayorSays>
+          <p className="text-base text-ink">{questStrings.mayor.councilDone}</p>
+        </MayorSays>
+        {summary}
         <ButtonLink to="/council" variant="secondary">
           {questStrings.council.back}
         </ButtonLink>
@@ -99,17 +116,18 @@ export function CouncilItemScreen() {
   }
 
   return (
-    <div className="space-y-6">
-      <ScreenHeader title={item.title} subtitle={questStrings.council.itemSubtitle} />
-      <p className="text-base text-ink">{item.summary}</p>
-      <p className="text-sm">
-        <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="underline">
-          {questStrings.council.source}
-        </a>
-      </p>
+    <div className="space-y-5">
+      <QuestHeader title={questStrings.council.listTitle} cancelTo="/council" />
+      {summary}
 
-      <div className="space-y-3">
-        <p className="text-base font-semibold text-ink">{item.question}</p>
+      <MayorSays live>
+        <p className="text-base text-ink" role={wrongHint ? 'alert' : undefined}>
+          {wrongHint ? questStrings.mayor.councilWrong : questStrings.mayor.councilItem}
+        </p>
+      </MayorSays>
+
+      <fieldset className="space-y-2">
+        <legend className="mb-3 text-base font-semibold text-ink">{item.question}</legend>
         {item.options.map((option, index) => (
           <OptionCard
             key={`${item.id}-${index}`}
@@ -124,13 +142,8 @@ export function CouncilItemScreen() {
             disabled={answer.isPending}
           />
         ))}
-      </div>
+      </fieldset>
 
-      {wrongHint ? (
-        <p className="text-sm text-severity-high" role="alert">
-          {questStrings.council.wrong}
-        </p>
-      ) : null}
       {answer.isError ? (
         <p className="text-sm text-severity-high" role="alert">
           {answer.error instanceof ApiError ? answer.error.message : questStrings.council.submitError}
@@ -145,7 +158,7 @@ export function CouncilItemScreen() {
           answer.mutate(Number(selected))
         }}
       >
-        {answer.isPending ? questStrings.council.submitting : questStrings.council.submit}
+        {answer.isPending ? questStrings.council.submitting : questStrings.council.submitFor(POINTS.council)}
       </Button>
     </div>
   )
