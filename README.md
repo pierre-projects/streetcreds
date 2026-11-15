@@ -110,6 +110,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 
 - Planning documents, the shared contract in `shared/`, and this README were drafted with Claude (Anthropic).
 - The project scaffold (`web/`, `api/`, `api/template.yaml`, `amplify.yml`) was generated with Claude Code (Anthropic). `web/` started from the `create-vite` `react-ts` template.
+- The Solana setup script, `mintPoints` and the mint test (`api/scripts/`, `api/src/points/solana.ts`) were generated with Claude Code (Anthropic).
 
 ## License
 

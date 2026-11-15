@@ -568,7 +568,7 @@ Notes:
 - Each player's first award also creates their token account, which costs the treasury about 0.002 SOL of rent. 2 SOL covers several hundred players.
 - The memo holds the player id only. Never put a nickname on chain.
 - Explorer link: `https://explorer.solana.com/tx/{txSignature}?cluster=devnet`.
-- `api/scripts/mint-test.ts [count]` calls `mintPoints` for a throwaway address `count` times (default 1), prints each explorer link and reports how many succeeded. It sends devnet transactions and does not touch the database. A human runs it: once in Phase 1 to prove the setup, and with a count of 10 in Phase 3.
+- `npm run mint-test` (in `api/`, add `-- 10` for ten in a row) runs `api/scripts/mint-test.ts`, which calls `mintPoints` for a throwaway address `count` times (default 1), prints each explorer link and reports how many succeeded. It sends devnet transactions and does not touch the database. A human runs it: once in Phase 1 to prove the setup, and with a count of 10 in Phase 3.
 
 ### `checkReportLimit(recentReportTimes, now)` (Pierre, `api/src/players/rateLimit.ts`, P1)
 
@@ -734,13 +734,13 @@ The Solana CLI is not required. `api/scripts/solana-setup.ts` does the same job 
 3. **First deploy (Pierre).** In `api/`: `npm run build`, then `sam deploy --guided --template-file template.yaml` with region `us-east-2` and `SolanaMode=off`. The guided deploy will not accept an empty answer for a secret, so type `none` for the Gemini key (if you don't have it yet), the treasury secret and the mint; the template turns `none` into an empty value. Every deploy after that is `npm run deploy`. Save the answers to `samconfig.toml`. Note `ApiUrl` and `PhotoBucketName` and send both to Sarah.
 4. **Local env (both).** Copy `api/.env.example` to `api/.env` and fill it from the stack outputs. Copy `web/.env.example` to `web/.env` with `VITE_API_URL=http://localhost:3001`.
 5. **Hosting (Pierre).** Connect Amplify as in section 8. Add the Amplify URL to `WebOrigins` and redeploy. Start the `streetcreds.app` custom domain at the same time, because DNS takes a while.
-6. **Solana (Pierre, 90-minute limit).** Run `npx tsx scripts/solana-setup.ts`. It must:
-   - generate a treasury keypair and write it to a git-ignored file outside `src/`;
-   - request a 2 SOL devnet airdrop (if that is rate-limited, print the address and tell the human to use https://faucet.solana.com);
-   - create the CIVIC mint with `createMint(connection, treasury, treasury.publicKey, null, 0)`;
-   - print `CIVIC_MINT` and the base64 `SOLANA_TREASURY_SECRET` for the human to paste into `api/.env` and `samconfig.toml`.
+6. **Solana (Pierre, 90-minute limit).** In `api/`, run `npm run solana-setup`. It is safe to run again; each run continues where the last one stopped. It:
+   - loads the treasury keypair from `api/treasury-keypair.json`, or creates it (the file is git-ignored);
+   - asks the devnet faucet for SOL when the treasury is low (if that is rate-limited, it prints the address, points to https://faucet.solana.com and stops);
+   - creates the CIVIC mint with `createMint(connection, treasury, treasury.publicKey, null, 0)`, unless `api/.env` already names a mint this treasury controls;
+   - writes `CIVIC_MINT` and the base64 `SOLANA_TREASURY_SECRET` into `api/.env` itself. It never prints the secret, so it cannot end up in a terminal log or a chat. For a deploy with Solana on, copy both values from `api/.env` into the guided deploy.
 
-   Then write `mintPoints` (section 6), set `SOLANA_MODE=per-player` in `api/.env`, run `npx tsx scripts/mint-test.ts` and open the explorer link it prints. This tests the mint on its own, before `awardPoints` exists. If it is not working after 90 minutes, set `SOLANA_MODE=shared` and run it again; if that fails too, stay on `off` and move on. The deployed API stays on `off` until the real `awardPoints` is merged in Phase 2.
+   Then set `SOLANA_MODE=per-player` in `api/.env`, run `npm run mint-test` and open the explorer link it prints. This tests the mint on its own, before `awardPoints` exists. If it is not working after 90 minutes, set `SOLANA_MODE=shared` and run it again; if that fails too, stay on `off` and move on. The deployed API stays on `off` until the real `awardPoints` is merged in Phase 2.
 
 ### Daily loop
 
