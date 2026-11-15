@@ -43,4 +43,4 @@ When a checkpoint passes, tag it (`git tag checkpoint-2`, then `git push origin 
 
 ## If you finish early
 
-Stretch items are built only after Phase 4 passes, one at a time, and only when you both agree: duplicate merge (Sarah), budget quest (Sarah), Spanish toggle (both), spending points at pretend shops (Pierre; needs a design decision first).
+Stretch items are built only after Phase 4 passes, one at a time, and only when you both agree: duplicate merge (Sarah), budget quest (Sarah), Spanish toggle (both), Local Deals (Pierre + Sarah unlock wiring; see `docs/PRD-LOCAL-DEALS.md`).

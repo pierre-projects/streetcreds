@@ -51,7 +51,7 @@ Build the report quest end to end first; everything else is added only once it w
 | P2 (stretch) | Duplicate merge for reports within about 30 meters | The benefit to the city |
 | P1 | Map of all reports | Strong visual for the demo |
 | P2 (stretch) | Budget quest: "your $100 in taxes" quiz | Third quest type |
-| P2 | Spend points at pretend local shops | Closes the rewards loop |
+| P2 | Spend points at pretend local shops (Local Deals) | Closes the rewards loop. Spec: `docs/PRD-LOCAL-DEALS.md` — curated partners, proximity unlock = cheaper CIVIC cost |
 | P2 | Spanish toggle, streaks and badges | Diversity/Equality and polish |
 
 **Cut:** real user accounts, mainnet or real money, actually filing reports with the city (the app prepares the report and the person files it), native apps, admin tools.
@@ -121,7 +121,7 @@ Each feature is done when its checks pass on a real phone, not only on a laptop.
 ### F7. Stretch (P2)
 
 - [ ] Budget quest with one "your $100 in taxes" question from the published city budget.
-- [ ] A pretend shop page where points can be spent (a transfer back to the treasury).
+- [ ] Local Deals: curated partners, proximity unlock (cheaper CIVIC cost), redeem for a demo code. Full spec in `docs/PRD-LOCAL-DEALS.md`. Replaces the thinner "pretend shop page" idea.
 - [ ] Spanish toggle for all screens and summaries.
 
 ## Tech architecture

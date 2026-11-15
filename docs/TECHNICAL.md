@@ -858,7 +858,7 @@ Each milestone ends with the checkpoint from the matching phase in `docs/PHASES.
 | M4 | Polish | Own screens: loading, errors, small and large phones | Own screens: the same; backup video | Feature freeze. Bug fixes only after this |
 | M5 | Submit | Devpost page | README with credits; architecture slide | Submitted, demo rehearsed twice |
 
-P2 items (duplicate merge, budget quest, spending points, Spanish, streaks) are built only if M4 is finished early, and only when a human asks for one by name.
+P2 items (duplicate merge, budget quest, Local Deals per `docs/PRD-LOCAL-DEALS.md`, Spanish, streaks) are built only if M4 is finished early, and only when a human asks for one by name.
 
 ## 11. Conventions
 
@@ -887,7 +887,7 @@ These are settled. Do not redesign them during the hackathon.
 | `awardPoints` writes the award and then adds the points, as two separate calls | If the second call fails, the award exists without its points and a retry gets `already_awarded`. Accepted for the demo: it takes a DynamoDB failure between two calls a few milliseconds apart, and a transaction is not worth the time |
 | Pierre writes the scaffold and the API's shared core (`index.ts`, `lib/`) once, and each person wires their own routes | Nobody waits on the other person to add one line. See Ownership in `AGENTS.md` |
 | Player wallets are addresses only; secret keys are discarded | Minting needs only the address, and nothing sensitive is stored |
-| Spending points (P2) has no design yet | It needs a decision on how a player without a key spends; ask before building |
+| Local Deals (P2) product direction is locked in `docs/PRD-LOCAL-DEALS.md` | Agree the proposed `shared/` contract (LD0) before coding; spend is server-side deduct / treasury return, player never holds a key |
 | Devnet only, token has no value | Hackathon demo; no real money anywhere |
 
 ## 13. Acceptance checks
@@ -935,7 +935,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 
 **F7. Stretch (P2, only when asked)**
 - Budget quest with one "your $100 in taxes" question from the published city budget.
-- A pretend shop page where points can be spent.
+- Local Deals: curated partners, proximity cheaper-cost unlock, redeem (`docs/PRD-LOCAL-DEALS.md`).
 - Spanish toggle for all screens and summaries.
 
 ## References
