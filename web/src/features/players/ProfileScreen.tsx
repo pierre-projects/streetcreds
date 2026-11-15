@@ -12,7 +12,7 @@ import { completeSignIn, signOutHere, usePlayer } from '../../app/player'
 import { playerReportsKey } from '../../app/queryClient'
 import { explorerAddressUrl } from '../../app/solana'
 import { strings } from '../../app/strings'
-import { Button, ButtonLink, Card, ErrorNotice, Eyebrow, ScreenHeader } from '../../app/ui'
+import { Button, ButtonLink, Card, ErrorNotice, Eyebrow, LogoMark, ScreenHeader } from '../../app/ui'
 import { ShareCard } from '../quests/share/ShareCard'
 import { GoogleSignInButton } from './GoogleSignInButton'
 import { hasPlace } from './mapReports'
@@ -48,26 +48,34 @@ export function ProfileScreen() {
     <div className="space-y-6">
       <ScreenHeader title={strings.profile.title} />
 
-      <Card tone="dark">
-        <h2 className="text-title font-bold tracking-tight [overflow-wrap:anywhere]">{me.nickname}</h2>
-        <p className="mt-1 text-sm text-on-ink/70">
-          {neighborhoodName(me.neighborhood)} · {strings.profile.joined(day(me.createdAt))}
-        </p>
-        <Eyebrow tone="dark" className="mt-5">{strings.profile.pointsLabel}</Eyebrow>
-        <p className="points-total mt-1">{me.points}</p>
-        {me.walletAddress !== null && (
-          <p className="dark-detail mt-4">
-            {strings.profile.walletNote}{' '}
-            <a href={explorerAddressUrl(me.walletAddress)} target="_blank" rel="noreferrer" className="wallet-link">
-              {strings.profile.wallet}
-            </a>
+      {/* The player's street cred card: the logo, who they are and their points, laid out like the
+          picture that Share sends, with Share right under it. One card, so nothing is said twice. */}
+      <section aria-labelledby="profile-name" className="overflow-hidden rounded-card border border-ink/10 bg-surface shadow-float">
+        <div className="bg-ink p-5 text-on-ink [&_:focus-visible]:outline-accent">
+          <div className="flex items-center gap-2.5">
+            <LogoMark className="size-8" />
+            <span className="text-base font-bold tracking-tight">{strings.appName}</span>
+          </div>
+          <h2 id="profile-name" className="mt-6 text-title font-bold tracking-tight [overflow-wrap:anywhere]">{me.nickname}</h2>
+          <p className="mt-1 text-sm text-on-ink/70">
+            {neighborhoodName(me.neighborhood)} · {strings.profile.joined(day(me.createdAt))}
           </p>
-        )}
-      </Card>
-
-      <Card>
-        <ShareCard player={me} />
-      </Card>
+          <Eyebrow tone="dark" className="mt-5">{strings.profile.pointsLabel}</Eyebrow>
+          <p className="points-total mt-1">{me.points}</p>
+          {me.walletAddress !== null && (
+            <p className="dark-detail mt-4">
+              {strings.profile.walletNote}{' '}
+              <a href={explorerAddressUrl(me.walletAddress)} target="_blank" rel="noreferrer" className="wallet-link">
+                {strings.profile.wallet}
+              </a>
+            </p>
+          )}
+        </div>
+        {/* Less room at the bottom: ShareCard keeps a line free there for what Share reports back. */}
+        <div className="px-4 pb-1 pt-4">
+          <ShareCard player={me} preview={false} />
+        </div>
+      </section>
 
       <OwnReports playerId={me.id} neighborhood={me.neighborhood} />
 
