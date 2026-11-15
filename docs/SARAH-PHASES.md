@@ -255,6 +255,14 @@ Do my Phase 4 from docs/SARAH-PHASES.md. For every screen and route I own: add a
 - [ ] Demo rehearsed twice with a timer. Sarah does the talking.
 - [ ] Submitted before the deadline. Nothing committed after it.
 
+## Accounts and the street cred card (added 2026-11-15, by Pierre with your agreement)
+
+What changed in your folders, so nothing is a surprise. Details: [ACCOUNTS.md](ACCOUNTS.md).
+
+- [ ] Read the change to your routes: each handler in `reportRoutes.ts` and `councilRoutes.ts` now calls `requirePlayer(c, playerId)` where it used to call `getPlayer` and throw `not_found`. Nothing else in them changed. Any new route that takes a player id should do the same.
+- [ ] Read `web/src/features/quests/share/` and the one `<ShareCard>` block added to the reward step in `ReportScreen.tsx`. The card's copy is the `share` group in your `strings.ts`; change the wording if you like.
+- [ ] Try the reward step on a phone: the share sheet opens with the card and the report photo.
+
 ## Prompts for any phase
 
 When something breaks:

@@ -62,6 +62,7 @@ export const strings = {
     home: 'Home',
     leaderboard: 'Leaderboard',
     map: 'Map',
+    profile: 'Profile',
   },
 
   header: {
@@ -356,6 +357,49 @@ export const strings = {
     backHome: 'Back to home',
     report: 'Report a street problem',
     council: 'Council quest',
+  },
+
+  auth: {
+    continueWithGoogle: 'Continue with Google',
+    joinHint: 'Optional. Signing in keeps your points and reports on any phone.',
+    newPerson: 'Signed in with Google. Pick a nickname to finish.',
+    signingIn: 'Signing in…',
+    failed: 'Google sign-in did not work. Try again.',
+    unavailable: 'Google sign-in could not load here. Open streetcreds.app in your phone’s own browser and try again.',
+    switchTitle: 'Switch to your saved player?',
+    switchBody: (saved: string, savedPoints: number, guestPoints: number) =>
+      `This Google account already has a saved player: ${saved}, with ${savedPoints} pts. ` +
+      (guestPoints > 0
+        ? `You have ${guestPoints} pts on this phone as a guest. They will not move to your saved player.`
+        : 'The guest player on this phone will be left behind.'),
+    switchConfirm: 'Switch to my saved player',
+    switchCancel: 'Stay as a guest',
+  },
+
+  profile: {
+    title: 'Profile',
+    loading: 'Loading your profile…',
+    pointsLabel: 'Street cred',
+    points: (points: number) => `${points} pts`,
+    joined: (date: string) => `Playing since ${date}`,
+    walletNote: 'Every point is also a token on Solana.',
+    wallet: 'See your wallet',
+    reportsTitle: 'Your reports',
+    reportsCount: (count: number) => (count === 1 ? '1 report sent in' : `${count} reports sent in`),
+    reportsLoading: 'Loading your reports…',
+    reportsError: 'Could not load your reports.',
+    reportsEmpty: 'You have not reported anything yet.',
+    reportsEmptyAction: 'Report a street problem',
+    reportsMapLabel: 'Map of your reports',
+    reportedOn: (date: string) => `Reported ${date}`,
+    guestTitle: 'Save your player',
+    guestBody:
+      'You are playing as a guest, and this player lives on this phone only. Sign in with Google to keep your points and reports on any phone. We keep an ID from Google, never your email, name or picture.',
+    guestOnly: 'You are playing as a guest. This player lives on this phone only.',
+    signedInTitle: 'Signed in with Google',
+    signedInBody: 'Your points and reports are saved. Sign in on any phone to pick up where you left off.',
+    signOut: 'Sign out',
+    signingOut: 'Signing out…',
   },
 
   errors: {

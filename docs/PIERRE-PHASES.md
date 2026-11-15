@@ -162,6 +162,17 @@ Do my Phase 4 from docs/PIERRE-PHASES.md. For every screen and route I own: add 
 - [ ] Demo rehearsed twice with a timer. Pierre runs the phone and handles anything that breaks.
 - [ ] Nothing committed after the deadline.
 
+## Accounts, profile and street cred card (added 2026-11-15)
+
+Built on `pierre/accounts-profile-share`. Design and setup steps: [ACCOUNTS.md](ACCOUNTS.md). Acceptance checks F8 to F10 in `docs/TECHNICAL.md` section 13.
+
+- [ ] Google OAuth client created (type "Web application") with every address the site is served from as a JavaScript origin.
+- [ ] Client id set: `GOOGLE_CLIENT_ID` in `api/.env`, `VITE_GOOGLE_CLIENT_ID` in `web/.env` and in the Amplify console.
+- [ ] API deployed with `GoogleClientId`, creating the accounts and sessions tables and allowing the `authorization` header.
+- [ ] On a phone against the live site: save a guest with Google, sign out, sign in on a second phone, same points and reports.
+- [ ] On a phone: share the street cred card after a report and from the profile into a chat app.
+- [ ] Privacy page read once more against what is actually stored.
+
 ## Prompts for any phase
 
 When something breaks:

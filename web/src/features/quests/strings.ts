@@ -48,6 +48,37 @@ export const questStrings = {
     dealsLink: 'See Local Deals',
     homeLink: 'Back home',
   },
+  // The street cred card: shown after a report and on the profile. See share/.
+  share: {
+    title: 'Show off your street cred',
+    hint: 'A picture of your points and your neighborhood. No location.',
+    button: 'Share',
+    preparing: 'Making your card…',
+    previewAlt: 'Your street cred card',
+    shared: 'Shared.',
+    saved: 'Card saved, and the text is copied. Paste it wherever you like.',
+    savedOnly: 'Card saved to your downloads.',
+    copied: 'Text copied. Paste it wherever you like.',
+    failed: 'Could not share from this browser. Try again.',
+    fileName: 'streetcreds.png',
+    wordmark: 'StreetCreds',
+    cardLabel: 'Street cred',
+    cardEarned: (points: number) => `+${points}`,
+    cardReason: (reported: string) => `for reporting ${reported}`,
+    cardFooter: 'Play at streetcreds.app',
+    placeRanked: (neighborhood: string, rank: number) => `${neighborhood} · #${rank} in Tempe`,
+    message: (points: number, place: string) => `I have ${points} street cred on StreetCreds. ${place}.`,
+    messageEarned: (reported: string, earned: number, points: number, place: string) =>
+      `I just reported ${reported} and earned +${earned} street cred on StreetCreds. ${points} pts total. ${place}.`,
+    // How each category reads in "reported …".
+    reported: {
+      pothole: 'a pothole',
+      streetlight: 'a broken streetlight',
+      graffiti: 'graffiti',
+      'blocked-sidewalk': 'a blocked sidewalk',
+      other: 'a street problem',
+    } satisfies Record<Category, string>,
+  },
   categories: {
     pothole: 'Pothole',
     streetlight: 'Streetlight',

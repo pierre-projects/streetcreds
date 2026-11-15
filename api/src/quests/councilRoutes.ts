@@ -6,7 +6,7 @@ import type { CouncilAnswerResponse, CouncilListResponse } from '../../../shared
 import { POINTS } from '../../../shared/constants';
 import { db, TABLES } from '../lib/db';
 import { ApiError } from '../lib/errors';
-import { getPlayer } from '../players/store';
+import { requirePlayer } from '../players/auth';
 import { awardId, awardPoints } from '../points/awardPoints';
 import { COUNCIL_ITEMS, getCouncilItem, isCorrectCouncilAnswer, toCouncilItemView } from './councilItems';
 
@@ -34,8 +34,7 @@ async function hasCouncilAward(itemId: string, playerId: string): Promise<boolea
 councilRoutes.get('/quests/council', async (c) => {
   const playerId = c.req.query('playerId');
   if (!playerId) throw new ApiError('validation_failed', 'playerId is required.');
-  const player = await getPlayer(playerId);
-  if (!player) throw new ApiError('not_found', 'We could not find that player.');
+  await requirePlayer(c, playerId);
 
   const items = await Promise.all(
     COUNCIL_ITEMS.map(async (item) => {
@@ -49,8 +48,7 @@ councilRoutes.get('/quests/council', async (c) => {
 
 councilRoutes.post('/quests/council/answer', async (c) => {
   const input = AnswerSchema.parse(await c.req.json());
-  const player = await getPlayer(input.playerId);
-  if (!player) throw new ApiError('not_found', 'We could not find that player.');
+  const player = await requirePlayer(c, input.playerId);
 
   const item = getCouncilItem(input.itemId);
   if (!item) throw new ApiError('not_found', 'We could not find that council item.');

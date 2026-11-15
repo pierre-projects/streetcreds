@@ -20,7 +20,7 @@ vi.mock('./s3', () => ({ photoBucket: vi.fn(), s3: {} }));
 const app = new Hono();
 app.route('/', reportRoutes);
 app.onError(handleError);
-const player = { id: 'existing-player', nickname: 'Sam', neighborhood: 'asu-campus' as const, points: 25, walletAddress: null, recentReportTimes: [], createdAt: '2026-11-14T00:00:00Z' };
+const player = { id: 'existing-player', nickname: 'Sam', neighborhood: 'asu-campus' as const, points: 25, walletAddress: null, recentReportTimes: [], createdAt: '2026-11-14T00:00:00Z', accountId: null };
 const draft = { id: 'report-1', playerId: player.id, photoKey: 'reports/existing-player/photo.jpg', lat: null, lng: null, category: 'pothole' as const, severity: 'low' as const, description: 'A pothole.', count: 1, status: 'draft' as const, createdAt: player.createdAt, submittedAt: null };
 const location = () => ({ lat: 33.418, lng: -111.934, accuracyMeters: 20, capturedAt: new Date().toISOString() });
 const submit = (body: unknown) => app.request('/reports/report-1/submit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });

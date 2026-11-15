@@ -15,7 +15,7 @@ local.use(
   cors({
     origin: env.WEB_ORIGINS.split(',').map((origin) => origin.trim()),
     allowMethods: ['GET', 'POST', 'OPTIONS'],
-    allowHeaders: ['content-type'],
+    allowHeaders: ['content-type', 'authorization'],
   }),
 );
 
