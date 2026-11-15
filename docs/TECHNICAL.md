@@ -6,7 +6,7 @@ This file is the implementation spec for StreetCreds: stack, data models, API co
 
 **Priorities.** P0 must work for the demo, P1 is added once P0 works on a phone, P2 is built only when a human asks for it by name. Each route in section 5 and each milestone in section 10 carries its priority.
 
-**Status on 2026-11-14:** the contract in `shared/` (constants, data fields, API shapes) and Pierre's Phase 1 exist. In `api/`: routes 1 to 4 (`GET /health`, `POST /players`, `GET /players/:id`, `GET /leaderboard`) against the real tables, the `awardPoints` stub (database only, no minting), `mintPoints`, and the Solana setup and mint-test scripts. In `web/`: the app shell (routing, layout, the `api` object, mock mode), the join screen and the home screen. Routes 5 to 10, the quest screens, the leaderboard screen and the map are still to build. Other code can import `isConditionalCheckFailed` from `api/src/players/store.ts` to recognize a refused conditional write.
+**Status on 2026-11-14:** the contract in `shared/` (constants, data fields, API shapes) and Pierre's Phases 1 and 2 on the API side exist. In `api/`: routes 1 to 4 (`GET /health`, `POST /players`, `GET /players/:id`, `GET /leaderboard`) against the real tables; a devnet address for each new player in `per-player` mode; the real `awardPoints`, which mints with a 10-second limit and leaves the award `pending` if devnet does not answer; `mintPoints`; and the Solana setup, mint-test and deploy-secrets scripts. The Solana library is loaded on first use with `await import('./solana')`, so routes that never mint are not slowed by it; keep it that way. In `web/`: the app shell (routing, layout, the `api` object, mock mode), the join screen and the home screen. Routes 5 to 10, the quest screens, the leaderboard screen and the map are still to build. Other code can import `isConditionalCheckFailed` from `api/src/players/store.ts` to recognize a refused conditional write.
 
 **Names.** The product is written StreetCreds. In code, resource names and storage keys it is `streetcreds`: the stack is `streetcreds`, the tables are `streetcreds-*`, and the stored player key is `streetcreds.playerId`. The site is planned for `https://streetcreds.app`. The points token keeps the symbol CIVIC.
 
@@ -739,7 +739,7 @@ The Solana CLI is not required. `api/scripts/solana-setup.ts` does the same job 
    - loads the treasury keypair from `api/treasury-keypair.json`, or creates it (the file is git-ignored);
    - asks the devnet faucet for SOL when the treasury is low (if that is rate-limited, it prints the address, points to https://faucet.solana.com and stops);
    - creates the CIVIC mint with `createMint(connection, treasury, treasury.publicKey, null, 0)`, unless `api/.env` already names a mint this treasury controls;
-   - writes `CIVIC_MINT` and the base64 `SOLANA_TREASURY_SECRET` into `api/.env` itself. It never prints the secret, so it cannot end up in a terminal log or a chat. For a deploy with Solana on, copy both values from `api/.env` into the guided deploy.
+   - writes `CIVIC_MINT` and the base64 `SOLANA_TREASURY_SECRET` into `api/.env` itself. It never prints the secret, so it cannot end up in a terminal log or a chat. To turn Solana on for the live API, run `npm run deploy-secrets` (see "Deploying and logs").
 
    Then set `SOLANA_MODE=per-player` in `api/.env`, run `npm run mint-test` and open the explorer link it prints. This tests the mint on its own, before `awardPoints` exists. If it is not working after 90 minutes, set `SOLANA_MODE=shared` and run it again; if that fails too, stay on `off` and move on. The deployed API stays on `off` until the real `awardPoints` is merged in Phase 2.
 
@@ -778,6 +778,7 @@ The acceptance checks for each feature are in section 13. Run them on a real pho
 ### Deploying and logs
 
 - API: `npm run deploy` in `api/` (humans only). Logs: `sam logs --stack-name streetcreds --tail`.
+- Secrets and Solana settings: `npm run deploy-secrets` in `api/` (humans only). It deploys with `GEMINI_API_KEY`, `SOLANA_MODE`, `CIVIC_MINT` and `SOLANA_TREASURY_SECRET` taken from `api/.env`, without printing them or asking you to paste them, and saves the mode and mint in `samconfig.toml` so later plain deploys keep them. A secret that is not in `api/.env` is left as it is on the live API. Add `-- --dry-run` to see what it would send. Run it when one of those four values changes; use `npm run deploy` for everything else.
 - Web: push to `main`; Amplify builds it.
 - Never log photo data, base64 strings or secrets. Log one JSON line per request: route, status, player id, milliseconds.
 

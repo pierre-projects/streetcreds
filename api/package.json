@@ -8,7 +8,8 @@
     "deploy": "npm run build && sam deploy --template-file template.yaml",
     "build": "esbuild src/index.ts --bundle --platform=node --format=cjs --target=es2022 --outfile=dist/index.js",
     "solana-setup": "tsx --env-file-if-exists=.env scripts/solana-setup.ts",
-    "mint-test": "tsx --env-file-if-exists=.env scripts/mint-test.ts"
+    "mint-test": "tsx --env-file-if-exists=.env scripts/mint-test.ts",
+    "deploy-secrets": "tsx --env-file-if-exists=.env scripts/deploy-secrets.ts"
   },
   "type": "commonjs",
   "dependencies": {

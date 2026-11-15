@@ -21,7 +21,7 @@ In progress during the hackathon. So far a player can join with a nickname and a
 | Shared contract (`shared/`): constants, data types, API types | Done |
 | API (`api/`) | Joining, loading a player and the leaderboard work against the database. `awardPoints` exists as a database-only stand-in. Quest routes are not built |
 | Web app (`web/`) | App shell, join screen and home screen. Quest, leaderboard and map screens are placeholders |
-| Solana points | Setup script, `mintPoints` and a mint test are written. The live API does not mint yet |
+| Solana points | Each new player gets a devnet address, and every award is minted as a CIVIC token with a link to the transaction. If devnet is slow the points still count and the award is marked pending |
 
 ## Documentation
 
@@ -113,7 +113,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The project scaffold (`web/`, `api/`, `api/template.yaml`, `amplify.yml`) was generated with Claude Code (Anthropic). `web/` started from the `create-vite` `react-ts` template.
 - The Solana setup script, `mintPoints` and the mint test (`api/scripts/`, `api/src/points/solana.ts`) were generated with Claude Code (Anthropic).
 - The web app shell (`web/src/app/`: routing, layout, API client and mock mode) was generated with Claude Code (Anthropic).
-- The player routes, the leaderboard, the `awardPoints` stub and the join and home screens were generated with Claude Code (Anthropic).
+- The player routes, the leaderboard, `awardPoints`, the deploy-secrets script and the join and home screens were generated with Claude Code (Anthropic).
 
 ## License
 

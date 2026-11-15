@@ -65,6 +65,7 @@ Run from the package folder named.
 | `api/` | `npm run mint-test` | Send one test mint to devnet and print its explorer link. Add `-- 10` for ten in a row. Humans only, see rule 8 |
 | `api/` | `npm run build` | Bundle the API into `api/dist/index.js` with esbuild. Safe to run any time |
 | `api/` | `npm run deploy` | `npm run build`, then `sam deploy`. Humans only, see rule 8. Never `sam build` |
+| `api/` | `npm run deploy-secrets` | Deploy with the Gemini key and the Solana settings from `api/.env`, without printing them. Humans only, see rule 8 |
 
 ## Definition of done
 

@@ -17,6 +17,14 @@ import { env } from '../lib/env';
 
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 
+/**
+ * A fresh devnet address for a new player. Only the address is returned and kept: the secret key
+ * is dropped here, because minting to an address never needs it. Nothing sensitive is stored.
+ */
+export function newWalletAddress(): string {
+  return Keypair.generate().publicKey.toBase58();
+}
+
 /** The page where anyone can look at a devnet transaction. */
 export function explorerTxUrl(signature: string): string {
   return `https://explorer.solana.com/tx/${signature}?cluster=devnet`;
