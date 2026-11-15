@@ -279,7 +279,7 @@ export function BoardScreen() {
           <div className="board-city-dock">
             <div className="flex items-center">
               {cityOpen ? (
-                <h3 className="min-w-0 flex-1 truncate px-4 text-sm text-ink">{strings.city.title}</h3>
+                <h3 className="min-w-0 flex-1 truncate px-4 text-sm text-on-ink">{strings.city.title}</h3>
               ) : (
                 <CityLayerKeys records={city.records} status={city.status} layers={layers} onChange={setLayers} />
               )}

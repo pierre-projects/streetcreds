@@ -21,21 +21,23 @@
 
 @theme static {
   --color-*: initial;
-  /* Night, Card, Raised, Blaze orange, Signal red, Coin amber: the StreetCreds game palette. */
-  --color-page: #0D0B0A;
-  --color-surface: #1A1614;
-  --color-raised: #26201C;
-  --color-line: rgb(255 244 236 / .5);
-  --color-ink: #FFF4EC;
-  --color-muted: #B5A99F;
+  /* Light game palette: white surfaces, warm dark ink; Blaze orange, Signal red, Coin amber accents. */
+  --color-page: #FAF7F4;
+  --color-surface: #FFFFFF;
+  --color-raised: #F3EDE7;
+  --color-line: rgb(26 18 16 / .5);
+  --color-ink: #1A1210;
+  --color-muted: #6B5E55;
   --color-accent: #FF7A1A;
-  --color-accent-soft: #FFB27A;
-  --color-on-accent: #0D0B0A;
-  --color-on-ink: #0D0B0A;
+  --color-accent-soft: #FF7A1A;
+  --color-on-accent: #1A1210;
+  --color-on-ink: #FFFFFF;
   --color-quest: #D62828;
   --color-on-quest: #FFF4EC;
   --color-coin: #FFB02E;
-  --color-on-coin: #0D0B0A;
+  /* Coin amber is too light for text on white, so numbers use a deeper amber. The coin itself stays #FFB02E. */
+  --color-coin-ink: #B86E00;
+  --color-on-coin: #1A1210;
   --color-severity-low: #4CAF50;
   --color-severity-medium: #F2A900;
   --color-severity-high: #D62828;
@@ -45,9 +47,9 @@
   --radius-control: 12px;
   --radius-card: 16px;
   --radius-pill: 9999px;
-  --shadow-float: 0 8px 28px rgb(0 0 0 / .45);
-  --surface-frost: rgb(26 22 20 / .82);
-  --surface-frost-strong: rgb(26 22 20 / .94);
+  --shadow-float: 0 6px 22px rgb(26 18 16 / .10);
+  --surface-frost: rgb(255 255 255 / .85);
+  --surface-frost-strong: rgb(255 255 255 / .94);
   --blur-frost: 18px;
   --text-display: 4rem;
   --text-display--line-height: 1;
@@ -118,7 +120,7 @@ body {
     justify-content: space-between;
     gap: 0.75rem;
     border-radius: var(--radius-pill);
-    border: 1px solid rgb(255 244 236 / .08);
+    border: 1px solid rgb(26 18 16 / .08);
     background: var(--surface-frost);
     padding: 0.5rem 0.85rem 0.5rem 0.65rem;
     box-shadow: var(--shadow-float);
@@ -178,7 +180,7 @@ body {
   .app-main-radar { @apply absolute inset-0 flex flex-col p-0; }
   /* A screen fades in when the player moves to it, so one screen does not snap into the next. */
   .screen-enter { animation: fade-in 0.16s ease-out backwards; }
-  .points-total { @apply font-display text-display text-coin; overflow-wrap: anywhere; }
+  .points-total { @apply font-display text-display text-coin-ink; overflow-wrap: anywhere; }
   .dark-detail { @apply border-t border-ink/10 pt-4 text-sm text-muted; }
   .wallet-link { @apply inline-flex min-h-11 items-center text-ink underline focus-visible:outline-2 focus-visible:outline-offset-4; }
   .section-title { @apply text-lg font-bold text-ink; }
@@ -261,7 +263,7 @@ body {
   .board-side-head { @apply flex flex-col gap-3 border-b border-ink/10 p-4 lg:px-6; }
   .board-list { @apply p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6; }
   .board-city-dock {
-    @apply absolute bottom-3 left-3 z-[1000] hidden max-w-[34rem] flex-col text-ink lg:flex;
+    @apply absolute bottom-3 left-3 z-[1000] hidden max-w-[34rem] flex-col text-on-ink lg:flex;
     border-radius: var(--radius-card);
     background: rgb(10 10 10 / .72);
     backdrop-filter: blur(12px);
@@ -269,11 +271,11 @@ body {
     box-shadow: var(--shadow-float);
   }
   .board-city-fold {
-    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control text-ink hover:bg-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control text-on-ink hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
   }
   .board-city-fold[aria-expanded="false"] svg { @apply rotate-180; }
   .city-key {
-    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control hover:bg-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
   }
   .board-city-panel { @apply flex flex-col gap-2 px-4 pb-4 pt-1; }
   .board-city-inline { @apply border-t border-ink/10 pt-3 lg:hidden; }
@@ -351,7 +353,7 @@ body {
   }
   .quest-row.is-locked { @apply opacity-70 hover:border-ink/10 active:scale-100; }
   .quest-icon { @apply flex size-12 shrink-0 items-center justify-center rounded-control; }
-  .quest-points { @apply flex shrink-0 items-center gap-1.5 font-display text-lg tabular-nums text-coin; }
+  .quest-points { @apply flex shrink-0 items-center gap-1.5 font-display text-lg tabular-nums text-coin-ink; }
   .profile-hero { @apply rounded-card border border-accent bg-raised p-5; }
   .profile-initial {
     @apply flex size-16 shrink-0 items-center justify-center rounded-full bg-accent font-display text-3xl text-on-accent ring-1 ring-accent ring-offset-2 ring-offset-raised;
@@ -366,7 +368,7 @@ body {
   .leaderboard-list { @apply flex flex-col gap-3; }
   .leaderboard-row {
     border-radius: var(--radius-card);
-    border: 1px solid rgb(255 244 236 / .08);
+    border: 1px solid rgb(26 18 16 / .08);
     background: var(--surface-frost-strong);
     padding: 1rem;
     box-shadow: var(--shadow-float);
@@ -417,13 +419,13 @@ body {
 .map-frame .leaflet-tile-pane,
 .board-map .leaflet-tile-pane,
 .map-frame-radar .leaflet-tile-pane {
-  /* The Esri dark gray tiles are dark already. */
+  /* Esri light gray tiles: quiet, so the pins stand out. */
   filter: none;
 }
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
   border-radius: var(--radius-card);
-  border: 1px solid rgb(255 244 236 / .12);
+  border: 1px solid rgb(26 18 16 / .12);
   background: var(--color-surface);
   color: var(--color-ink);
   box-shadow: var(--shadow-float);
@@ -435,7 +437,7 @@ body {
   right: 0;
   width: 44px;
   height: 44px;
-  border: 1px solid rgb(255 244 236 / .12);
+  border: 1px solid rgb(26 18 16 / .12);
   border-radius: 0 var(--radius-card) 0 var(--radius-control);
   background: var(--color-surface);
   color: var(--color-ink);
@@ -443,7 +445,7 @@ body {
 }
 
 .leaflet-touch .leaflet-bar, .leaflet-bar {
-  border: 1px solid rgb(255 244 236 / .12);
+  border: 1px solid rgb(26 18 16 / .12);
   border-radius: var(--radius-control);
   box-shadow: var(--shadow-float);
   overflow: hidden;
@@ -453,7 +455,7 @@ body {
   height: 44px;
   line-height: 44px;
   border-radius: var(--radius-control);
-  border-bottom-color: rgb(255 244 236 / .12);
+  border-bottom-color: rgb(26 18 16 / .12);
   background: var(--surface-frost-strong);
   color: var(--color-ink);
 }
@@ -574,21 +576,21 @@ html:has(.app-main-radar) { overscroll-behavior: none; }
 .pin-resource, .filter-diamond { transform: rotate(45deg); }
 .pin-resource > span, .filter-diamond > span { transform: rotate(-45deg); }
 
-.board-city-dock .filter-toggle { background: transparent; border-color: var(--color-ink); color: var(--color-ink); outline-color: var(--color-accent); }
+.board-city-dock .filter-toggle { background: transparent; border-color: var(--color-on-ink); color: var(--color-on-ink); outline-color: var(--color-accent); }
 .board-city-dock .filter-toggle[aria-pressed="false"],
 .board-city-dock .filter-toggle:disabled {
-  border-color: color-mix(in srgb, var(--color-ink) 45%, transparent);
-  color: color-mix(in srgb, var(--color-ink) 70%, transparent);
+  border-color: color-mix(in srgb, var(--color-on-ink) 45%, transparent);
+  color: color-mix(in srgb, var(--color-on-ink) 70%, transparent);
 }
 .board-city-dock .filter-toggle[aria-pressed="false"] .filter-square { opacity: .55; }
-.board-city-dock .text-muted { color: color-mix(in srgb, var(--color-ink) 75%, transparent); }
+.board-city-dock .text-muted { color: color-mix(in srgb, var(--color-on-ink) 75%, transparent); }
 .city-key .filter-square { width: 1.625rem; height: 1.625rem; font-size: 13px; }
 .city-key[aria-pressed="false"] .filter-square,
 .city-key:disabled .filter-square {
   border-style: dotted;
-  border-color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+  border-color: color-mix(in srgb, var(--color-on-ink) 60%, transparent);
   background: transparent;
-  color: color-mix(in srgb, var(--color-ink) 70%, transparent);
+  color: color-mix(in srgb, var(--color-on-ink) 70%, transparent);
 }
 
 .filter-toggle[aria-pressed="false"] .filter-dot { background: var(--color-surface); border-color: var(--color-ink); }

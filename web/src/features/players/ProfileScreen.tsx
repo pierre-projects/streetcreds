@@ -73,7 +73,7 @@ export function ProfileScreen() {
 
         <div className="mt-5 border-t border-ink/10 pt-4">
           <Eyebrow>{strings.profile.pointsLabel}</Eyebrow>
-          <p className="mt-1 flex items-center gap-2 font-display text-5xl tabular-nums text-coin [&_svg]:size-9">
+          <p className="mt-1 flex items-center gap-2 font-display text-5xl tabular-nums text-coin-ink [&_svg]:size-9">
             <CoinIcon />
             {me.points}
           </p>
