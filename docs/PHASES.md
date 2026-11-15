@@ -24,7 +24,7 @@ The time shares are of whatever hacking time is left. Write real clock times in 
 
 Do not start a phase until the checkpoint before it passes.
 
-- [ ] **After Phase 0:** the live URL opens on a phone, and `GET /leaderboard` returns four neighborhoods with zero points.
+- [x] **After Phase 0:** the live URL opens on a phone, and `GET /leaderboard` returns four neighborhoods with zero points.
 - [ ] **After Phase 1:** a player can join from a phone and appears in the database.
 - [ ] **After Phase 2, the cut line:** photo, to label, to points, to leaderboard works on a phone. If it fails, both fix it together, drop the council quest and go to polish.
 - [ ] **After Phase 3:** both quests work and the map shows pins. Cut whatever is unfinished.
