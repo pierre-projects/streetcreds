@@ -35,6 +35,9 @@ Nothing you need from Pierre is missing. Everything in this table is on `main` a
 | The current player | `usePlayer()` | `web/src/app/player.ts` |
 | The names players see for categories and severities | `strings.categories`, `strings.severities` | `web/src/app/strings.ts` |
 | The link to a Solana transaction | `explorerTxUrl(signature)` | `web/src/app/solana.ts` |
+| Buttons, cards, badges, text fields, radio cards, error blocks, screen titles | `Button`, `ButtonLink`, `Card`, `LinkCard`, `Badge`, `TextField`, `OptionCard`, `ErrorNotice`, `ScreenHeader`, `Eyebrow` | `web/src/app/ui/` |
+| The colors, fonts, corners and shadows | the design tokens (`bg-accent`, `text-ink`, `rounded-card`, `shadow-hard`, `text-title`, ...) | `web/src/index.css` |
+| Every component in every state, on one page | the temporary `/design` page | `web/src/app/design/` |
 | A finished screen to copy the style from | the map and the join screen | `web/src/features/players/` |
 
 ## The fastest path
@@ -64,9 +67,9 @@ I'm Sarah, working on StreetCreds. Read AGENTS.md, docs/TECHNICAL.md, docs/CONTR
 
 I own the quests: web/src/features/quests/, api/src/quests/, and the scripts generate-council.ts and label-photos.ts in api/scripts/. Work only in those. The one exception is wiring my own work: you may add the line in api/src/index.ts that mounts my routes, the route lines marked "Sarah" in web/src/app/App.tsx, and the example data for my own routes in web/src/app/mock/. Apart from that, do not change shared/, Pierre's folders, package.json or the deploy template. If a task needs a change there, describe the change and stop.
 
-Pierre's half is already built. Before you write anything, read these files so you reuse them instead of rebuilding them: api/src/lib/env.ts, api/src/lib/db.ts, api/src/lib/errors.ts, api/src/players/routes.ts, api/src/players/store.ts, api/src/players/rateLimit.ts, api/src/points/awardPoints.ts, api/src/points/withLimit.ts, web/src/app/api.ts, web/src/app/mock/index.ts, web/src/app/player.ts, web/src/app/strings.ts, web/src/app/solana.ts and web/src/features/players/MapScreen.tsx.
+Pierre's half is already built. Before you write anything, read these files so you reuse them instead of rebuilding them: api/src/lib/env.ts, api/src/lib/db.ts, api/src/lib/errors.ts, api/src/players/routes.ts, api/src/players/store.ts, api/src/players/rateLimit.ts, api/src/points/awardPoints.ts, api/src/points/withLimit.ts, web/src/app/api.ts, web/src/app/mock/index.ts, web/src/app/player.ts, web/src/app/strings.ts, web/src/app/solana.ts, web/src/index.css, every file in web/src/app/ui/, and web/src/features/players/MapScreen.tsx.
 
-Rules that are easy to miss: the AWS region is us-east-2. Never run sam build, sam deploy or npm run deploy. The code samples in docs/TECHNICAL.md were never compiled, so type-check against the installed packages. Do not write unit tests that call Gemini, Solana or AWS.
+Rules that are easy to miss: build every screen from the components in web/src/app/ui/ and the tokens in web/src/index.css; do not write your own button, card or input styles, and do not use raw colors. The AWS region is us-east-2. Never run sam build, sam deploy or npm run deploy. The code samples in docs/TECHNICAL.md were never compiled, so type-check against the installed packages. Do not write unit tests that call Gemini, Solana or AWS.
 
 Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) the routes and functions I am responsible for, (3) which of the files above I will reuse and for what, (4) anything in the docs that looks unclear or contradictory. Do not write code yet.
 ```
@@ -134,7 +137,7 @@ Build the whole report quest in web/src/features/quests/:
 - RewardCard.tsx: the points earned, the new total, and by award.chainStatus: "sent" shows a link built with explorerTxUrl from web/src/app/solana.ts, "pending" shows "On-chain confirmation pending", "off" shows nothing.
 - strings.ts: every piece of text, shaped like web/src/app/strings.ts. For category and severity names use strings.categories and strings.severities from web/src/app/strings.ts.
 
-Rules: call the API only through the api object in web/src/app/api.ts (getUploadUrl, uploadPhoto, createReport, submitReport); never write your own fetch. Get the player from usePlayer() in web/src/app/player.ts. Use only the color classes defined in web/src/index.css, as the existing screens do. Every button is at least 44 px tall. For an error, show the ApiError's message and a way to try again.
+Rules: call the API only through the api object in web/src/app/api.ts (getUploadUrl, uploadPhoto, createReport, submitReport); never write your own fetch. Get the player from usePlayer() in web/src/app/player.ts. Build the screens from the components in web/src/app/ui/ (import them from '../../app/ui'): Button for every action (one primary per step, secondary for the rest), Card and Eyebrow for the reward card, OptionCard for the category picker, ScreenHeader for the title, ErrorNotice with onRetry for errors. Use only the tokens in web/src/index.css, never a raw color or your own rounded, ring or bold classes. The components already make every button at least 44 px tall. For an error, pass the ApiError's message to ErrorNotice.
 
 Then change the /report line marked "Sarah" in web/src/app/App.tsx to show ReportScreen.
 
@@ -214,7 +217,7 @@ Do Phase 3 from docs/SARAH-PHASES.md, following docs/TECHNICAL.md section 5 (rou
 
 1. Write api/scripts/generate-council.ts. It reads agenda text I paste into a local file and drafts, for each item, a three-sentence plain-language summary and one multiple-choice question with three or four answers. It prints the drafts for me to check. It must NOT write council.json: I paste the checked result in myself.
 2. Build GET /quests/council and POST /quests/council/answer in api/src/quests/councilRoutes.ts, reading api/src/quests/council.json, and add the line in api/src/index.ts that mounts them. Never send answerIndex to the phone. An item counts as answered when the award with the id awardId('council', itemId, playerId) exists; awardId is exported from api/src/points/awardPoints.ts. A wrong answer returns correct: false and the player may try again. A right answer calls awardPoints with POINTS.council and the quest type 'council'.
-3. Build CouncilListScreen.tsx and CouncilItemScreen.tsx in web/src/features/quests/, calling api.listCouncilItems and api.answerCouncilItem from web/src/app/api.ts, and reusing RewardCard. Each item links to its official source. Then change the two council lines marked "Sarah" in web/src/app/App.tsx.
+3. Build CouncilListScreen.tsx and CouncilItemScreen.tsx in web/src/features/quests/, calling api.listCouncilItems and api.answerCouncilItem from web/src/app/api.ts, and reusing RewardCard. Build them from web/src/app/ui/: LinkCard and Badge for the list, OptionCard for the answers, Button to submit, ErrorNotice for errors. Each item links to its official source. Then change the two council lines marked "Sarah" in web/src/app/App.tsx.
 
 Never invent agenda content. Use only the text I give you. Stop when done and tell me how to test acceptance check F5.
 ```
@@ -233,7 +236,7 @@ Never invent agenda content. Use only the text I give you. Stop when done and te
 Prompt 4:
 
 ```text
-Do my Phase 4 from docs/SARAH-PHASES.md. For every screen and route I own: add a loading state and a plain-language error state, check the layout at 375 px and 430 px wide with no horizontal scroll, and make every tap target at least 44 px tall. Do not add features. List each change you made, one line each.
+Do my Phase 4 from docs/SARAH-PHASES.md. For every screen and route I own: add a loading state and a plain-language error state, check the layout at 375 px and 430 px wide with no horizontal scroll, and make every tap target at least 44 px tall. Replace any hand-written button, card, input or error styles with the components in web/src/app/ui/. Do not add features. List each change you made, one line each.
 ```
 
 **Checkpoint (both):** feature freeze. Bug fixes only from here.
@@ -258,6 +261,19 @@ This is broken. What I did: <steps>. What I expected: <result>. What happened: <
 <paste the full error>
 
 Find the cause before changing anything. Explain it in two sentences, then fix only that. Check the troubleshooting table in docs/TECHNICAL.md section 9 first.
+```
+
+When you want to change how something looks:
+
+```text
+I want to change the design: <what you want, e.g. "the reward card should feel bigger" or "use a different orange">.
+
+Read web/src/index.css, every file in web/src/app/ui/ and web/src/app/design/DesignScreen.tsx first. The look lives in two layers: the tokens in web/src/index.css (colors, fonts, corners, shadows, type sizes) and the components in web/src/app/ui/. Both are Pierre's, and every screen uses them, so a change there changes the whole app.
+
+1. If the change is only about my quest screens (layout, spacing, which component goes where), make it in web/src/features/quests/ using the existing components and tokens.
+2. If it needs a new or changed token, a new component, or a new variant of one, do not edit index.css or app/ui. Write the exact diff as a note for Pierre, say which screens it would affect, and stop.
+
+Never add raw colors, your own rounded, ring, shadow or bold classes, or a style library. Check the result at 375 px wide with mock mode on, and compare it against the /design page. Stop when done and tell me what changed and what Pierre needs to approve.
 ```
 
 Wrap-up, at the end of every prompt's work:

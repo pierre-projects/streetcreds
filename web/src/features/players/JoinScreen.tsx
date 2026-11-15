@@ -9,6 +9,7 @@ import type { NeighborhoodId } from '../../../../shared/types'
 import { api } from '../../app/api'
 import { getStoredPlayerId, storePlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
+import { Button, ErrorNotice, LogoMark, OptionCard, ScreenHeader, TextField } from '../../app/ui'
 
 export function JoinScreen() {
   const navigate = useNavigate()
@@ -45,78 +46,36 @@ export function JoinScreen() {
   }
 
   // What the player got wrong on this screen, or else what the API said.
-  const message = problem ?? (join.isError ? join.error.message : null)
+  const message = problem || (join.isError ? join.error.message || strings.errors.generic : null)
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-4 py-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-ink">{strings.appName}</h1>
-        <p className="mt-1 text-base text-muted">{strings.tagline}</p>
-      </header>
+    <main className="app-column flex flex-col px-4 py-8">
+      <div className="mb-4"><LogoMark /></div>
+      <ScreenHeader title={strings.appName} subtitle={strings.tagline} />
 
       <form onSubmit={submit} noValidate className="mt-8 flex flex-1 flex-col gap-6">
-        <div>
-          <label htmlFor="nickname" className="block text-base font-semibold text-ink">
-            {strings.join.nicknameLabel}
-          </label>
-          <input
-            id="nickname"
-            name="nickname"
-            type="text"
-            value={nickname}
-            onChange={(event) => setNickname(event.target.value)}
-            maxLength={NICKNAME_MAX}
-            autoComplete="nickname"
-            autoCapitalize="words"
-            enterKeyHint="done"
-            aria-describedby="nickname-hint"
-            className="mt-2 block min-h-12 w-full rounded-xl border border-line bg-surface px-4 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-          />
-          <p id="nickname-hint" className="mt-2 text-sm text-muted">
-            {strings.join.nicknameHint(NICKNAME_MIN, NICKNAME_MAX)}
-          </p>
-        </div>
+        <TextField
+          label={strings.join.nicknameLabel}
+          hint={strings.join.nicknameHint(NICKNAME_MIN, NICKNAME_MAX)}
+          name="nickname" type="text" value={nickname}
+          onChange={(event) => setNickname(event.target.value)}
+          maxLength={NICKNAME_MAX} autoComplete="nickname" autoCapitalize="words" enterKeyHint="done"
+        />
 
         <fieldset>
-          <legend className="text-base font-semibold text-ink">{strings.join.neighborhoodLabel}</legend>
+          <legend className="text-base text-ink">{strings.join.neighborhoodLabel}</legend>
           <div className="mt-2 grid gap-2">
-            {NEIGHBORHOODS.map((option) => {
-              const selected = neighborhood === option.id
-              return (
-                <label
-                  key={option.id}
-                  className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border bg-surface px-4 text-base ${
-                    selected ? 'border-accent font-semibold text-ink ring-2 ring-accent/30' : 'border-line text-ink'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="neighborhood"
-                    value={option.id}
-                    checked={selected}
-                    onChange={() => setNeighborhood(option.id)}
-                    className="size-5 accent-accent"
-                  />
-                  {option.name}
-                </label>
-              )
-            })}
+            {NEIGHBORHOODS.map((option) => (
+              <OptionCard key={option.id} name="neighborhood" value={option.id} checked={neighborhood === option.id} onChange={setNeighborhood} label={option.name} />
+            ))}
           </div>
         </fieldset>
 
         <div className="mt-auto">
-          {message !== null && (
-            <p role="alert" className="mb-3 text-base text-severity-high">
-              {message}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={join.isPending}
-            className="flex min-h-12 w-full items-center justify-center rounded-xl bg-accent px-4 text-base font-semibold text-on-accent disabled:opacity-60"
-          >
+          {message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>}
+          <Button type="submit" disabled={join.isPending}>
             {join.isPending ? strings.join.submitting : strings.join.submit}
-          </button>
+          </Button>
         </div>
       </form>
     </main>

@@ -1,4 +1,4 @@
-// Every path in the app. The list matches docs/TECHNICAL.md section 7.
+// Game paths match docs/TECHNICAL.md section 7; /design is a temporary ninth route outside that list.
 //
 // Screens that are not built yet show <ComingSoon />. To put a real screen in, import it and
 // replace the `element` on its line. Sarah: the three lines marked "Sarah" are yours to change.
@@ -22,6 +22,7 @@ const router = createBrowserRouter([
   { path: '/', element: <Start /> },
   // No navigation around this one: nobody has joined yet.
   { path: '/join', element: <JoinScreen /> },
+  { path: '/design', lazy: () => import('./design/DesignScreen') },
   {
     element: <Layout />,
     children: [

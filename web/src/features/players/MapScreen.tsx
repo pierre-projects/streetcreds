@@ -2,7 +2,6 @@
 // times the problem has been reported. Tapping a pin shows the photo and details, and a button
 // that copies a report ready to paste into the city's own form.
 import { useQuery } from '@tanstack/react-query'
-import 'leaflet/dist/leaflet.css'
 import { useState } from 'react'
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import { MAP_CENTER, SEVERITIES } from '../../../../shared/constants'
@@ -10,6 +9,7 @@ import type { PublicReport, Severity } from '../../../../shared/types'
 import { api } from '../../app/api'
 import { MAP_POLL_MS, reportsKey } from '../../app/queryClient'
 import { strings } from '../../app/strings'
+import { Button, Card, ErrorNotice, ScreenHeader } from '../../app/ui'
 import { buildCityReport } from './cityReport'
 
 const ZOOM = 14
@@ -42,23 +42,19 @@ function ReportPopup({ report, copy, onCopy }: { report: PublicReport; copy: Cop
         src={report.photoUrl}
         alt={strings.map.photoAlt(category)}
         loading="lazy"
-        className="h-32 w-full rounded-lg bg-page object-cover"
+        className="h-32 w-full bg-page object-cover"
       />
       <div>
-        <p className="text-base font-semibold">{category}</p>
-        <p className={`text-xs font-semibold ${SEVERITY_TEXT[report.severity]}`}>
+        <p className="text-base">{category}</p>
+        <p className={`text-xs ${SEVERITY_TEXT[report.severity]}`}>
           {strings.map.severity(strings.severities[report.severity])}
         </p>
       </div>
       <p>{report.description}</p>
       <p className="text-xs text-muted">{strings.map.reportedTimes(report.count)}</p>
-      <button
-        type="button"
-        onClick={onCopy}
-        className="flex min-h-11 w-full items-center justify-center rounded-xl bg-accent px-3 text-sm font-semibold text-on-accent"
-      >
+      <Button onClick={onCopy}>
         {strings.map.copy}
-      </button>
+      </Button>
       {copiedThis && (
         <p role="status" className={`text-xs ${copy.ok ? 'text-muted' : 'text-severity-high'}`}>
           {copy.ok ? strings.map.copied : strings.map.copyFailed}
@@ -90,13 +86,10 @@ export function MapScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">{strings.map.title}</h1>
-        <p className="mt-1 text-sm text-muted">{strings.map.subtitle}</p>
-      </header>
+      <ScreenHeader title={strings.map.title} subtitle={strings.map.subtitle} />
 
       {/* `isolate` keeps Leaflet's own layers underneath the app's header and navigation. */}
-      <div className="relative isolate z-0 h-[58dvh] min-h-80 overflow-hidden rounded-2xl border border-line bg-surface">
+      <div className="map-frame">
         <MapContainer center={[MAP_CENTER.lat, MAP_CENTER.lng]} zoom={ZOOM} className="h-full w-full">
           <TileLayer
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -121,28 +114,17 @@ export function MapScreen() {
         {reports.isPending && <p className="text-sm text-muted">{strings.map.loading}</p>}
 
         {reports.isError && !reports.data && (
-          <div className="rounded-2xl border border-line bg-surface p-4">
-            <p role="alert" className="text-base text-severity-high">
-              {reports.error.message || strings.map.error}
-            </p>
-            <button
-              type="button"
-              onClick={() => void reports.refetch()}
-              className="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl border border-line px-4 font-semibold text-accent"
-            >
-              {strings.map.retry}
-            </button>
-          </div>
+          <ErrorNotice message={reports.error.message} fallback={strings.map.error} onRetry={() => void reports.refetch()} retryLabel={strings.map.retry} />
         )}
 
         {reports.data && (
-          <p className="text-sm font-semibold text-ink">
+          <p className="text-sm text-ink">
             {pins.length === 0 ? strings.map.empty : strings.map.count(pins.length)}
           </p>
         )}
       </div>
 
-      <section className="rounded-2xl border border-line bg-surface p-4">
+      <Card>
         <ul className="flex flex-wrap gap-x-5 gap-y-2">
           {SEVERITIES.map((severity) => (
             <li key={severity} className="flex items-center gap-2 text-sm text-ink">
@@ -152,7 +134,7 @@ export function MapScreen() {
           ))}
         </ul>
         <p className="mt-2 text-sm text-muted">{strings.map.legend}</p>
-      </section>
+      </Card>
     </div>
   )
 }
