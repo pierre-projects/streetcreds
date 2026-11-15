@@ -182,4 +182,4 @@ Wrap up this phase. Run npm run check in every package you touched and fix failu
 
 ## If you finish early
 
-Only after Phase 4 passes, one at a time, and only when you both agree: spending points at pretend shops (needs a design decision first), the Spanish toggle (with Sarah).
+Only after Phase 4 passes, one at a time, and only when you both agree: Local Deals per `docs/PRD-LOCAL-DEALS.md` (curated partners, proximity cheaper-cost unlock; design decisions are locked there — still agree the `shared/` contract in LD0 before coding), the Spanish toggle (with Sarah).
