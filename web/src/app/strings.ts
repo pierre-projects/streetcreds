@@ -194,6 +194,8 @@ export const strings = {
     severity: (label: string) => `${label} severity`,
     reportedTimes: (count: number) => (count === 1 ? 'Reported once' : `Reported ${count} times`),
     photoAlt: (category: string) => `Photo of the reported problem: ${category.toLowerCase()}`,
+    // Under the name of the player's own neighborhood, where its edges are drawn on the map.
+    yourNeighborhood: 'Your neighborhood',
   },
 
   // The City of Tempe's own accessibility records, drawn on the map as square pins.

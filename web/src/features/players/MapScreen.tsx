@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { api } from '../../app/api'
+import { usePlayer } from '../../app/player'
 import { MAP_POLL_MS, reportsKey } from '../../app/queryClient'
 import { strings } from '../../app/strings'
 import { Card, ErrorNotice, ScreenHeader } from '../../app/ui'
@@ -19,6 +20,8 @@ export function MapScreen() {
   // The City's records start switched off here: on a phone the map is for what players reported first.
   const [layers, setLayers] = useState<CityLayers>(NO_LAYERS)
   const city = useCityRecords()
+  // For the player's own neighborhood, which the map draws in the accent color.
+  const player = usePlayer()
   const reports = useQuery({
     queryKey: reportsKey,
     queryFn: api.listReports,
@@ -56,7 +59,7 @@ export function MapScreen() {
 
       {/* `isolate` keeps Leaflet's own layers underneath the app's header and navigation. */}
       <div className="map-frame">
-        <ReportsMap pins={visible} cityRecords={cityShown} matches={matches} />
+        <ReportsMap pins={visible} cityRecords={cityShown} matches={matches} yourNeighborhood={player.data?.neighborhood} />
       </div>
 
       {/* Below the map, so the map stays on screen without scrolling. */}

@@ -11,7 +11,8 @@ import L from 'leaflet'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { MAP_CENTER } from '../../../../shared/constants'
-import type { PublicReport, Severity } from '../../../../shared/types'
+import { TEMPE_BOUNDARY } from '../../../../shared/tempeBoundary'
+import type { NeighborhoodId, PublicReport, Severity } from '../../../../shared/types'
 import { useReducedMotion } from '../../app/motion'
 import { strings } from '../../app/strings'
 import { Button } from '../../app/ui'
@@ -30,17 +31,27 @@ import {
   TAP_PX,
   worstSeverity,
 } from './mapReports'
+import { NeighborhoodLayer } from './NeighborhoodLayer'
+import { boundaryBox } from './neighborhoodZones'
 
 const ZOOM = 14
 /** As far in as the map goes. Here every report gets its own pin, however close its neighbors are. */
 const MAX_ZOOM = 18
-/** As far out as the map goes: the Phoenix area, with Tempe still easy to find. Without it a pinch ends up over the whole world. */
+/** As far out as any map goes. Each map then stops where the whole city fits in it, which is closer in on most screens: see StayInTempe. */
 const MIN_ZOOM = 11
-/** How far the map can be moved: about 45 km from the middle of Tempe each way. A report filed from a neighboring city is still in reach. */
-const REACH = L.latLngBounds(
-  [MAP_CENTER.lat - 0.4, MAP_CENTER.lng - 0.5],
-  [MAP_CENTER.lat + 0.4, MAP_CENTER.lng + 0.5],
-)
+const CITY = boundaryBox(TEMPE_BOUNDARY)
+/**
+ * How far the map can be moved: Tempe, and a twentieth of its size past each edge, so the line
+ * along the city's edge is not at the very edge of the map. Reports can only be sent from inside
+ * the city, so every pin is in here.
+ */
+const TEMPE = L.latLngBounds([CITY.south, CITY.west], [CITY.north, CITY.east]).pad(0.05)
+/**
+ * How far it can be moved while a popup is open. A popup is taller than the map is on some
+ * screens, and opens above its pin: for a pin near the city's north edge, the map has to move
+ * past the city to show it. The map goes back inside Tempe when the popup closes.
+ */
+const POPUP_REACH = TEMPE.pad(1.5)
 
 /**
  * The zoom settles on quarter steps. On whole steps, which is Leaflet's own setting, the map
@@ -137,6 +148,35 @@ function zoomInto(map: L.Map, reports: PinnedReport[], center?: L.LatLngExpressi
   const fit = map.getBoundsZoom(bounds, false, L.point(TAP_PX * 2, TAP_PX * 2))
   const zoom = Math.min(MAX_ZOOM, Math.max(map.getZoom() + 1, Number.isFinite(fit) ? fit : MAX_ZOOM))
   map.setView(center ?? bounds.getCenter(), zoom)
+}
+
+/**
+ * Keeps the map on Tempe. It cannot be moved past the city (the MapContainer's `maxBounds`), and
+ * here it is stopped from zooming out further than the whole city fitting in it. That depends on
+ * the map's size, so it is worked out again when the size changes.
+ */
+function StayInTempe() {
+  const map = useMap()
+  useEffect(() => {
+    const fit = () => {
+      const whole = map.getBoundsZoom(TEMPE)
+      // Never closer in than the opening view, however big the screen. A map with no size yet has no answer.
+      if (Number.isFinite(whole)) map.setMinZoom(Math.min(ZOOM, Math.max(MIN_ZOOM, whole)))
+    }
+    const loosen = () => map.setMaxBounds(POPUP_REACH)
+    // Setting the limit also moves the map back inside it.
+    const tighten = () => map.setMaxBounds(TEMPE)
+    fit()
+    map.on('resize', fit)
+    map.on('popupopen', loosen)
+    map.on('popupclose', tighten)
+    return () => {
+      map.off('resize', fit)
+      map.off('popupopen', loosen)
+      map.off('popupclose', tighten)
+    }
+  }, [map])
+  return null
 }
 
 /** Zooms out once, after the first load, if a report is outside the opening view. */
@@ -406,6 +446,8 @@ interface ReportsMapProps {
   cityRecords?: CityRecord[]
   /** For reports at a spot the City recorded too: that record, by report id. Keep the map the same between renders. */
   matches?: ReadonlyMap<string, CityRecord>
+  /** The neighborhood of the player looking at the map. Its edges are drawn in the accent color. */
+  yourNeighborhood?: NeighborhoodId | null
   /** Extra controls rendered inside the map (must use react-leaflet hooks). */
   children?: ReactNode
   /** Optional map instance callback for recenter and similar HUD controls. */
@@ -433,6 +475,7 @@ export function ReportsMap({
   onOpenChange,
   cityRecords = NO_RECORDS,
   matches = NO_MATCHES,
+  yourNeighborhood = null,
   children,
   onMapReady,
   popupInsets,
@@ -459,8 +502,8 @@ export function ReportsMap({
         zoomAnimation={!calm}
         markerZoomAnimation={!calm}
         fadeAnimation={!calm}
-        // The edge of the reach is solid, and the zoom stops at its limits without springing back.
-        maxBounds={REACH}
+        // The edge of Tempe is solid, and the zoom stops at its limits without springing back.
+        maxBounds={TEMPE}
         maxBoundsViscosity={1}
         bounceAtZoomLimits={false}
         className="h-full w-full"
@@ -470,7 +513,10 @@ export function ReportsMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         <MapReady onMapReady={onMapReady} />
+        <StayInTempe />
         <FitToPins pins={pins} />
+        {/* First, so the City's dots and every pin are drawn over the lines. */}
+        <NeighborhoodLayer yours={yourNeighborhood} />
         <CityRecordsLayer records={cityRecords} reportedIds={reportedIds} />
         <PinLayer pins={pins} matches={matches} selectedId={selectedId} onSend={setSending} onOpenChange={onOpenChange} popupInsets={popupInsets} />
         {children}
