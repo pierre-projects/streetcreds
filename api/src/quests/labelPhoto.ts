@@ -8,13 +8,17 @@ import { ApiError } from '../lib/errors';
 import { withLimit } from '../points/withLimit';
 import { photoBucket, s3 } from './s3';
 
-const LABEL_LIMIT_MS = 12_000;
+// A Gemini 3 model thinks before it answers, and with a photo that alone can pass 12 s. Thinking is
+// set to low below, and the wait stays under the Lambda's 29 s, which also covers the S3 read.
+const LABEL_LIMIT_MS = 20_000;
 
 const LabelSchema = z.object({
   isStreetProblem: z.boolean(),
   category: z.enum(CATEGORIES as unknown as [Category, ...Category[]]),
   severity: z.enum(SEVERITIES as unknown as [Severity, ...Severity[]]),
-  description: z.string().max(140),
+  // The API ignores maxLength in the schema, so a longer sentence is cut here, not refused:
+  // refusing it turned a good label into label_failed.
+  description: z.string().transform((text) => (text.length > 140 ? text.slice(0, 139).trimEnd() + '…' : text)),
 });
 
 export type PhotoLabel = z.infer<typeof LabelSchema>;
@@ -77,6 +81,8 @@ export async function labelJpegBase64(base64Jpeg: string): Promise<PhotoLabel> {
           },
         ],
         response_format: { type: 'text', mime_type: 'application/json', schema: LABEL_JSON_SCHEMA },
+        // Sorting one photo into five categories needs little thought, and less thought is faster.
+        generation_config: { thinking_level: 'low' },
       }),
       LABEL_LIMIT_MS,
     );
