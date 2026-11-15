@@ -29,6 +29,8 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 
 ## Phase 0. Setup (with Pierre, first 30 to 45 minutes)
 
+The step-by-step version of this phase, with the commands and an explanation of how the pieces fit, is in [SARAH-SETUP.md](SARAH-SETUP.md).
+
 - [ ] Clone the repo and read `shared/` with Pierre once. It is the fixed contract.
 - [ ] Install Node.js 24 and the AWS CLI. Sign in with `aws login --region us-east-2`, to the same AWS project Pierre deploys to, then save the region with `aws configure set region us-east-2`.
 - [ ] Get a Gemini API key from Google AI Studio. Share it with Pierre privately, never in the repo.
