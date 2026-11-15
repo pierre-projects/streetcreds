@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { NEIGHBORHOODS } from '../../../../shared/constants'
+import { MAP_CENTER, NEIGHBORHOODS } from '../../../../shared/constants'
 import { assignGameNeighborhood, GAME_ZONES, pointInBoundary } from '../../../../shared/location'
 import type { Boundary } from '../../../../shared/playArea'
 import { TEMPE_BOUNDARY } from '../../../../shared/tempeBoundary'
-import { edgeOnSide, insideSpans, neighborhoodZones } from './neighborhoodZones'
+import { boundaryBox, edgeOnSide, insideSpans, neighborhoodZones } from './neighborhoodZones'
 
 // A square city from 0 to 10 each way, with a square hole from 4 to 6 in the middle. Points are [lng, lat].
 const SQUARE: Boundary = [
@@ -14,6 +14,26 @@ const SQUARE: Boundary = [
 ]
 
 const inCity = (lat: number, lng: number) => TEMPE_BOUNDARY.some((rings) => pointInBoundary({ lat, lng }, rings))
+
+describe('boundaryBox', () => {
+  it('is the smallest box around every ring', () => {
+    expect(boundaryBox(SQUARE)).toEqual({ south: 0, north: 10, west: 0, east: 10 })
+  })
+
+  it('holds the middle of the map and every game zone, for Tempe', () => {
+    const box = boundaryBox(TEMPE_BOUNDARY)
+    for (const zone of [GAME_ZONES.campus, GAME_ZONES.downtown]) {
+      expect(zone.south).toBeGreaterThan(box.south)
+      expect(zone.north).toBeLessThan(box.north)
+      expect(zone.west).toBeGreaterThan(box.west)
+      expect(zone.east).toBeLessThan(box.east)
+    }
+    expect(MAP_CENTER.lat).toBeGreaterThan(box.south)
+    expect(MAP_CENTER.lat).toBeLessThan(box.north)
+    expect(MAP_CENTER.lng).toBeGreaterThan(box.west)
+    expect(MAP_CENTER.lng).toBeLessThan(box.east)
+  })
+})
 
 describe('insideSpans', () => {
   it('gives the whole width of the city where nothing is in the way', () => {

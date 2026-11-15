@@ -13,11 +13,27 @@ import type { NeighborhoodId } from '../../../../shared/types'
 export type MapPoint = [lat: number, lng: number]
 export type MapLine = MapPoint[]
 
-interface Box {
+export interface Box {
   south: number
   north: number
   west: number
   east: number
+}
+
+/** The smallest box around the whole city. */
+export function boundaryBox(boundary: Boundary): Box {
+  const box: Box = { south: Infinity, north: -Infinity, west: Infinity, east: -Infinity }
+  for (const rings of boundary) {
+    for (const ring of rings) {
+      for (const [lng, lat] of ring) {
+        box.south = Math.min(box.south, lat)
+        box.north = Math.max(box.north, lat)
+        box.west = Math.min(box.west, lng)
+        box.east = Math.max(box.east, lng)
+      }
+    }
+  }
+  return box
 }
 
 export interface ZoneLabel {
@@ -144,16 +160,7 @@ export function neighborhoodZones(boundary: Boundary): NeighborhoodZones {
   const northEdge = edgeOnSide(boundary, split, 'north')
   const southEdge = edgeOnSide(boundary, split, 'south')
 
-  let southmost = Infinity
-  let northmost = -Infinity
-  for (const rings of boundary) {
-    for (const ring of rings) {
-      for (const [, lat] of ring) {
-        southmost = Math.min(southmost, lat)
-        northmost = Math.max(northmost, lat)
-      }
-    }
-  }
+  const { south: southmost, north: northmost } = boundaryBox(boundary)
 
   const labels: ZoneLabel[] = [
     { id: 'asu-campus', at: [campus.north, (campus.west + campus.east) / 2], hung: true, minZoom: SMALL_ZONE_LABEL_ZOOM },
