@@ -7,7 +7,7 @@ import { Card } from './Card'
 import { cx } from './cx'
 import { LogoMark } from './LogoMark'
 
-const MASCOT_SRC = '/brand/mayor-patch.png'
+const MASCOT_SRC = '/brand/mayor-patch.svg'
 
 export function MayorAvatar({ size = 'small' }: { size?: 'small' | 'large' }) {
   const [missing, setMissing] = useState(false)
