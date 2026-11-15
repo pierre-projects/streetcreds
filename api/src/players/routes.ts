@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import type { LeaderboardResponse, PlayerResponse } from '../../../shared/api';
 import type { Player } from '../../../shared/types';
+import { env } from '../lib/env';
 import { ApiError } from '../lib/errors';
 import { aggregateLeaderboard } from './leaderboard';
 import { CreatePlayerSchema } from './schemas';
@@ -13,13 +14,21 @@ export const playerRoutes = new Hono();
 
 playerRoutes.post('/players', async (c) => {
   const input = CreatePlayerSchema.parse(await c.req.json());
+
+  // In per-player mode each player gets a devnet address of their own to hold their points.
+  // The Solana library is loaded only here and in awardPoints, so other routes start quickly.
+  let walletAddress: string | null = null;
+  if (env.SOLANA_MODE === 'per-player') {
+    const { newWalletAddress } = await import('../points/solana');
+    walletAddress = newWalletAddress();
+  }
+
   const player: Player = {
     id: randomUUID(),
     nickname: input.nickname,
     neighborhood: input.neighborhood,
     points: 0,
-    // Phase 2 gives each player a devnet address here when SOLANA_MODE is per-player.
-    walletAddress: null,
+    walletAddress,
     recentReportTimes: [],
     createdAt: new Date().toISOString(),
   };

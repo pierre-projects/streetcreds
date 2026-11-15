@@ -2,15 +2,19 @@
 //
 //   const { award, player } = await awardPoints(playerId, POINTS['report-new'], 'report-new', report.id);
 //
-// THIS IS THE PHASE 1 STUB: it does the database half and never mints. Phase 2 adds the devnet
-// mint after step 3 without changing the signature or the return shape, so callers stay as they are.
-// The full steps are in docs/TECHNICAL.md section 6.
+// Points in DynamoDB are the source of truth. The Solana mint mirrors them: if devnet is slow or
+// down, the points still count and the award is left "pending". The steps are in
+// docs/TECHNICAL.md section 6.
 import { PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { Award, Player, QuestType } from '../../../shared/types';
 import { db, TABLES } from '../lib/db';
 import { env } from '../lib/env';
 import { ApiError } from '../lib/errors';
 import { isConditionalCheckFailed } from '../players/store';
+import { withLimit } from './withLimit';
+
+/** How long to wait for devnet before giving up on the mint. The whole request must fit in 29 s. */
+const MINT_LIMIT_MS = 10_000;
 
 /**
  * The award's id. It is built from what the award is for, so the same award can never be paid twice:
@@ -22,6 +26,8 @@ export function awardId(questType: QuestType, refId: string, playerId: string): 
 
 /**
  * @param refId The thing the award is for: a report id or a council item id.
+ * @returns The award and the player with their new total. `award.chainStatus` is `off` when Solana
+ *   is off, `sent` (with `txSignature`) when the mint confirmed, and `pending` when it did not.
  * @throws ApiError('already_awarded') if this player already has this award.
  * @throws ApiError('not_found') if the player does not exist. Callers should check first.
  */
@@ -76,8 +82,38 @@ export async function awardPoints(
     throw error;
   }
 
-  // 4. Phase 2: mint on devnet here, with a 10 second limit, and save the signature.
+  // 4. Mirror the points on devnet. From here on nothing may throw: the points already count.
+  if (env.SOLANA_MODE === 'off') {
+    return { award, player };
+  }
+  return { award: await mintAndRecord(award, player), player };
+}
 
-  // 5.
-  return { award, player };
+/** Mints the award's points and saves the transaction. On any failure the award stays "pending". */
+async function mintAndRecord(award: Award, player: Player): Promise<Award> {
+  try {
+    // Loaded only when an award needs it, so routes that never mint start quickly.
+    const { mintPoints } = await import('./solana');
+    const txSignature = await withLimit(mintPoints(player, award.points), MINT_LIMIT_MS);
+    await db.send(
+      new UpdateCommand({
+        TableName: TABLES.awards,
+        Key: { id: award.id },
+        UpdateExpression: 'SET #txSignature = :signature, #chainStatus = :sent',
+        ExpressionAttributeNames: { '#txSignature': 'txSignature', '#chainStatus': 'chainStatus' },
+        ExpressionAttributeValues: { ':signature': txSignature, ':sent': 'sent' },
+      }),
+    );
+    return { ...award, txSignature, chainStatus: 'sent' };
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        msg: 'Mint failed. The points count and the award stays pending.',
+        awardId: award.id,
+        cause: error instanceof Error ? error.message.split('\n')[0] : String(error),
+      }),
+    );
+    return award;
+  }
 }

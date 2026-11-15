@@ -8,26 +8,11 @@
 import { Keypair } from '@solana/web3.js';
 import { env } from '../src/lib/env';
 import { explorerTxUrl, mintPoints } from '../src/points/solana';
+import { withLimit } from '../src/points/withLimit';
 
 const WAIT_LIMIT_MS = 30_000;
-// awardPoints will wait this long before leaving an award "pending".
+// awardPoints waits this long before leaving an award "pending".
 const AWARD_LIMIT_MS = 10_000;
-
-function withLimit<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`no confirmation after ${ms / 1000} s`)), ms);
-    promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error: unknown) => {
-        clearTimeout(timer);
-        reject(error instanceof Error ? error : new Error(String(error)));
-      },
-    );
-  });
-}
 
 async function main(): Promise<void> {
   const count = Number(process.argv[2] ?? '1');
