@@ -1,5 +1,6 @@
 // Mock mode: a stand-in for the whole API that lives in the browser tab.
 // Turn it on with VITE_USE_MOCKS=true in web/.env and restart `npm run dev`.
+// Add VITE_MOCK_DEMO=true (or run `vite --mode demo`) for the populated set in demo.ts.
 //
 // It keeps a little state while the tab is open (the player's points, reports you submit,
 // council items you answer), so a screen can be built and clicked through before its route exists.
@@ -23,7 +24,7 @@ import {
   mockPlayer,
   mockReports,
   mockSavedPlayer,
-} from './fixtures'
+} from './data'
 import { distanceMeters, mockPartners } from './partners'
 
 /** What POST /reports does with every photo: 'ok', or one of the errors the real route can return. */

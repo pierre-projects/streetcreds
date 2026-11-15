@@ -123,6 +123,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - Map tiles are from OpenStreetMap contributors, shown with Leaflet and react-leaflet.
 - The accessibility records and helpful places on the map are public City of Tempe data: the ADA Transition Plan survey, the "bus stops without a shelter" layer, and the drinking fountain, park restroom and community food site layers, from the City's open data services (`gis.tempe.gov` and the TempeData ArcGIS Online organization).
 - The City records script (`api/scripts/city-records.ts`, `api/scripts/lib/`) and the City records layer on the map (`web/src/features/players/cityRecords.ts`, `cityText.ts`, `CityRecordsLayer.tsx`, `CityLayerToggles.tsx`) were generated with Claude Code (Anthropic). The page checks follow an earlier project of Pierre's, Patchnote.
+- The demo video script (`docs/VIDEO-SCRIPT.md`) and the populated demo data for recording it (`web/src/app/mock/demo.ts`, `data.ts`) were generated with Claude Code (Anthropic).
 - The neighborhood edges on the map (`web/src/features/players/neighborhoodZones.ts`, `NeighborhoodLayer.tsx`) were generated with Claude Code (Anthropic).
 
 - Local Deals (curated partners, proximity unlock, redeem) and the minimum report quest path were generated with Cursor Agent / Composer.

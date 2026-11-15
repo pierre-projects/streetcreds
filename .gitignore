@@ -32,3 +32,7 @@ coverage/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Real photos for the demo video stay on this laptop (web/src/app/mock/demo.ts reads them in demo mode).
+web/src/app/mock/demo-photos/*
+!web/src/app/mock/demo-photos/README.md
