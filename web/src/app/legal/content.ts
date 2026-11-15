@@ -113,7 +113,7 @@ export const legalContent = {
       credits: { paragraphs: [
         'Claude and Claude Code (Anthropic) helped draft the planning documents, shared contract, README, scaffold, AWS setup, Solana scripts, API, app shell and player screens. The web scaffold started from the create-vite React TypeScript template.',
         'Codex (OpenAI) helped create the temporary design system from the StreetCreds landing page, and these legal pages and links.',
-        'Russo One is by Jovanny Lemonad, used under the SIL Open Font License.',
+        'Outfit is by Rodrigo Fuenzalida / Smartsheet Inc (The Outfit Project Authors), used under the SIL Open Font License.',
       ] },
     },
   },

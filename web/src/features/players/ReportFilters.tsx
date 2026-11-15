@@ -36,7 +36,7 @@ export function ReportFilters({ pins, filter, onChange, compact = false, beside 
   const perCategory = countByCategory(applyFilter(pins, { ...NO_FILTER, severities: filter.severities }))
 
   return (
-    <div role="group" aria-label={strings.map.filtersLabel} className="flex flex-col gap-2">
+    <div role="group" aria-label={strings.map.filtersLabel} className="filter-sheet">
       <div className="flex flex-wrap gap-2">
         {SEVERITY_ORDER.map((severity) => (
           <button
