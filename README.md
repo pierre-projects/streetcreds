@@ -13,14 +13,14 @@ Built at [sunhacks 2026](https://sunhacks-2026.devpost.com/) at Arizona State Un
 
 ## Status
 
-In progress during the hackathon. So far the repo holds the plan and the shared contract; the app itself is not built yet.
+In progress during the hackathon. The plan, the shared contract and the project scaffold exist; the game itself is not built yet, and nothing is deployed.
 
 | Part | State |
 | --- | --- |
 | Product plan, technical spec, agent rules | Done |
 | Shared contract (`shared/`): constants, data types, API types | Done |
-| API (`api/`) | Not started |
-| Web app (`web/`) | Not started |
+| API (`api/`) | Scaffolded: health check, a stand-in leaderboard, and the deploy template. Not deployed |
+| Web app (`web/`) | Scaffolded: a placeholder page that reads the leaderboard |
 
 ## Documentation
 
@@ -65,7 +65,25 @@ streetcreds/
 
 ## Getting started
 
-The app is not built yet. To set up a machine and start building, follow [TECHNICAL.md section 9, "Development guide"](docs/TECHNICAL.md#9-development-guide). In short, you need Node.js 24, Git, the AWS CLI and a Gemini API key.
+You need Node.js 24 and Git to run it locally. Deploying also needs the AWS CLI and the AWS SAM CLI, and the report quest needs a Gemini API key. The full guide is [TECHNICAL.md section 9, "Development guide"](docs/TECHNICAL.md#9-development-guide).
+
+Run the API and the web app in two terminals:
+
+```bash
+cd api
+npm install
+cp .env.example .env
+npm run dev
+```
+
+```bash
+cd web
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Then open http://localhost:5173. Before pushing, run `npm run check` in each package you changed.
 
 Never commit keys. Secrets go in `api/.env` and `api/samconfig.toml`, which `.gitignore` already excludes.
 
@@ -90,6 +108,7 @@ Start a new agent chat for each phase, paste the session opener from your file, 
 The sunhacks rules ask every project to credit the tutorials and AI tools it used. Add a line here whenever you follow a tutorial or generate a substantial part of the code.
 
 - Planning documents, the shared contract in `shared/`, and this README were drafted with Claude (Anthropic).
+- The project scaffold (`web/`, `api/`, `api/template.yaml`, `amplify.yml`) was generated with Claude Code (Anthropic). `web/` started from the `create-vite` `react-ts` template.
 
 ## License
 

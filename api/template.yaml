@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: StreetCreds API. One Lambda behind an HTTP API, three DynamoDB tables and one private photo bucket.
+
+# Deploy with `npm run deploy` in api/ (humans only). Stack name: streetcreds. Region: us-west-2.
+# The answers to `sam deploy --guided` are saved in samconfig.toml, which is git-ignored.
+
+Parameters:
+  WebOrigins:
+    Type: CommaDelimitedList
+    Default: http://localhost:5173
+    Description: Every address the web app is served from, comma-separated with no spaces. Add the Amplify URL and https://streetcreds.app here.
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: Gemini API key from Google AI Studio. Secret.
+  GeminiModel:
+    Type: String
+    Default: gemini-3.8-flash
+  SolanaMode:
+    Type: String
+    Default: 'off'
+    AllowedValues:
+      - 'off'
+      - per-player
+      - shared
+    Description: Leave on off until the treasury and the CIVIC mint exist.
+  SolanaTreasurySecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: Base64 of the devnet treasury secret key. Secret. Empty while SolanaMode is off.
+  CivicMint:
+    Type: String
+    Default: ''
+    Description: Address of the CIVIC mint on devnet. Empty while SolanaMode is off.
+
+Resources:
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      # CORS for deployed requests is handled here. Do not add Hono's cors() to src/index.ts as well.
+      CorsConfiguration:
+        AllowOrigins: !Ref WebOrigins
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - content-type
+        MaxAge: 600
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+          - src/index.ts
+        Format: cjs
+        Target: es2022
+        Minify: false
+        Sourcemap: false
+    Properties:
+      CodeUri: .
+      # esbuild writes the bundle as index.js at the top of the package.
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Architectures:
+        - arm64
+      MemorySize: 512
+      # The HTTP API cuts requests off at 30 seconds.
+      Timeout: 29
+      Environment:
+        Variables:
+          TABLE_PLAYERS: !Ref PlayersTable
+          TABLE_REPORTS: !Ref ReportsTable
+          TABLE_AWARDS: !Ref AwardsTable
+          PHOTO_BUCKET: !Ref PhotoBucket
+          WEB_ORIGINS: !Join [',', !Ref WebOrigins]
+          GEMINI_API_KEY: !Ref GeminiApiKey
+          GEMINI_MODEL: !Ref GeminiModel
+          SOLANA_MODE: !Ref SolanaMode
+          SOLANA_RPC_URL: https://api.devnet.solana.com
+          SOLANA_TREASURY_SECRET: !Ref SolanaTreasurySecret
+          CIVIC_MINT: !Ref CivicMint
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PlayersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReportsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AwardsTable
+        - S3CrudPolicy:
+            BucketName: !Ref PhotoBucket
+      Events:
+        # No Path or Method: this is the $default route, so every request reaches the Hono app.
+        AnyRequest:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+
+  PlayersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: streetcreds-players
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  ReportsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: streetcreds-reports
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  AwardsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: streetcreds-awards
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  PhotoBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      # Private. Photos are uploaded and shown through presigned links only.
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - PUT
+              - GET
+            AllowedOrigins: !Ref WebOrigins
+            AllowedHeaders:
+              - '*'
+            MaxAge: 3000
+
+Outputs:
+  ApiUrl:
+    Description: Base URL of the API. Use it as VITE_API_URL.
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+  PhotoBucketName:
+    Description: Name of the photo bucket. Use it as PHOTO_BUCKET in api/.env.
+    Value: !Ref PhotoBucket
