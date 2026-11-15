@@ -85,13 +85,42 @@ export const strings = {
     retry: 'Try again',
     empty: 'No reports yet. Be the first to report a problem.',
     count: (count: number) => (count === 1 ? '1 open report' : `${count} open reports`),
-    legend: 'Color shows how serious it is. Bigger pins have been reported more often.',
+    legend:
+      'Color shows how serious it is. A number on a colored pin is how many times it has been reported. A black pin is several reports close together: tap it to zoom in.',
+    countFiltered: (shown: number, total: number) => `Showing ${shown} of ${total} open reports`,
+    noMatch: 'No open reports match these filters.',
+    showAll: 'Show all',
+    filtersLabel: 'Filter the reports',
+    severityToggle: (severity: string, count: number) =>
+      `${severity} severity, ${count === 1 ? '1 report' : `${count} reports`}`,
+    typeLabel: 'Type',
+    allTypes: 'All types',
+    typeOption: (type: string, count: number) => `${type} (${count})`,
+    groupLabel: (count: number) => `${count} reports here. Zoom in to see them.`,
+    pinLabel: (category: string, severity: string, count: number) =>
+      `${category}, ${severity.toLowerCase()} severity, reported ${count === 1 ? 'once' : `${count} times`}`,
     severity: (label: string) => `${label} severity`,
     reportedTimes: (count: number) => (count === 1 ? 'Reported once' : `Reported ${count} times`),
     photoAlt: (category: string) => `Photo of the reported problem: ${category.toLowerCase()}`,
     copy: 'Copy city report',
+    copyHint: 'Makes a report you can paste into the city’s own form.',
     copied: 'Copied. Paste it into the city’s report form.',
     copyFailed: 'Could not copy. Try again.',
+  },
+
+  // The big-screen board at /board. It reuses the leaderboard and map strings where they fit.
+  board: {
+    title: 'Live board',
+    live: 'Live',
+    open: 'Live board',
+    play: 'Play',
+    playAt: 'Play on your phone at streetcreds.app',
+    mapLabel: 'Map of open reports',
+    standingsTitle: 'Neighborhood standings',
+    topPlayer: (nickname: string) => `${nickname} leads`,
+    reportsTitle: 'Open reports',
+    reportsHint: 'Most serious first. Pick one to see it on the map.',
+    showMore: (count: number) => `Show ${count} more`,
   },
 
   comingSoon: {
