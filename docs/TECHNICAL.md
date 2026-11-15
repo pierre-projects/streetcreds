@@ -659,7 +659,7 @@ Reported with StreetCreds on 2026-11-14
 | Resource | Key settings |
 | --- | --- |
 | `AWS::Serverless::HttpApi` | CORS: origins from the `WebOrigins` parameter, methods `GET, POST, OPTIONS`, header `content-type` |
-| `AWS::Serverless::Function` | Runtime `nodejs24.x`, `arm64`, memory 512 MB, timeout 29 s, one `HttpApi` event on `$default`. Build with `Metadata: BuildMethod: esbuild`, entry `src/index.ts`, format `cjs`, target `es2022` |
+| `AWS::Serverless::Function` | Runtime `nodejs24.x`, `arm64`, memory 512 MB, timeout 29 s, one `HttpApi` event on `$default`. `CodeUri: dist/`, `Handler: index.handler`. The code is bundled by `npm run build` (esbuild: entry `src/index.ts`, format `cjs`, target `es2022`, output `dist/index.js`), not by SAM |
 | Three `AWS::DynamoDB::Table` | Names from section 4, key `id` (S), `BillingMode: PAY_PER_REQUEST` |
 | `AWS::S3::Bucket` | All public access blocked. CORS: methods `PUT, GET`, origins from `WebOrigins`, headers `*` |
 | Function policies | `DynamoDBCrudPolicy` for each table, `S3CrudPolicy` for the bucket |
@@ -669,7 +669,9 @@ Reported with StreetCreds on 2026-11-14
 Notes:
 - The HTTP API cuts requests off at 30 seconds, which is why the function timeout is 29 and the Gemini and Solana calls have their own shorter limits.
 - CORS for deployed requests is handled by the HTTP API. Add Hono's `cors()` middleware only in `local.ts`. Doing both sends duplicate headers and browsers reject the response.
-- `esbuild` must be in `api/devDependencies` for `sam build` to find it.
+- The HTTP API passes preflight `OPTIONS` requests through the `$default` route to the app and adds the CORS headers itself. `index.ts` answers `OPTIONS *` with an empty 204; without that the browser gets a 404 and blocks every `POST`.
+- Do not run `sam build`. It works on a copy of `api/`, which cannot see `../shared`, and it does not find the project's esbuild. `npm run build` bundles the code into `api/dist/index.js` instead, and `sam deploy --template-file template.yaml` uploads that folder as it is. `npm run deploy` does both.
+- After adding a dependency that the Lambda uses, run `npm run build` once to check that it still bundles.
 - `api/src/index.ts` exports `app` (for `local.ts` and tests) and `handler = handle(app)` from `hono/aws-lambda`.
 
 ### Web hosting (Amplify Hosting)
@@ -712,8 +714,8 @@ After the first Amplify deploy, add its URL to `WebOrigins` and redeploy the API
 | Tool | Who | Why |
 | --- | --- | --- |
 | Node.js 24 and Git | Both | Everything |
-| AWS CLI v2, signed in with `aws login --region us-east-2` (or `aws configure` with an access key) | Both | Local API talks to the real tables and bucket |
-| AWS SAM CLI | Whoever deploys | `sam build`, `sam deploy` |
+| AWS CLI v2, signed in with `aws login --region us-east-2` (or `aws configure` with an access key), and the region saved with `aws configure set region us-east-2` | Both | Local API talks to the real tables and bucket |
+| AWS SAM CLI | Whoever deploys | `sam deploy` |
 | A Gemini API key from Google AI Studio | Sarah (shared with Pierre for deploys) | `labelPhoto` |
 | A phone with a camera | Both | Every checkpoint is tested on a phone |
 
@@ -729,7 +731,7 @@ The Solana CLI is not required. `api/scripts/solana-setup.ts` does the same job 
    - Create the API's shared core: `api/src/index.ts` with `GET /health` and the error handler, `api/src/local.ts`, and `api/src/lib/env.ts`, `db.ts` and `errors.ts`. Pierre writes these once; after the first checkpoint they change only by agreement.
    - Write `api/template.yaml` in full from section 8, with the three tables and the bucket, so the first deploy creates everything Sarah needs.
 2. **Contract (both).** `shared/` is already written. Read its three files together once. From here on they change only by agreement.
-3. **First deploy (Pierre).** `sam build`, then `sam deploy --guided` with `SolanaMode=off` and empty Solana values. Save the answers to `samconfig.toml`. Note `ApiUrl` and `PhotoBucketName` and send both to Sarah.
+3. **First deploy (Pierre).** In `api/`: `npm run build`, then `sam deploy --guided --template-file template.yaml` with region `us-east-2` and `SolanaMode=off`. The guided deploy will not accept an empty answer for a secret, so type `none` for the Gemini key (if you don't have it yet), the treasury secret and the mint; the template turns `none` into an empty value. Every deploy after that is `npm run deploy`. Save the answers to `samconfig.toml`. Note `ApiUrl` and `PhotoBucketName` and send both to Sarah.
 4. **Local env (both).** Copy `api/.env.example` to `api/.env` and fill it from the stack outputs. Copy `web/.env.example` to `web/.env` with `VITE_API_URL=http://localhost:3001`.
 5. **Hosting (Pierre).** Connect Amplify as in section 8. Add the Amplify URL to `WebOrigins` and redeploy. Start the `streetcreds.app` custom domain at the same time, because DNS takes a while.
 6. **Solana (Pierre, 90-minute limit).** Run `npx tsx scripts/solana-setup.ts`. It must:
@@ -832,6 +834,7 @@ These are settled. Do not redesign them during the hackathon.
 | --- | --- |
 | No login; the player id is the only identity | Judges will not create accounts |
 | One Lambda with a router, not one per route | One thing to deploy and debug |
+| The API is bundled by our own esbuild script, not by `sam build` | `sam build` failed on the first try: it builds from a copy of `api/` that cannot reach `shared/` |
 | DynamoDB with scans and no indexes | A few hundred items; simplest correct code |
 | Council items in a JSON file, not a table | Three static items that a human checked |
 | Photos private, shown through presigned links that expire | No public bucket; the "Copy city report" photo link is temporary and says so |

@@ -4,17 +4,22 @@ Description: StreetCreds API. One Lambda behind an HTTP API, three DynamoDB tabl
 
 # Deploy with `npm run deploy` in api/ (humans only). Stack name: streetcreds. Region: us-east-2 (the AWS project is locked to it).
 # The answers to `sam deploy --guided` are saved in samconfig.toml, which is git-ignored.
+#
+# Do not run `sam build`. The code is bundled by `npm run build` into dist/index.js, and SAM uploads
+# that folder as it is. `sam build` works on a copy of api/ that cannot see ../shared.
 
 Parameters:
   WebOrigins:
     Type: CommaDelimitedList
     Default: http://localhost:5173
     Description: Every address the web app is served from, comma-separated with no spaces. Add the Amplify URL and https://streetcreds.app here.
+  # `sam deploy --guided` will not accept an empty answer for a secret (NoEcho) parameter.
+  # Type the word none to leave one empty; the Conditions below turn none into an empty value.
   GeminiApiKey:
     Type: String
     NoEcho: true
-    Default: ''
-    Description: Gemini API key from Google AI Studio. Secret.
+    Default: none
+    Description: Gemini API key from Google AI Studio. Secret. Type none to leave it empty.
   GeminiModel:
     Type: String
     Default: gemini-3.8-flash
@@ -29,12 +34,17 @@ Parameters:
   SolanaTreasurySecret:
     Type: String
     NoEcho: true
-    Default: ''
-    Description: Base64 of the devnet treasury secret key. Secret. Empty while SolanaMode is off.
+    Default: none
+    Description: Base64 of the devnet treasury secret key. Secret. Type none while SolanaMode is off.
   CivicMint:
     Type: String
-    Default: ''
-    Description: Address of the CIVIC mint on devnet. Empty while SolanaMode is off.
+    Default: none
+    Description: Address of the CIVIC mint on devnet. Leave as none while SolanaMode is off.
+
+Conditions:
+  NoGeminiApiKey: !Equals [!Ref GeminiApiKey, none]
+  NoSolanaTreasurySecret: !Equals [!Ref SolanaTreasurySecret, none]
+  NoCivicMint: !Equals [!Ref CivicMint, none]
 
 Resources:
   HttpApi:
@@ -53,18 +63,9 @@ Resources:
 
   ApiFunction:
     Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: esbuild
-      BuildProperties:
-        EntryPoints:
-          - src/index.ts
-        Format: cjs
-        Target: es2022
-        Minify: false
-        Sourcemap: false
     Properties:
-      CodeUri: .
-      # esbuild writes the bundle as index.js at the top of the package.
+      # dist/ holds one file, index.js, written by `npm run build`. It is git-ignored.
+      CodeUri: dist/
       Handler: index.handler
       Runtime: nodejs24.x
       Architectures:
@@ -79,12 +80,12 @@ Resources:
           TABLE_AWARDS: !Ref AwardsTable
           PHOTO_BUCKET: !Ref PhotoBucket
           WEB_ORIGINS: !Join [',', !Ref WebOrigins]
-          GEMINI_API_KEY: !Ref GeminiApiKey
+          GEMINI_API_KEY: !If [NoGeminiApiKey, '', !Ref GeminiApiKey]
           GEMINI_MODEL: !Ref GeminiModel
           SOLANA_MODE: !Ref SolanaMode
           SOLANA_RPC_URL: https://api.devnet.solana.com
-          SOLANA_TREASURY_SECRET: !Ref SolanaTreasurySecret
-          CIVIC_MINT: !Ref CivicMint
+          SOLANA_TREASURY_SECRET: !If [NoSolanaTreasurySecret, '', !Ref SolanaTreasurySecret]
+          CIVIC_MINT: !If [NoCivicMint, '', !Ref CivicMint]
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref PlayersTable
