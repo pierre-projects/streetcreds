@@ -11,7 +11,7 @@ import L from 'leaflet'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { MAP_CENTER } from '../../../../shared/constants'
-import type { PublicReport, Severity } from '../../../../shared/types'
+import type { NeighborhoodId, PublicReport, Severity } from '../../../../shared/types'
 import { useReducedMotion } from '../../app/motion'
 import { strings } from '../../app/strings'
 import { Button } from '../../app/ui'
@@ -30,6 +30,7 @@ import {
   TAP_PX,
   worstSeverity,
 } from './mapReports'
+import { NeighborhoodLayer } from './NeighborhoodLayer'
 
 const ZOOM = 14
 /** As far in as the map goes. Here every report gets its own pin, however close its neighbors are. */
@@ -406,6 +407,8 @@ interface ReportsMapProps {
   cityRecords?: CityRecord[]
   /** For reports at a spot the City recorded too: that record, by report id. Keep the map the same between renders. */
   matches?: ReadonlyMap<string, CityRecord>
+  /** The neighborhood of the player looking at the map. Its edges are drawn in the accent color. */
+  yourNeighborhood?: NeighborhoodId | null
   /** Extra controls rendered inside the map (must use react-leaflet hooks). */
   children?: ReactNode
   /** Optional map instance callback for recenter and similar HUD controls. */
@@ -433,6 +436,7 @@ export function ReportsMap({
   onOpenChange,
   cityRecords = NO_RECORDS,
   matches = NO_MATCHES,
+  yourNeighborhood = null,
   children,
   onMapReady,
   popupInsets,
@@ -471,6 +475,8 @@ export function ReportsMap({
         />
         <MapReady onMapReady={onMapReady} />
         <FitToPins pins={pins} />
+        {/* First, so the City's dots and every pin are drawn over the lines. */}
+        <NeighborhoodLayer yours={yourNeighborhood} />
         <CityRecordsLayer records={cityRecords} reportedIds={reportedIds} />
         <PinLayer pins={pins} matches={matches} selectedId={selectedId} onSend={setSending} onOpenChange={onOpenChange} popupInsets={popupInsets} />
         {children}
