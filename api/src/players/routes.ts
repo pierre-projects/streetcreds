@@ -20,7 +20,7 @@ export const playerRoutes = new Hono();
 
 playerRoutes.post('/players', async (c) => {
   const input = CreatePlayerSchema.parse(await c.req.json());
-  const neighborhood = await requirePlayLocation(input.location);
+  const neighborhood = await requirePlayLocation(input.location, 'join');
   const playerId = randomUUID();
   const createdAt = new Date().toISOString();
 

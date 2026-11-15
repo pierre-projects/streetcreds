@@ -71,7 +71,8 @@ export function JoinScreen() {
     join.reset()
     setLocating(true)
     try {
-      const location = await readCurrentLocation()
+      // Joining only uses the reading to pick a team, so it accepts a rougher one than a report does.
+      const location = await readCurrentLocation('join')
       setLocating(false)
       join.mutate({ nickname: trimmed, location, ...(credential === null ? {} : { credential }) })
     } catch (error) {
@@ -100,8 +101,8 @@ export function JoinScreen() {
     <main className="app-column flex flex-col px-4 py-8">
       <BoardLink />
       <div className="mb-5 flex items-center gap-3">
-        <LogoMark />
-        <span className="text-lg font-bold tracking-tight text-ink">{strings.appName}</span>
+        <LogoMark className="size-9" />
+        <span className="text-xl font-bold tracking-tight text-ink">{strings.appName}</span>
       </div>
       <ScreenHeader title={strings.appName} subtitle={strings.tagline} />
 

@@ -451,7 +451,7 @@ Routes 3 and 7 are not in the PRD's first API table. They exist because the home
 
 **2. `POST /players`**
 Request: `{ "nickname": string, "location": LocationFix }`, where `LocationFix` is `{ lat, lng, accuracyMeters, capturedAt }` and `capturedAt` is an ISO timestamp.
-Steps: trim the nickname and check 2 to 20 characters; refuse an offensive nickname with `400 validation_failed` and the message "Pick a different nickname." (`isBlockedNickname` in `api/src/players/nickname.ts`); validate location age (at most 60 seconds, at most 10 seconds ahead of server time), accuracy (at most 100 meters), and membership in the City's published polygon; assign the neighborhood from the game zones; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`. Do not store joining coordinates.
+Steps: trim the nickname and check 2 to 20 characters; refuse an offensive nickname with `400 validation_failed` and the message "Pick a different nickname." (`isBlockedNickname` in `api/src/players/nickname.ts`); validate the location's age (at most 60 seconds old and 10 seconds ahead, plus 2 minutes either way for a device clock that differs from the server's), accuracy (at most 500 meters to join; a report needs 100) and membership in the City's published polygon; assign the neighborhood from the game zones; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`. Do not store joining coordinates.
 Response: `201 { "player": Player }`.
 With the optional `"credential": string` (Google's ID token, from "Continue with Google"): after the location check, verify the token (`verifyGoogleCredential`), write the account row `google:{sub}` with the condition that it does not exist (`409 already_linked` if it does), write the player with that account's `accountId`, and start a session. If the player write fails, delete the account row. Response: `201 { "player": Player, "sessionToken": string }`.
 
@@ -494,7 +494,7 @@ Response: `201 { "report": Report }`.
 **7. `POST /reports/:id/submit`** (the player confirmed; publish it and award points)
 Request: `{ "playerId": string, "location": LocationFix, "category"?: Category }`.
 Steps:
-0. Validate the location's coordinates, age, accuracy and membership in Tempe before any writes or awards. This applies to existing player IDs too. Fail with `validation_failed` for an unusable/outside reading, or `internal` with a retry message if the City boundary cannot be loaded and no valid cached boundary exists.
+0. Validate the location's coordinates, age, accuracy and membership in Tempe before any writes or awards. This applies to existing player IDs too. Fail with `validation_failed` for an unusable/outside reading. If the City's live boundary cannot be loaded, the check uses the last one it downloaded, or else the copy bundled with the API (`shared/tempeBoundary.ts`), so an outage at the City does not stop reports.
 1. Load the report. `404` if missing or `playerId` differs. `409 already_submitted` if `status` is not `draft`.
 2. Use `location.lat` and `location.lng` as the report's coordinates; top-level pin coordinates are not accepted as a location reading. If `category` is present, it replaces Gemini's.
 3. P2 only: `findDuplicate(report)`. If it returns an open report `R`: set this report to `merged`, add 1 to `R.count`, and award `report-confirm` with `refId = R.id`. Respond with `R` and `"merged": true`. Until P2 is built, skip this step.
@@ -710,7 +710,7 @@ One screen driven by a state value: `idle`, `resizing`, `uploading`, `labeling`,
 3. **Upload.** `GET /upload-url`, then `fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: blob })`.
 4. **Label.** `POST /reports`. Show a progress message; this takes a few seconds. On `not_street_problem`, show the message and offer "Try another photo".
 5. **Confirm.** Show the photo, description, severity and a category picker preselected with Gemini's answer.
-6. **Locate.** On "Submit", use `app/location.ts` to call `navigator.geolocation.getCurrentPosition` with `{ enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }`. If it is denied, times out or is inaccurate, keep the draft and offer a location retry. There is no manual pin fallback. The server checks the same freshness/accuracy limits and the City's polygon before publishing.
+6. **Locate.** On "Submit", `readCurrentLocation()` in `app/location.ts` listens with `navigator.geolocation.watchPosition` and `{ enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }` until the first reading that is fresh and within 100 meters, then stops. A phone's first reading is often a rough one, so a rough reading is not an error while time is left. It listens for at most 12 seconds, for this one action only, and keeps nothing. If location is denied, or no precise reading arrives in time, keep the draft and offer a location retry. There is no manual pin fallback. The server checks the same freshness/accuracy limits and the City's polygon before publishing.
 7. **Submit.** `POST /reports/:id/submit`.
 8. **Reward** (`RewardCard`): points earned, new total, and by `award.chainStatus`: `sent` shows the explorer link, `pending` shows "On-chain confirmation pending", `off` shows nothing. Under it, the street cred card (`share/ShareCard.tsx`, see "Street cred card" below) with the photo still on the phone, then the "Send to Tempe 311" panel for the report just filed (see "Send to Tempe 311" below).
 
@@ -914,7 +914,8 @@ Unit tests (Vitest) are required for these pure functions and nothing else:
 | `isBlockedNickname` | api | Ordinary names pass; real names that contain a bad word pass; leetspeak and spaced-out letters are caught |
 | `haversineMeters` | api | Same point is 0; two points about 30 m apart; about 1 km apart |
 | `checkReportLimit` (the rate-limit helper) | api | Times older than one hour are dropped; the fifth passes, the sixth fails |
-| Request schemas and location | api | Nickname of 1, 2, 20 and 21 characters; an offensive nickname; missing/malformed, stale, inaccurate and out-of-area location; arbitrary-pin requests |
+| Request schemas and location | api | Nickname of 1, 2, 20 and 21 characters; an offensive nickname; missing/malformed, stale, inaccurate and out-of-area location; arbitrary-pin requests; the looser accuracy limit for joining; the allowance for a device clock; the bundled boundary taking over when the City's service fails |
+| `readCurrentLocation` | web | A rough reading followed by a precise one; time running out; blocked; a reading with an old time |
 | `buildCityReport`, `cityLocationText` | web | Output matches the format in section 7; no `Photo` line without a photo link |
 | `tempe311Url`, `tempe311Target`, `tempe311RecordTarget` | web | Each category and each kind of City record opens the page in section 7 |
 | Resize size math | web | Landscape, portrait, and an image already under 1280 px |
@@ -1013,7 +1014,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 
 **F1. Join (P0)**
 - Opening the URL on a phone shows the join screen in under 3 seconds.
-- Nickname (2 to 20 characters) and location access are required. The server assigns a neighborhood only for a fresh, accurate position inside Tempe. No email or password: "Continue with Google" is offered and never required.
+- Nickname (2 to 20 characters) and location access are required. The server assigns a neighborhood only for a fresh position inside Tempe, accurate to 500 meters or better, so a laptop on Wi-Fi can join. No email or password: "Continue with Google" is offered and never required.
 - An offensive nickname is refused with "Pick a different nickname." A real name such as Dickson is accepted.
 - The player id is stored on the phone, so a refresh keeps the player signed in.
 - With `SOLANA_MODE=per-player`, the new player has a `walletAddress`. The player never sees a seed phrase.

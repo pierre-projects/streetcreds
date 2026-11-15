@@ -65,5 +65,5 @@ Until these are done, no sign-in control shows and the game runs as guest-only.
 
 - Google's button can fail inside an in-app browser (a link opened from a social app). Guests are not affected. The message says to open the site in the phone's own browser.
 - A guest id can still be used, and saved to a Google account, by whoever knows it. That is the same trust as before; saving the player is what closes it.
-- The shared link has no preview image yet. The picture travels as the shared PNG.
+- The card's picture travels as the shared PNG. The link beside it previews with the site's own image (`og:image` in `web/index.html`), not with the player's card.
 - Google draws its button 40 px tall. The app scales it to 44 px to meet the tap-target rule.

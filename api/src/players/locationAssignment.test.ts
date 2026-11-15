@@ -24,6 +24,8 @@ describe('server-assigned neighborhoods', () => {
     expect(result.status).toBe(201);
     expect(await result.json()).toMatchObject({ player: { neighborhood: 'north-tempe' } });
     expect(putNewPlayer).toHaveBeenCalledWith(expect.objectContaining({ neighborhood: 'north-tempe', points: 0 }));
+    // Joining asks for the looser accuracy limit; a report keeps the strict one.
+    expect(requirePlayLocation).toHaveBeenCalledWith(expect.objectContaining({ lat: 33.45 }), 'join');
     const stored = vi.mocked(putNewPlayer).mock.calls[0][0];
     expect(stored).not.toHaveProperty('location');
     expect(stored).not.toHaveProperty('lat');

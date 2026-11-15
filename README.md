@@ -123,14 +123,17 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The temporary design system (`web/src/app/ui/`, `/design`) was generated with Codex (OpenAI), following the StreetCreds landing page.
 - The soft glass radar HUD redesign (tokens, Outfit self-host, floating frost chrome, map-first home) was implemented with Cursor (Composer).
 - Outfit by Rodrigo Fuenzalida / Smartsheet Inc (The Outfit Project Authors), under the SIL Open Font License (see `web/public/fonts/OFL.txt`).
+- The StreetCreds logo mark, wordmark, favicon and app icon in `web/public/brand/` and the favicon / apple-touch icons were taken from the StreetCreds_Logo_Pack asset set (white S on orange / wordmark masters), resized for the web app.
 
 - The Privacy, Terms, About & contact pages and their navigation links were drafted and implemented with Codex (OpenAI).
 - The About, Privacy and Terms copy was revised with Codex (OpenAI) for clarity and current app behavior.
 - Location-based joining and report submission, their shared validation, and the accompanying tests and notes were implemented with Codex (OpenAI). City membership uses the City of Tempe's public City Boundary layer: https://services.arcgis.com/lQySeXwbBg53XWDi/ArcGIS/rest/services/City_Boundary/FeatureServer/0.
+- The location improvements (waiting for a precise reading, the looser accuracy limit for joining, the allowance for device clocks, and the bundled copy of the City boundary with `api/scripts/city-boundary.ts`) were written with Claude Code (Anthropic).
 - The Home map fixes and the motion rules (`web/src/app/motion.ts`, the motion and "Reduce motion" sections of `web/src/index.css`) were written with Claude Code (Anthropic). The reduced-motion rules follow the `accessible-animation` skill from `iart-ai/web-animation-skills` (MIT).
 - "Send to Tempe 311" (`web/src/features/players/tempe311.ts`, `CityHandoff.tsx`, `CityHandoffDialog.tsx`, and the reward-screen and map-popup wiring) was written with Claude Code (Anthropic). The links into the City of Tempe's service request form were worked out by reading that form's own page; nothing was submitted to it.
 - Optional Google sign-in, the profile screen and the street cred share card (`api/src/players/auth.ts`, `authRoutes.ts`, `google.ts`, `sessions.ts`, `accounts.ts`, `playerReports.ts`, `web/src/app/google.ts`, `session.ts`, `web/src/features/players/ProfileScreen.tsx`, `GoogleSignInButton.tsx`, `web/src/features/quests/share/`, and their tests) were written with Claude Code (Anthropic). Sign-in follows Google's "Sign in with Google for Web" guide (https://developers.google.com/identity/gsi/web/guides/overview) and its ID token checks (https://developers.google.com/identity/gsi/web/guides/verify-google-id-token).
 - The council quest (`api/scripts/generate-council.ts`, `api/src/quests/council.json`, `councilRoutes.ts`, and the council screens) was implemented with Cursor Agent / Composer. Agenda text is from the City of Tempe Agenda Online portal (Regular City Council Meeting, Nov 5, 2026).
+- The live route check that runs after every deploy (`api/scripts/check-live.ts`, `api/scripts/lib/liveRoutes.ts`) was written with Claude Code (Anthropic).
 
 ## License
 

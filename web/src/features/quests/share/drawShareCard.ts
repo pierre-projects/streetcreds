@@ -11,6 +11,9 @@ const MARGIN = 84
 const FONT = '"Outfit", "Helvetica Neue", Helvetica, Arial, sans-serif'
 const PHOTO_HEIGHT = 430
 const PHOTO_RADIUS = 36
+/** The brand mark from the logo pack, the same file LogoMark shows. */
+const MARK_SRC = '/brand/mark.png'
+const MARK_SIZE = 68
 
 function token(name: string, fallback: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
@@ -37,13 +40,21 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 /** Draws `image` to fill the box, cropped evenly on the long side, with rounded corners. */
-function drawCover(context: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, width: number, height: number) {
+function drawCover(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius = PHOTO_RADIUS,
+) {
   const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight)
   const sourceWidth = width / scale
   const sourceHeight = height / scale
   context.save()
   context.beginPath()
-  context.roundRect(x, y, width, height, PHOTO_RADIUS)
+  context.roundRect(x, y, width, height, radius)
   context.clip()
   context.drawImage(
     image,
@@ -78,6 +89,12 @@ export async function drawShareCard(cred: ShareCred, photoUrl?: string | null): 
   } catch {
     // Draw with the fallback fonts.
   }
+  let mark: HTMLImageElement | null = null
+  try {
+    mark = await loadImage(MARK_SRC)
+  } catch {
+    // An accent dot stands in for the mark.
+  }
   let photo: HTMLImageElement | null = null
   if (photoUrl) {
     try {
@@ -98,14 +115,18 @@ export async function drawShareCard(cred: ShareCred, photoUrl?: string | null): 
   context.textBaseline = 'alphabetic'
   context.textAlign = 'left'
 
-  // Wordmark, with the accent dot the logo uses.
-  context.fillStyle = accent
-  context.beginPath()
-  context.arc(MARGIN + 22, 126, 22, 0, Math.PI * 2)
-  context.fill()
+  // The brand mark and the name, as in the app's header.
+  if (mark) {
+    drawCover(context, mark, MARGIN, 92, MARK_SIZE, MARK_SIZE, 14)
+  } else {
+    context.fillStyle = accent
+    context.beginPath()
+    context.arc(MARGIN + MARK_SIZE / 2, 92 + MARK_SIZE / 2, MARK_SIZE / 2, 0, Math.PI * 2)
+    context.fill()
+  }
   context.fillStyle = light
   context.font = `700 56px ${FONT}`
-  context.fillText(text.wordmark, MARGIN + 64, 146)
+  context.fillText(text.wordmark, MARGIN + MARK_SIZE + 22, 146)
 
   let y = 210
   if (photo) {
