@@ -119,7 +119,8 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The City records script (`api/scripts/city-records.ts`, `api/scripts/lib/`) and the City records layer on the map (`web/src/features/players/cityRecords.ts`, `cityText.ts`, `CityRecordsLayer.tsx`, `CityLayerToggles.tsx`) were generated with Claude Code (Anthropic). The page checks follow an earlier project of Pierre's, Patchnote.
 
 - The temporary design system (`web/src/app/ui/`, `/design`) was generated with Codex (OpenAI), following the StreetCreds landing page.
-- Russo One by Jovanny Lemonad, under the SIL Open Font License (see `web/public/fonts/OFL.txt`).
+- The soft glass radar HUD redesign (tokens, Outfit self-host, floating frost chrome, map-first home) was implemented with Cursor (Composer).
+- Outfit by Rodrigo Fuenzalida / Smartsheet Inc (The Outfit Project Authors), under the SIL Open Font License (see `web/public/fonts/OFL.txt`).
 
 - The Privacy, Terms, About & contact pages and their navigation links were drafted and implemented with Codex (OpenAI).
 

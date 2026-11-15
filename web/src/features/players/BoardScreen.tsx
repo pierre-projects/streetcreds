@@ -103,7 +103,7 @@ function ReportRow({ report, selected, cityRecord, now, onPick }: ReportRowProps
         alt=""
         loading="lazy"
         decoding="async"
-        className="my-3 size-16 shrink-0 border border-ink bg-page object-cover"
+        className="my-3 size-16 shrink-0 rounded-control border border-ink/15 bg-page object-cover"
         onError={(event) => {
           const fresh = renewPhotoUrl(report)
           if (fresh !== null) event.currentTarget.src = fresh
@@ -255,8 +255,8 @@ export function BoardScreen() {
                     </span>
                   </div>
                   {/* How far this neighborhood is behind the leader. Decoration: the numbers say the same. */}
-                  <div className="mt-1 h-2 border border-ink bg-surface" aria-hidden="true">
-                    <div className="h-full bg-accent" style={{ width: `${(row.points / topPoints) * 100}%` }} />
+                  <div className="mt-1 h-2 overflow-hidden rounded-pill border border-ink/15 bg-surface" aria-hidden="true">
+                    <div className="h-full rounded-pill bg-accent" style={{ width: `${(row.points / topPoints) * 100}%` }} />
                   </div>
                   <p className="mt-1 truncate text-xs text-muted">
                     {strings.leaderboard.players(row.playerCount)}

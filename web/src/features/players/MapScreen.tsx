@@ -49,7 +49,7 @@ export function MapScreen() {
         </div>
       )}
 
-      {/* The short form. The type menu and the numbers are left to the big-screen board: here they would push the map off the screen. */}
+      {/* Soft filter sheet. The type menu and the numbers are left to the big-screen board. */}
       {pins.length > 0 && <ReportFilters pins={pins} filter={filter} onChange={setFilter} compact />}
 
       {/* `isolate` keeps Leaflet's own layers underneath the app's header and navigation. */}
@@ -61,7 +61,7 @@ export function MapScreen() {
       <Card>
         <div className="flex flex-col gap-3">
           <div>
-            <h2 className="text-base text-ink">{strings.city.title}</h2>
+            <h2 className="text-base font-semibold text-ink">{strings.city.title}</h2>
             <p className="mt-1 text-sm text-muted">{strings.city.intro}</p>
           </div>
           <CityLayerToggles records={city.records} status={city.status} layers={layers} onChange={setLayers} compact />

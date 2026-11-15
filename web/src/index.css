@@ -5,9 +5,23 @@
    (bg-page, bg-surface, text-ink, text-muted, bg-accent, text-severity-high, ...)
    and never a raw color in a component. */
 @font-face {
-  font-family: "Russo One";
-  src: url('/fonts/RussoOne-Regular.ttf') format('truetype');
+  font-family: "Outfit";
+  src: url('/fonts/Outfit-400.woff2') format('woff2');
   font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Outfit";
+  src: url('/fonts/Outfit-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Outfit";
+  src: url('/fonts/Outfit-700.woff2') format('woff2');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -25,20 +39,24 @@
   --color-severity-low: #2e7d32;
   --color-severity-medium: #9a5b00;
   --color-severity-high: #c62828;
-  --font-sans: "Russo One", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --font-sans: "Outfit", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --radius-control: 0;
-  --radius-card: 0;
-  --shadow-hard: 3px 3px 0 var(--color-ink);
+  --radius-control: 14px;
+  --radius-card: 16px;
+  --radius-pill: 9999px;
+  --shadow-float: 0 8px 28px rgb(10 10 10 / .12);
+  --surface-frost: rgb(255 255 255 / .82);
+  --surface-frost-strong: rgb(255 255 255 / .92);
+  --blur-frost: 18px;
   --text-display: 4rem;
   --text-display--line-height: 1;
-  --text-display--letter-spacing: -.05em;
+  --text-display--letter-spacing: -.04em;
   --text-title: 1.75rem;
-  --text-title--line-height: 1.1;
-  --text-title--letter-spacing: -.03em;
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -.02em;
   --text-label: .75rem;
   --text-label--line-height: 1.5;
-  --text-label--letter-spacing: .01em;
+  --text-label--letter-spacing: .02em;
 }
 
 html {
@@ -51,63 +69,200 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
+  font-family: var(--font-sans);
+}
+
+@keyframes hud-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes radar-pulse {
+  0% { transform: translate(-50%, -50%) scale(0.35); opacity: 0.45; }
+  70% { opacity: 0.12; }
+  100% { transform: translate(-50%, -50%) scale(1.65); opacity: 0; }
+}
+
+@keyframes pin-appear {
+  from { opacity: 0; transform: scale(0.72); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* Screen compositions stay here so restyling only touches CSS and app/ui. */
 @layer components {
-  .app-column { @apply mx-auto min-h-dvh w-full max-w-[480px] min-[480px]:border-x min-[480px]:border-dotted min-[480px]:border-line; }
-  .app-header { @apply sticky top-0 z-10 flex min-h-16 items-center justify-between gap-3 border-b border-dotted border-line bg-surface px-4; }
-  .app-brand { @apply flex shrink-0 items-center gap-2 text-base tracking-tight text-ink; }
-  .app-nav { @apply fixed inset-x-0 bottom-0 z-10 border-t border-dotted border-line bg-surface pb-[env(safe-area-inset-bottom)]; }
-  .app-nav-link { @apply flex min-h-14 flex-col items-center justify-center gap-0.5 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-ink; }
-  .app-nav-link[aria-current="page"] { @apply bg-ink text-accent outline-accent; }
+  .app-column {
+    @apply relative mx-auto min-h-dvh w-full max-w-[480px] min-[480px]:border-x min-[480px]:border-line/20;
+  }
+  .app-header {
+    display: flex;
+    min-height: 3.25rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgb(10 10 10 / .08);
+    background: var(--surface-frost);
+    padding: 0.5rem 0.85rem 0.5rem 0.65rem;
+    box-shadow: var(--shadow-float);
+    backdrop-filter: blur(var(--blur-frost));
+    -webkit-backdrop-filter: blur(var(--blur-frost));
+  }
+  .app-header-wrap {
+    @apply pointer-events-none sticky z-20 px-3;
+    top: max(0.75rem, env(safe-area-inset-top));
+    padding-top: 0.25rem;
+    animation: hud-enter 0.45s ease-out both;
+  }
+  .app-header-wrap > * { pointer-events: auto; }
+  .app-brand {
+    @apply flex min-w-0 shrink-0 items-center gap-2 text-base font-bold tracking-tight text-ink;
+  }
+  .app-hud-meta {
+    @apply flex min-w-0 items-center gap-2 text-sm;
+  }
+  .app-hud-points {
+    @apply flex shrink-0 flex-col items-end leading-none;
+  }
+  .app-hud-points-label {
+    @apply text-[10px] font-medium uppercase tracking-[0.08em] text-muted;
+  }
+  .app-hud-points-value {
+    @apply font-bold tabular-nums text-ink;
+  }
+  .app-hud-divider {
+    @apply h-7 w-px shrink-0 bg-ink/15;
+  }
+  .app-hud-place {
+    @apply min-w-0 truncate text-sm font-medium text-ink;
+  }
+  .app-nav {
+    @apply pointer-events-none fixed inset-x-0 z-20 px-3;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    animation: hud-enter 0.5s ease-out 0.05s both;
+  }
+  .app-nav-inner {
+    @apply pointer-events-auto mx-auto flex max-w-[480px] items-stretch gap-1 border border-ink/10 px-1.5 py-1.5;
+    border-radius: var(--radius-pill);
+    background: var(--surface-frost);
+    box-shadow: var(--shadow-float);
+    backdrop-filter: blur(var(--blur-frost));
+    -webkit-backdrop-filter: blur(var(--blur-frost));
+  }
+  .app-nav-link {
+    @apply flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-pill px-2 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
+  }
+  .app-nav-link[aria-current="page"] { @apply bg-ink text-on-ink outline-accent; }
   .app-nav-link:not([aria-current="page"]) { @apply text-muted; }
-  .points-total { @apply text-display text-accent; overflow-wrap: anywhere; }
-  .dark-detail { @apply border-t border-dotted border-on-ink/50 pt-4 text-sm text-on-ink/70; }
+  .app-main { @apply flex-1 px-4 pb-28 pt-3; }
+  .app-main-radar { @apply absolute inset-0 flex flex-col p-0; }
+  .points-total { @apply text-display font-bold text-accent; overflow-wrap: anywhere; }
+  .dark-detail { @apply border-t border-on-ink/30 pt-4 text-sm text-on-ink/70; }
   .wallet-link { @apply inline-flex min-h-11 items-center text-on-ink underline focus-visible:outline-2 focus-visible:outline-offset-4; }
-  .section-title { @apply text-lg uppercase text-ink; }
-  .map-frame { @apply relative isolate z-0 h-[52dvh] min-h-[28rem] overflow-hidden rounded-card border border-ink bg-surface; }
+  .section-title { @apply text-lg font-bold text-ink; }
+  .map-frame {
+    @apply relative isolate z-0 h-[52dvh] min-h-[28rem] overflow-hidden border border-ink/10 bg-surface;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-float);
+  }
+  .map-frame-radar {
+    @apply absolute inset-0 z-0 overflow-hidden rounded-none border-0 shadow-none;
+  }
+
+  /* Home radar dock: Report + Council over the map, above the pill nav. */
+  .radar-dock {
+    @apply pointer-events-none absolute inset-x-0 z-[1000] flex justify-center px-3;
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
+    animation: hud-enter 0.55s ease-out 0.08s both;
+  }
+  .radar-dock-inner {
+    @apply pointer-events-auto flex w-full max-w-[480px] items-center gap-3 border border-ink/10 px-2.5 py-2;
+    border-radius: var(--radius-pill);
+    background: var(--surface-frost);
+    box-shadow: var(--shadow-float);
+    backdrop-filter: blur(var(--blur-frost));
+    -webkit-backdrop-filter: blur(var(--blur-frost));
+  }
+  .radar-dock-btn {
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-ink text-on-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-accent;
+  }
+  .radar-dock-primary {
+    @apply flex min-h-11 flex-1 items-center justify-center gap-2 rounded-pill bg-accent px-4 text-sm font-bold text-on-accent focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
+  }
+  .radar-dock-plus {
+    @apply inline-flex size-7 items-center justify-center rounded-full bg-surface text-ink;
+  }
+  .radar-dock-caption {
+    @apply mt-1 text-center text-[10px] font-medium text-ink/80;
+  }
+  .radar-locus {
+    @apply pointer-events-none absolute left-1/2 top-1/2 z-[450] size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent bg-surface;
+  }
+  .radar-ring {
+    @apply pointer-events-none absolute left-1/2 top-1/2 z-[440] size-40 rounded-full border border-accent/40;
+    animation: radar-pulse 2.8s ease-out infinite;
+  }
+  .radar-ring:nth-child(2) { animation-delay: 0.9s; }
+  .radar-ring:nth-child(3) { animation-delay: 1.8s; }
 
   /* The big-screen board (features/players/BoardScreen.tsx). From 1024 px it fills the window:
      the map on the left, a side panel that scrolls on the right. Narrower, the parts stack. */
   .board { @apply flex min-h-dvh flex-col bg-page lg:h-dvh; }
-  .board-header { @apply flex min-h-16 flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-ink bg-surface px-4 py-2 lg:px-6; }
+  .board-header {
+    @apply flex min-h-16 flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-ink/10 bg-surface/90 px-4 py-2 backdrop-blur-md lg:px-6;
+  }
   .board-body { @apply flex flex-1 flex-col lg:grid lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_26rem] lg:grid-rows-[minmax(0,1fr)]; }
-  .board-map { @apply relative isolate z-0 h-[60dvh] min-h-[28rem] overflow-hidden border-b border-ink bg-surface lg:h-auto lg:min-h-0 lg:border-b-0 lg:border-r; }
-  .board-scores { @apply border-b border-ink bg-surface px-4 py-3 lg:px-6; }
+  .board-map { @apply relative isolate z-0 h-[60dvh] min-h-[28rem] overflow-hidden border-b border-ink/10 bg-surface lg:h-auto lg:min-h-0 lg:border-b-0 lg:border-r; }
+  .board-scores { @apply border-b border-ink/10 bg-surface px-4 py-3 lg:px-6; }
   .board-scores-list { @apply grid grid-cols-1 gap-x-8 gap-y-3 min-[480px]:grid-cols-2 lg:grid-cols-4; }
   .board-side { @apply flex flex-col lg:min-h-0; }
-  .board-side-head { @apply flex flex-col gap-3 border-b border-dotted border-line p-4 lg:px-6; }
+  .board-side-head { @apply flex flex-col gap-3 border-b border-ink/10 p-4 lg:px-6; }
   .board-list { @apply p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6; }
-  /* The City records switches. On a wide screen they are docked in the map's bottom left corner:
-     dark and see-through, with no card around them, so the map stays the picture. The title bar
-     (.board-city-fold) folds them down to a row of letter keys. On a narrow screen they sit in the side panel instead. */
-  .board-city-dock { @apply absolute bottom-0 left-0 z-[1000] hidden max-w-[34rem] flex-col bg-ink/80 text-on-ink backdrop-blur-sm lg:flex; }
-  .board-city-fold { @apply inline-flex size-11 shrink-0 items-center justify-center text-on-ink hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent; }
+  .board-city-dock {
+    @apply absolute bottom-3 left-3 z-[1000] hidden max-w-[34rem] flex-col text-on-ink lg:flex;
+    border-radius: var(--radius-card);
+    background: rgb(10 10 10 / .72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-float);
+  }
+  .board-city-fold {
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control text-on-ink hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
+  }
   .board-city-fold[aria-expanded="false"] svg { @apply rotate-180; }
-  /* One letter key in the folded dock (features/players/CityLayerKeys.tsx). */
-  .city-key { @apply inline-flex size-11 shrink-0 items-center justify-center hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent; }
+  .city-key {
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
+  }
   .board-city-panel { @apply flex flex-col gap-2 px-4 pb-4 pt-1; }
-  .board-city-inline { @apply border-t border-dotted border-line pt-3 lg:hidden; }
+  .board-city-inline { @apply border-t border-ink/10 pt-3 lg:hidden; }
 
-  /* Filter controls (features/players/ReportFilters.tsx). */
-  .filter-toggle { @apply inline-flex min-h-11 items-center gap-2 rounded-control border border-ink bg-surface px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
-  .filter-toggle[aria-pressed="false"] { @apply border-dotted border-line text-muted; }
-  .filter-dot { @apply inline-block size-4 shrink-0 rounded-full border-2 border-ink; }
-  /* The key for a City record pin (features/players/CityLayerToggles.tsx): the same square, with its letter. */
-  .filter-square { @apply inline-flex size-5 shrink-0 items-center justify-center border-2 border-ink bg-surface text-[11px] leading-none text-ink; }
-  .filter-toggle:disabled { @apply border-dotted border-line text-muted; }
-  .filter-select { @apply min-h-11 min-w-0 flex-1 rounded-control border border-ink bg-surface px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
-  /* A link inside a map popup, tall enough to tap. */
+  /* Filter controls (features/players/ReportFilters.tsx). Soft frost sheet language. */
+  .filter-sheet {
+    @apply flex flex-col gap-2 rounded-card border border-ink/10 bg-surface/90 p-3 shadow-float backdrop-blur-md;
+  }
+  .filter-toggle {
+    @apply inline-flex min-h-11 items-center gap-2 rounded-pill border border-ink/15 bg-surface px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
+  }
+  .filter-toggle[aria-pressed="false"] { @apply border-ink/10 text-muted; }
+  .filter-dot { @apply inline-block size-4 shrink-0 rounded-full border-2 border-surface; }
+  .filter-square {
+    @apply inline-flex size-5 shrink-0 items-center justify-center rounded-[6px] border-2 border-ink bg-surface text-[11px] leading-none text-ink;
+  }
+  .filter-toggle:disabled { @apply border-ink/10 text-muted; }
+  .filter-select {
+    @apply min-h-11 min-w-0 flex-1 rounded-control border border-ink/15 bg-surface px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
+  }
   .popup-link { @apply inline-flex min-h-11 items-center text-xs text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
-  .filter-reset {@apply inline-flex min-h-11 shrink-0 items-center px-2 text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
-  /* One report in the board's list. Its left edge is the severity color; the photo and the words follow. */
-  .board-row { @apply flex min-h-11 w-full items-stretch gap-3 overflow-hidden rounded-card border border-dotted border-line bg-surface text-left hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
-  .board-row[aria-pressed="true"] { @apply border-solid border-ink shadow-hard; }
-  /* A small tag on a row: "Reported 3 times", "New". */
-  .board-chip { @apply inline-flex items-center border border-ink px-1.5 py-0.5 font-mono text-[11px] leading-none text-ink; }
-  /* The way to the board from the phone layout. Only shown where the window has room beside the column. */
-  .board-link { @apply fixed left-6 top-3 z-20 hidden min-h-11 items-center gap-2 rounded-control border border-ink bg-surface px-4 text-sm text-ink shadow-hard hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink lg:inline-flex; }
+  .filter-reset { @apply inline-flex min-h-11 shrink-0 items-center px-2 text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
+  .board-row {
+    @apply flex min-h-11 w-full items-stretch gap-3 overflow-hidden rounded-card border border-ink/10 bg-surface text-left shadow-none hover:border-ink/30 focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
+  }
+  .board-row[aria-pressed="true"] { @apply border-ink shadow-float; }
+  .board-chip {
+    @apply inline-flex items-center rounded-pill border border-ink/20 px-2 py-0.5 font-mono text-[11px] leading-none text-ink;
+  }
+  .board-link {
+    @apply fixed left-6 top-3 z-20 hidden min-h-11 items-center gap-2 rounded-pill border border-ink/10 bg-surface/90 px-4 text-sm text-ink shadow-float backdrop-blur-md hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink lg:inline-flex;
+  }
 }
 
 /* Leaflet ships unlayered CSS, so these overrides are unlayered too. */
@@ -115,16 +270,19 @@ body {
 .leaflet-container a { color: var(--color-ink); }
 .leaflet-container a:focus-visible { outline: 2px solid var(--color-ink); outline-offset: -2px; }
 
-/* The street map is drawn in grey, so the only color on it is the pins. */
-.map-frame .leaflet-tile-pane, .board-map .leaflet-tile-pane { filter: grayscale(1) contrast(1.05); }
+/* Slightly desaturated map so frost chrome and severity pins pop. */
+.map-frame .leaflet-tile-pane,
+.board-map .leaflet-tile-pane,
+.map-frame-radar .leaflet-tile-pane {
+  filter: grayscale(0.55) contrast(1.05) brightness(0.96);
+}
 
-/* Popup: the photo runs edge to edge and the close button sits on its corner. */
 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
   border-radius: var(--radius-card);
-  border: 1px solid var(--color-ink);
+  border: 1px solid rgb(10 10 10 / .12);
   background: var(--color-surface);
   color: var(--color-ink);
-  box-shadow: var(--shadow-hard);
+  box-shadow: var(--shadow-float);
 }
 .leaflet-popup-content-wrapper { padding: 0; overflow: hidden; }
 .leaflet-popup-content, .leaflet-popup-content p { margin: 0; }
@@ -133,75 +291,105 @@ body {
   right: 0;
   width: 44px;
   height: 44px;
-  border: 1px solid var(--color-ink);
+  border: 1px solid rgb(10 10 10 / .12);
+  border-radius: 0 var(--radius-card) 0 var(--radius-control);
   background: var(--color-surface);
   color: var(--color-ink);
   font: 24px/42px var(--font-sans);
 }
 
-/* Zoom buttons. */
 .leaflet-touch .leaflet-bar, .leaflet-bar {
-  border: 1px solid var(--color-ink);
+  border: 1px solid rgb(10 10 10 / .12);
   border-radius: var(--radius-control);
-  box-shadow: var(--shadow-hard);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
 }
 .leaflet-touch .leaflet-bar a, .leaflet-bar a {
   width: 44px;
   height: 44px;
   line-height: 44px;
   border-radius: var(--radius-control);
-  border-bottom-color: var(--color-ink);
-  background: var(--color-surface);
+  border-bottom-color: rgb(10 10 10 / .12);
+  background: var(--surface-frost-strong);
   color: var(--color-ink);
 }
 
-/* Leaflet draws its buttons on top of popups. They step aside while a popup is open, so they never cover the photo. */
 .leaflet-container:has(.leaflet-popup) .leaflet-control-zoom { visibility: hidden; }
 
-/* The map credit stays one line tall. The invisible box gives its link a 44 px touch area. */
 .leaflet-control-attribution { max-width: 100%; }
 .leaflet-control-attribution a { position: relative; }
 .leaflet-control-attribution a::after { content: ""; position: absolute; left: -8px; right: -8px; bottom: -4px; height: 44px; }
 
-/* Map pins. Leaflet draws each one as a 44 px touch area (.pin-target) with the visible dot
-   (.pin) in the middle. The class names are set in features/players/MapScreen.tsx. */
+/* Map pins: severity fill, white ring, soft elevation; category is label text only. */
 .leaflet-marker-icon.pin-target { display: flex; align-items: center; justify-content: center; }
+.pin-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: pin-appear 0.35s ease-out both;
+}
 .pin {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  border: 2px solid var(--color-ink);
+  border: 2px solid var(--color-surface);
   border-radius: 9999px;
-  box-shadow: 2px 2px 0 var(--color-ink);
+  box-shadow: 0 4px 12px rgb(10 10 10 / .22);
   color: var(--color-on-ink);
-  font: 13px/1 var(--font-sans);
+  font: 700 12px/1 var(--font-sans);
+}
+.pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 1px;
+  background: inherit;
+  box-shadow: inherit;
+  z-index: -1;
+}
+.pin-label {
+  max-width: 7.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 9999px;
+  background: var(--surface-frost-strong);
+  padding: 0.15rem 0.45rem;
+  color: var(--color-ink);
+  font: 600 10px/1.2 var(--font-sans);
+  box-shadow: 0 2px 8px rgb(10 10 10 / .12);
 }
 .pin-low { background: var(--color-severity-low); }
 .pin-medium { background: var(--color-severity-medium); }
 .pin-high { background: var(--color-severity-high); }
-/* Several reports close together: black, with a ring in the color of the most serious one inside. */
-.pin-group { background: var(--color-ink); border-width: 4px; box-shadow: 0 0 0 2px var(--color-surface); }
+.pin-group {
+  background: var(--color-ink);
+  border-width: 3px;
+  box-shadow: 0 0 0 2px var(--color-surface), 0 4px 12px rgb(10 10 10 / .22);
+}
 .pin-group-low { border-color: var(--color-severity-low); }
 .pin-group-medium { border-color: var(--color-severity-medium); }
 .pin-group-high { border-color: var(--color-severity-high); }
 
-/* A City record (features/players/CityRecordsLayer.tsx): square and black on white, so it is never
-   taken for a report. Filled with the accent color once a player has reported a problem there. */
 .pin-city {
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgb(10 10 10 / .18);
   background: var(--color-surface);
   color: var(--color-ink);
   font-size: 11px;
 }
+.pin-city::after { display: none; }
 .pin-city-reported { background: var(--color-accent); color: var(--color-on-accent); }
-/* A helpful place from the City: the same pin turned to a diamond, with its letter kept upright. */
 .pin-resource, .filter-diamond { transform: rotate(45deg); }
 .pin-resource > span, .filter-diamond > span { transform: rotate(-45deg); }
 
-/* Inside the dark City dock the switches and the small print are light on dark. Unlayered, so
-   these win over the usual colors. A switch that is off keeps its dotted edge and goes dim. */
 .board-city-dock .filter-toggle { background: transparent; border-color: var(--color-on-ink); color: var(--color-on-ink); outline-color: var(--color-accent); }
 .board-city-dock .filter-toggle[aria-pressed="false"],
 .board-city-dock .filter-toggle:disabled {
@@ -210,8 +398,6 @@ body {
 }
 .board-city-dock .filter-toggle[aria-pressed="false"] .filter-square { opacity: .55; }
 .board-city-dock .text-muted { color: color-mix(in srgb, var(--color-on-ink) 75%, transparent); }
-/* The letter keys of the folded dock: a little bigger than on a switch, and when a group is off
-   its key is an empty dotted outline. */
 .city-key .filter-square { width: 1.625rem; height: 1.625rem; font-size: 13px; }
 .city-key[aria-pressed="false"] .filter-square,
 .city-key:disabled .filter-square {
@@ -221,8 +407,17 @@ body {
   color: color-mix(in srgb, var(--color-on-ink) 70%, transparent);
 }
 
-/* A severity that is switched off shows an empty dot. Unlayered, so it wins over the color utility. */
-.filter-toggle[aria-pressed="false"] .filter-dot { background: var(--color-surface); }
+.filter-toggle[aria-pressed="false"] .filter-dot { background: var(--color-surface); border-color: var(--color-ink); }
 .pin-target:focus { outline: none; }
 .pin-target:focus-visible .pin { outline: 3px solid var(--color-ink); outline-offset: 2px; }
 .pin-target.is-open .pin { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header-wrap,
+  .app-nav,
+  .radar-dock,
+  .pin-stack,
+  .radar-ring {
+    animation: none !important;
+  }
+}
