@@ -43,7 +43,7 @@ Where the PRD and TECHNICAL.md differ on an implementation detail, TECHNICAL.md 
 | Points | An SPL token on Solana devnet |
 | Map | Leaflet with OpenStreetMap |
 
-The phone uploads photos straight to S3 and sends everything else through the API. Only the Lambda talks to Gemini and Solana, so no key ever reaches the phone. Details and diagrams are in [TECHNICAL.md](TECHNICAL.md).
+The phone uploads photos straight to S3 and sends everything else through the API. Only the Lambda talks to Gemini and Solana, so no key ever reaches the phone. Details are in [TECHNICAL.md](TECHNICAL.md).
 
 ## Repo layout
 
