@@ -20,7 +20,8 @@ export const mockPlayer: Player = {
   nickname: 'Sam',
   neighborhood: 'asu-campus',
   points: 130,
-  walletAddress: null,
+  // The treasury's public address, so the wallet link on the home screen has somewhere to go.
+  walletAddress: 'ETt92Vzd3AwTKztSKyF7VzKgkKzyg9zoUqXJqdRqMtnR',
   recentReportTimes: [],
   createdAt: '2026-11-14T17:40:03.000Z',
 }

@@ -42,7 +42,22 @@ export const strings = {
     councilTitle: 'Council quest',
     councilBody: 'Read a short summary of a real council item and answer one question.',
     reward: (points: number) => `+${points} pts`,
+    walletNote: 'Every point is also a token on Solana.',
+    walletLink: 'See your wallet',
     loading: 'Loading your points…',
+    retry: 'Try again',
+  },
+
+  leaderboard: {
+    title: 'Leaderboard',
+    subtitle: 'Points earned by each neighborhood. Updates as people play.',
+    yours: 'Your neighborhood',
+    rank: (rank: number) => `#${rank}`,
+    points: (points: number) => `${points} pts`,
+    players: (count: number) => (count === 1 ? '1 player' : `${count} players`),
+    noPlayers: 'Nobody here yet.',
+    loading: 'Loading the leaderboard…',
+    error: 'Could not load the leaderboard.',
     retry: 'Try again',
   },
 
@@ -51,7 +66,6 @@ export const strings = {
     backHome: 'Back to home',
     report: 'Report a street problem',
     council: 'Council quest',
-    leaderboard: 'Leaderboard',
     map: 'Map',
   },
 
