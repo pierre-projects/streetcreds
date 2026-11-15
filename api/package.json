@@ -21,6 +21,7 @@
     "@solana/spl-token": "^0.4.15",
     "@solana/web3.js": "^1.99.0",
     "hono": "^4.13.18",
+    "obscenity": "^0.4.6",
     "zod": "^4.6.7"
   },
   "devDependencies": {

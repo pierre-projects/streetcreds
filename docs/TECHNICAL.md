@@ -27,6 +27,7 @@ Pin the major versions below. Several of these had major releases recently, so e
 | Map | Leaflet + react-leaflet | 1.9, 5.x | OpenStreetMap tiles, no API key |
 | API framework | Hono | 4.x | One Lambda, adapter `hono/aws-lambda` |
 | Validation | zod | 4.x | API side only |
+| Nickname filter | obscenity | 0.4.x | API side only, `api/src/players/nickname.ts`. Runs locally, no outside service |
 | AWS SDK | AWS SDK for JavaScript v3 | 3.x | `client-dynamodb`, `lib-dynamodb`, `client-s3`, `s3-request-presigner` |
 | AI | `@google/genai`, Interactions API | 3.x | Model `gemini-3.8-flash` (image input, structured output, free tier) |
 | Chain | `@solana/web3.js` + `@solana/spl-token` | **1.x** and 0.4.x | Devnet. See the warning below |
@@ -404,7 +405,7 @@ Routes 3 and 7 are not in the PRD's first API table. They exist because the home
 
 **2. `POST /players`**
 Request: `{ "nickname": string, "neighborhood": NeighborhoodId }`.
-Steps: trim the nickname and check 2 to 20 characters; check the neighborhood id; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`.
+Steps: trim the nickname and check 2 to 20 characters; refuse an offensive nickname with `400 validation_failed` and the message "Pick a different nickname." (`isBlockedNickname` in `api/src/players/nickname.ts`); check the neighborhood id; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`.
 Response: `201 { "player": Player }`.
 
 **3. `GET /players/:id`** returns `200 { "player": Player }` or `404 not_found`.
@@ -739,7 +740,7 @@ The Solana CLI is not required. `api/scripts/solana-setup.ts` does the same job 
 1. **Scaffold (Pierre).**
    - `npm create vite@latest web -- --template react-ts`
    - In `web/`: `npm i react-router @tanstack/react-query leaflet react-leaflet` and `npm i -D tailwindcss @tailwindcss/vite @types/leaflet vitest`
-   - In `api/`: `npm init -y`, then `npm i hono zod @google/genai @solana/web3.js@1 @solana/spl-token @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @aws-sdk/client-s3 @aws-sdk/s3-request-presigner` and `npm i -D typescript tsx esbuild vitest @hono/node-server @types/node @types/aws-lambda`
+   - In `api/`: `npm init -y`, then `npm i hono zod obscenity @google/genai @solana/web3.js@1 @solana/spl-token @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @aws-sdk/client-s3 @aws-sdk/s3-request-presigner` and `npm i -D typescript tsx esbuild vitest @hono/node-server @types/node @types/aws-lambda`
    - Add `shared/`, `.gitignore` (section 3), the `amplify.yml` above, and the npm scripts in `AGENTS.md`.
    - Create the API's shared core: `api/src/index.ts` with `GET /health` and the error handler, `api/src/local.ts`, and `api/src/lib/env.ts`, `db.ts` and `errors.ts`. Pierre writes these once; after the first checkpoint they change only by agreement.
    - Write `api/template.yaml` in full from section 8, with the three tables and the bucket, so the first deploy creates everything Sarah needs.
@@ -770,10 +771,11 @@ Unit tests (Vitest) are required for these pure functions and nothing else:
 
 | Function | Package | Cases that must be covered |
 | --- | --- | --- |
-| `aggregateLeaderboard` | api | Empty input, ties, a neighborhood with no players |
+| `aggregateLeaderboard` | api | Empty input, ties, a neighborhood with no players, an offensive nickname shown as "Player" |
+| `isBlockedNickname` | api | Ordinary names pass; real names that contain a bad word pass; leetspeak and spaced-out letters are caught |
 | `haversineMeters` | api | Same point is 0; two points about 30 m apart; about 1 km apart |
 | `checkReportLimit` (the rate-limit helper) | api | Times older than one hour are dropped; the fifth passes, the sixth fails |
-| Request schemas | api | Nickname of 1, 2, 20 and 21 characters; an unknown neighborhood |
+| Request schemas | api | Nickname of 1, 2, 20 and 21 characters; an offensive nickname; an unknown neighborhood |
 | `buildCityReport` | web | Output matches the format in section 7 |
 | Resize size math | web | Landscape, portrait, and an image already under 1280 px |
 
@@ -814,6 +816,8 @@ The acceptance checks for each feature are in section 13. Run them on a real pho
 | Awards stay `pending` | Devnet is slow, the treasury is out of SOL, or the free public Solana address is refusing requests (`429 Too Many Requests` in the logs) | Check the treasury balance. For the 429, switch to a dedicated address (see "Deploying and logs"). Points still count either way |
 | `interactions` is undefined on the Gemini client | `@google/genai` is older than 2.3.0 | Update the package |
 | Lambda times out at 29 s | Gemini or Solana hung | Check the per-call limits in section 6 are in place |
+| An offensive nickname is on the live board | The filter missed it | Delete that player's item from the `streetcreds-players` table in the DynamoDB console; it leaves the board on the next refresh. Then add the word to `EXTRA_BLOCKED_WORDS` in `api/src/players/nickname.ts` and redeploy, so it is refused at join and masked on the board from then on |
+| A real name is refused at join | The filter matched part of it | Add the name, lowercase, to `ALLOWED_NAMES` in `api/src/players/nickname.ts` |
 
 ## 10. Build order
 
@@ -867,6 +871,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 **F1. Join (P0)**
 - Opening the URL on a phone shows the join screen in under 3 seconds.
 - Nickname (2 to 20 characters) and neighborhood are required. No email or password.
+- An offensive nickname is refused with "Pick a different nickname." A real name such as Dickson is accepted.
 - The player id is stored on the phone, so a refresh keeps the player signed in.
 - With `SOLANA_MODE=per-player`, the new player has a `walletAddress`. The player never sees a seed phrase.
 
