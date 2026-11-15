@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Mayor Patch">
-  <!-- Mayor Patch, the StreetCreds mascot: a chibi mayor with a beard, waving hello. Big head, tiny body. -->
+  <!-- Mayor Patch, the StreetCreds mascot: a chibi mayor with a full short beard and curled mustache, waving hello. Big head, tiny body. -->
   <circle cx="100" cy="100" r="100" fill="#FF7A1A"/>
   <g stroke="#1A1210" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
     <!-- ground shadow -->
@@ -30,12 +30,12 @@
     <!-- hair: neat dark cap with a side part -->
     <path d="M49 74 Q46 26 100 24 Q154 26 151 74 Q146 50 128 46 Q112 42 96 44 Q74 44 62 54 Q52 62 49 74 Z" fill="#2B201B"/>
     <path d="M78 38 Q96 30 120 34" fill="none" stroke="#5A4639" stroke-width="2.5"/>
-    <!-- beard: sideburns down around the chin, open around the smile -->
-    <path d="M49 74 Q48 110 72 122 Q86 130 100 130 Q114 130 128 122 Q152 110 151 74 Q146 86 140 92 Q134 112 118 117 Q108 120 100 120 Q92 120 82 117 Q66 112 60 92 Q54 86 49 74 Z" fill="#2B201B"/>
-    <path d="M70 116 Q76 122 84 124 M116 124 Q124 122 130 116" fill="none" stroke="#5A4639" stroke-width="2"/>
+    <!-- beard: a short full beard over the whole jaw and chin, like the mockup -->
+    <path d="M48 80 Q48 112 74 122 Q100 132 126 122 Q152 112 152 80 Q146 94 132 99 Q116 104 100 104 Q84 104 68 99 Q54 94 48 80 Z" fill="#2B201B"/>
+    <path d="M66 108 Q72 114 80 116 M120 116 Q128 114 134 108 M92 120 Q100 122 108 120" fill="none" stroke="#4A3A30" stroke-width="2"/>
     <!-- blush -->
-    <ellipse cx="68" cy="96" rx="9" ry="5.5" fill="#E8836A" stroke="none" opacity=".75"/>
-    <ellipse cx="132" cy="96" rx="9" ry="5.5" fill="#E8836A" stroke="none" opacity=".75"/>
+    <ellipse cx="66" cy="92" rx="8" ry="5" fill="#E8836A" stroke="none" opacity=".75"/>
+    <ellipse cx="134" cy="92" rx="8" ry="5" fill="#E8836A" stroke="none" opacity=".75"/>
     <!-- big round glasses -->
     <circle cx="80" cy="78" r="17" fill="#FFF8F2"/>
     <circle cx="120" cy="78" r="17" fill="#FFF8F2"/>
@@ -50,9 +50,10 @@
     <!-- eyebrows -->
     <path d="M70 55 Q79 50 89 55" fill="none" stroke-width="4"/>
     <path d="M111 55 Q121 50 130 55" fill="none" stroke-width="4"/>
-    <!-- small mustache and happy mouth -->
-    <path d="M100 101 Q93 96 85 101 Q89 107 100 104 Q111 107 115 101 Q107 96 100 101 Z" fill="#2B201B" stroke-width="2.5"/>
-    <path d="M95 110 Q100 114 105 110" fill="none" stroke-width="2.5"/>
+    <!-- small round nose -->
+    <ellipse cx="100" cy="94" rx="5" ry="4" fill="#B97C52" stroke-width="2.5"/>
+    <!-- thick curled mustache sitting on the beard -->
+    <path d="M100 101 Q90 95 79 99 Q70 103 72 111 Q78 105 87 107 Q95 109 100 105 Q105 109 113 107 Q122 105 128 111 Q130 103 121 99 Q110 95 100 101 Z" fill="#1F1714" stroke-width="2.5"/>
     <!-- right arm, raised and waving (drawn over the head so the hand is in front) -->
     <path d="M124 136 Q152 134 162 116" fill="none" stroke="#1A1210" stroke-width="14"/>
     <path d="M124 136 Q152 134 162 116" fill="none" stroke="#2A2420" stroke-width="8"/>
