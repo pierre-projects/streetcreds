@@ -56,3 +56,34 @@ export function ChevronIcon() {
     </Icon>
   )
 }
+
+/** Recenter / navigate control on the home radar dock. */
+export function NavigateIcon() {
+  return (
+    <Icon>
+      <path d="m12 3 7 18-7-4-7 4 7-18Z" />
+    </Icon>
+  )
+}
+
+/** Plus glyph inside the primary Report CTA. */
+export function PlusIcon() {
+  return (
+    <Icon>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </Icon>
+  )
+}
+
+/** Council quest control on the home radar dock. */
+export function CouncilIcon() {
+  return (
+    <Icon>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </Icon>
+  )
+}

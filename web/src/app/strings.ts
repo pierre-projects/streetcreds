@@ -65,7 +65,8 @@ export const strings = {
   },
 
   header: {
-    points: (points: number) => `${points} pts`,
+    pointsLabel: 'CIVIC',
+    points: (points: number) => `${points}`,
     loading: 'Loading…',
   },
 
@@ -87,11 +88,16 @@ export const strings = {
     rankError: 'Could not load the leaderboard.',
     questsTitle: 'Earn points',
     reportTitle: 'Report a street problem',
+    reportCta: 'Report a problem',
     reportBody: 'Take a photo of a pothole, a broken light, graffiti or a blocked sidewalk.',
     councilTitle: 'Council quest',
+    councilShort: 'Council',
     councilBody: 'Read a short summary of a real council item and answer one question.',
     dealsTitle: 'Local Deals',
+    dealsShort: 'Deals',
     dealsBody: 'Spend CIVIC at curated neighborhood spots. Report nearby for a better rate.',
+    recenter: 'Recenter map',
+    mapLabel: 'Neighborhood radar map',
     reward: (points: number) => `+${points} pts`,
     walletNote: 'Every point is also a token on Solana.',
     walletLink: 'See your wallet',

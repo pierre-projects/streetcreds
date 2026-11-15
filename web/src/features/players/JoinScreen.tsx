@@ -53,7 +53,10 @@ export function JoinScreen() {
   return (
     <main className="app-column flex flex-col px-4 py-8">
       <BoardLink />
-      <div className="mb-4"><LogoMark /></div>
+      <div className="mb-5 flex items-center gap-3">
+        <LogoMark />
+        <span className="text-lg font-bold tracking-tight text-ink">{strings.appName}</span>
+      </div>
       <ScreenHeader title={strings.appName} subtitle={strings.tagline} />
 
       <form onSubmit={submit} noValidate className="mt-8 flex flex-1 flex-col gap-6">
@@ -66,7 +69,7 @@ export function JoinScreen() {
         />
 
         <fieldset>
-          <legend className="text-base text-ink">{strings.join.neighborhoodLabel}</legend>
+          <legend className="text-base font-medium text-ink">{strings.join.neighborhoodLabel}</legend>
           <div className="mt-2 grid gap-2">
             {NEIGHBORHOODS.map((option) => (
               <OptionCard key={option.id} name="neighborhood" value={option.id} checked={neighborhood === option.id} onChange={setNeighborhood} label={option.name} />

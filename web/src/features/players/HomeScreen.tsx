@@ -1,118 +1,106 @@
-// Home: the player's points, where their neighborhood stands, and the two quests.
+// Home: map-first radar HUD. Brand, CIVIC points and neighborhood live in the shell header;
+// this screen is the full-bleed map with Report / Council / Deals dock over the pins.
 import { useQuery } from '@tanstack/react-query'
-import { NEIGHBORHOODS, POINTS } from '../../../../shared/constants'
-import type { NeighborhoodId } from '../../../../shared/types'
+import type L from 'leaflet'
+import { useCallback, useMemo, useRef } from 'react'
+import { Link } from 'react-router'
+import { MAP_CENTER } from '../../../../shared/constants'
 import { api } from '../../app/api'
-import { LegalFooter } from '../../app/legal/LegalLinks'
-import { usePlayer } from '../../app/player'
-import { leaderboardKey, POLL_MS } from '../../app/queryClient'
-import { explorerAddressUrl } from '../../app/solana'
+import { CouncilIcon, NavigateIcon, PlusIcon } from '../../app/icons'
+import { MAP_POLL_MS, reportsKey } from '../../app/queryClient'
 import { strings } from '../../app/strings'
-import { Badge, Card, ErrorNotice, Eyebrow, LinkCard } from '../../app/ui'
+import { ErrorNotice } from '../../app/ui'
+import { hasPlace } from './mapReports'
+import { ReportsMap } from './ReportsMap'
 
-function neighborhoodName(id: NeighborhoodId): string {
-  return NEIGHBORHOODS.find((n) => n.id === id)?.name ?? id
-}
+const HOME_ZOOM = 14
 
-function QuestCard({ to, title, body, points }: { to: string; title: string; body: string; points: number }) {
+/** Tag / deal glyph for the Local Deals dock control. */
+function DealsIcon() {
   return (
-    <LinkCard to={to}>
-      <span>
-        <span className="block text-base text-ink">{title}</span>
-        <span className="mt-1 block text-sm text-muted">{body}</span>
-      </span>
-      <Badge>
-        {strings.home.reward(points)}
-      </Badge>
-    </LinkCard>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+      <path d="M2 17 12 22 22 17" />
+      <path d="M2 12 12 17 22 12" />
+    </svg>
   )
 }
 
 export function HomeScreen() {
-  const player = usePlayer()
-  const leaderboard = useQuery({
-    queryKey: leaderboardKey,
-    queryFn: api.getLeaderboard,
-    refetchInterval: POLL_MS,
+  const mapRef = useRef<L.Map | null>(null)
+  const reports = useQuery({
+    queryKey: reportsKey,
+    queryFn: api.listReports,
+    refetchInterval: MAP_POLL_MS,
   })
 
-  if (player.isPending) {
-    return <div className="space-y-6"><p className="text-muted">{strings.home.loading}</p><LegalFooter /></div>
+  const pins = useMemo(() => (reports.data?.reports ?? []).filter(hasPlace), [reports.data])
+
+  const onMapReady = useCallback((map: L.Map) => {
+    mapRef.current = map
+  }, [])
+
+  function recenter() {
+    mapRef.current?.setView([MAP_CENTER.lat, MAP_CENTER.lng], HOME_ZOOM, { animate: true })
   }
 
-  if (player.isError || !player.data) {
+  if (reports.isError && !reports.data) {
     return (
-      <div className="space-y-6">
-        <ErrorNotice message={player.error?.message} fallback={strings.errors.playerLoad} onRetry={() => void player.refetch()} retryLabel={strings.home.retry} />
-        <LegalFooter />
+      <div className="flex h-full flex-col justify-end gap-3 p-4 pb-28">
+        <ErrorNotice message={reports.error.message} fallback={strings.map.error} onRetry={() => void reports.refetch()} retryLabel={strings.map.retry} />
       </div>
     )
   }
 
-  const me = player.data
-  const rows = leaderboard.data?.neighborhoods ?? []
-  const rankIndex = rows.findIndex((row) => row.neighborhood === me.neighborhood)
-  const myRow = rankIndex >= 0 ? rows[rankIndex] : undefined
-
   return (
-    <div className="flex flex-col gap-6">
-      <Card tone="dark">
-        <Eyebrow tone="dark">{strings.home.pointsLabel}</Eyebrow>
-        <p className="points-total mt-1">{me.points}</p>
+    <div className="relative h-full min-h-0 w-full flex-1">
+      <div className="map-frame-radar absolute inset-0" aria-label={strings.home.mapLabel}>
+        <ReportsMap pins={pins} onMapReady={onMapReady} />
+        <span className="radar-ring" aria-hidden="true" />
+        <span className="radar-ring" aria-hidden="true" />
+        <span className="radar-ring" aria-hidden="true" />
+        <span className="radar-locus" aria-hidden="true" />
+      </div>
 
-        <div className="dark-detail mt-4" aria-live="polite">
-          {myRow ? (
-            <>
-              <p className="text-on-ink">
-                {strings.home.rank(neighborhoodName(me.neighborhood), rankIndex + 1, rows.length)}
-              </p>
-              <p className="mt-0.5 text-on-ink/70">{strings.home.neighborhoodPoints(myRow.points)}</p>
-            </>
-          ) : (
-            <p className="text-on-ink/70">{leaderboard.isError ? strings.home.rankError : strings.home.rankLoading}</p>
-          )}
+      <button
+        type="button"
+        className="radar-dock-btn absolute right-3 top-3 z-[1000]"
+        aria-label={strings.home.recenter}
+        onClick={recenter}
+      >
+        <NavigateIcon />
+      </button>
+
+      <div className="radar-dock">
+        <div className="radar-dock-inner">
+          <div className="flex w-11 shrink-0 flex-col items-center">
+            <Link to="/deals" className="radar-dock-btn" aria-label={strings.home.dealsTitle}>
+              <DealsIcon />
+            </Link>
+            <span className="radar-dock-caption" aria-hidden="true">{strings.home.dealsShort}</span>
+          </div>
+          <Link to="/report" className="radar-dock-primary">
+            <span>{strings.home.reportCta}</span>
+            <span className="radar-dock-plus" aria-hidden="true"><PlusIcon /></span>
+          </Link>
+          <div className="flex w-11 shrink-0 flex-col items-center">
+            <Link to="/council" className="radar-dock-btn" aria-label={strings.home.councilTitle}>
+              <CouncilIcon />
+            </Link>
+            <span className="radar-dock-caption" aria-hidden="true">{strings.home.councilShort}</span>
+          </div>
         </div>
-
-        {me.walletAddress !== null && (
-          <p className="dark-detail mt-4">
-            {strings.home.walletNote}{' '}
-            <a
-              href={explorerAddressUrl(me.walletAddress)}
-              target="_blank"
-              rel="noreferrer"
-              className="wallet-link"
-            >
-              {strings.home.walletLink}
-            </a>
-          </p>
-        )}
-      </Card>
-
-      <section>
-        <h2 className="section-title">{strings.home.questsTitle}</h2>
-        <div className="mt-3 grid gap-3">
-          <QuestCard
-            to="/report"
-            title={strings.home.reportTitle}
-            body={strings.home.reportBody}
-            points={POINTS['report-new']}
-          />
-          <QuestCard
-            to="/council"
-            title={strings.home.councilTitle}
-            body={strings.home.councilBody}
-            points={POINTS.council}
-          />
-          <LinkCard to="/deals">
-            <span>
-              <span className="block text-base text-ink">{strings.home.dealsTitle}</span>
-              <span className="mt-1 block text-sm text-muted">{strings.home.dealsBody}</span>
-            </span>
-            <Badge>{strings.home.dealsTitle}</Badge>
-          </LinkCard>
-        </div>
-      </section>
-      <LegalFooter />
+      </div>
     </div>
   )
 }

@@ -8,7 +8,7 @@
 // Pins that would sit on top of each other are drawn as one black pin with the number of reports
 // in it. Tapping that zooms in until they come apart.
 import L from 'leaflet'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { MAP_CENTER } from '../../../../shared/constants'
 import type { PublicReport, Severity } from '../../../../shared/types'
@@ -56,21 +56,32 @@ const GROUP_LIFT = 3000
 
 const icons = new Map<string, L.DivIcon>()
 
+/** Escape text that ends up inside a DivIcon's HTML (category labels from our own strings). */
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+}
+
 /**
- * A Leaflet icon holding one round pin, centered in a touch area of at least 44 px. Each one is
- * made once and reused: Leaflet rebuilds a pin whenever it is handed a new icon object, which
- * would drop keyboard focus on every refresh. The HTML holds only what the two callers below
- * pass in, numbers and class names from the tables above, never text from a report.
+ * A Leaflet icon holding one round pin plus an optional category label. The touch area is at
+ * least 44 px. Each icon is made once and reused so Leaflet does not rebuild pins on refresh.
  */
-function roundIcon(key: string, pinClass: string, size: number, label: string): L.DivIcon {
+function roundIcon(key: string, pinClass: string, size: number, countLabel: string, categoryLabel?: string): L.DivIcon {
   const cached = icons.get(key)
   if (cached) return cached
-  const box = Math.max(TAP_PX, size)
+  const labelHtml = categoryLabel
+    ? `<span class="pin-label">${escapeHtml(categoryLabel)}</span>`
+    : ''
+  const width = Math.max(TAP_PX, size, categoryLabel ? 96 : size)
+  const height = Math.max(TAP_PX, size + (categoryLabel ? 22 : 0))
   const icon = L.divIcon({
     className: 'pin-target',
-    html: `<span class="pin ${pinClass}" style="width:${size}px;height:${size}px">${label}</span>`,
-    iconSize: [box, box],
-    iconAnchor: [box / 2, box / 2],
+    html: `<span class="pin-stack"><span class="pin ${pinClass}" style="width:${size}px;height:${size}px">${countLabel}</span>${labelHtml}</span>`,
+    iconSize: [width, height],
+    iconAnchor: [width / 2, size / 2],
     popupAnchor: [0, -size / 2],
   })
   icons.set(key, icon)
@@ -78,9 +89,15 @@ function roundIcon(key: string, pinClass: string, size: number, label: string): 
 }
 
 /** One report. Bigger for problems reported more often, up to a limit so one pin cannot cover the map. */
-function pinIcon(severity: Severity, count: number): L.DivIcon {
-  const label = count > 99 ? '99+' : count > 1 ? String(count) : ''
-  return roundIcon(`pin:${severity}:${count}`, SEVERITY_PIN[severity], 20 + 4 * Math.min(count, 6), label)
+function pinIcon(severity: Severity, count: number, category: string): L.DivIcon {
+  const countLabel = count > 99 ? '99+' : count > 1 ? String(count) : ''
+  return roundIcon(
+    `pin:${severity}:${count}:${category}`,
+    SEVERITY_PIN[severity],
+    20 + 4 * Math.min(count, 6),
+    countLabel,
+    category,
+  )
 }
 
 /** Several reports close together. Bigger for more reports, up to a limit. */
@@ -211,7 +228,7 @@ function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected }:
     <Marker
       ref={ref}
       position={position}
-      icon={pinIcon(report.severity, count)}
+      icon={pinIcon(report.severity, count, strings.categories[report.category])}
       zIndexOffset={SEVERITY_LIFT[report.severity]}
       title={strings.map.pinLabel(strings.categories[report.category], strings.severities[report.severity], count)}
       eventHandlers={handlers}
@@ -356,6 +373,19 @@ interface ReportsMapProps {
   cityRecords?: CityRecord[]
   /** For reports at a spot the City recorded too: that record, by report id. Keep the map the same between renders. */
   matches?: ReadonlyMap<string, CityRecord>
+  /** Extra controls rendered inside the map (must use react-leaflet hooks). */
+  children?: ReactNode
+  /** Optional map instance callback for recenter and similar HUD controls. */
+  onMapReady?: (map: L.Map) => void
+}
+
+/** Publishes the Leaflet map once, for HUD controls that live outside MapContainer. */
+function MapReady({ onMapReady }: { onMapReady?: (map: L.Map) => void }) {
+  const map = useMap()
+  useEffect(() => {
+    onMapReady?.(map)
+  }, [map, onMapReady])
+  return null
 }
 
 /** Fills its parent, which must have a height: without one Leaflet draws nothing. */
@@ -365,6 +395,8 @@ export function ReportsMap({
   onOpenChange,
   cityRecords = NO_RECORDS,
   matches = NO_MATCHES,
+  children,
+  onMapReady,
 }: ReportsMapProps) {
   // The City records that a player's report is at. Their pins are filled in.
   const reportedIds = useMemo(() => new Set([...matches.values()].map((record) => record.id)), [matches])
@@ -374,9 +406,11 @@ export function ReportsMap({
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
+      <MapReady onMapReady={onMapReady} />
       <FitToPins pins={pins} />
       <CityRecordsLayer records={cityRecords} reportedIds={reportedIds} />
       <PinLayer pins={pins} matches={matches} selectedId={selectedId} onOpenChange={onOpenChange} />
+      {children}
     </MapContainer>
   )
 }
