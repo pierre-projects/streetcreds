@@ -36,9 +36,11 @@ export function MapScreen() {
     <div className="flex flex-col gap-4">
       <ScreenHeader title={strings.map.title} subtitle={strings.map.subtitle} />
 
-      {/* Above the map, so it is on screen without scrolling. Once there are reports, the filters take this place. */}
+      {/* Above the map, so it is on screen without scrolling. Once there are reports, the filters take this place.
+          It is as tall as the filters from the start (122 px, one row of switches), so the map
+          does not drop by a hundred pixels when the reports arrive. */}
       {pins.length === 0 && (
-        <div aria-live="polite">
+        <div aria-live="polite" className="min-h-[7.625rem]">
           {reports.isPending && <p className="text-sm text-muted">{strings.map.loading}</p>}
 
           {reports.isError && !reports.data && (

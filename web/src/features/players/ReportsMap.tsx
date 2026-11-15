@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { MAP_CENTER } from '../../../../shared/constants'
 import type { PublicReport, Severity } from '../../../../shared/types'
+import { useReducedMotion } from '../../app/motion'
 import { strings } from '../../app/strings'
 import { Button } from '../../app/ui'
 import { type CityRecord, TEMPE_311_FORM_URL } from './cityRecords'
@@ -40,6 +41,13 @@ const REACH = L.latLngBounds(
   [MAP_CENTER.lat - 0.4, MAP_CENTER.lng - 0.5],
   [MAP_CENTER.lat + 0.4, MAP_CENTER.lng + 0.5],
 )
+
+/**
+ * The zoom settles on quarter steps. On whole steps, which is Leaflet's own setting, the map
+ * jumps to the nearest one when a pinch is let go; on quarter steps it stays about where the
+ * fingers left it.
+ */
+const ZOOM_SNAP = 0.25
 
 /** How much of the map's top and bottom is covered by things floating over it, in pixels. */
 export interface PopupInsets {
@@ -453,12 +461,21 @@ export function ReportsMap({
 }: ReportsMapProps) {
   // The City records that a player's report is at. Their pins are filled in.
   const reportedIds = useMemo(() => new Set([...matches.values()].map((record) => record.id)), [matches])
+  // With "Reduce motion" on, the map changes zoom at once, without the animation that scales the
+  // whole view. Leaflet reads these settings only when a map is made, so the key makes a new map
+  // if the setting changes while the page is open.
+  const calm = useReducedMotion()
   return (
     <MapContainer
+      key={calm ? 'calm' : 'moving'}
       center={[MAP_CENTER.lat, MAP_CENTER.lng]}
       zoom={ZOOM}
       minZoom={MIN_ZOOM}
       maxZoom={MAX_ZOOM}
+      zoomSnap={ZOOM_SNAP}
+      zoomAnimation={!calm}
+      markerZoomAnimation={!calm}
+      fadeAnimation={!calm}
       // The edge of the reach is solid, and the zoom stops at its limits without springing back.
       maxBounds={REACH}
       maxBoundsViscosity={1}

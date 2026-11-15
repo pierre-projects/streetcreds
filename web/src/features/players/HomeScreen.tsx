@@ -7,6 +7,7 @@ import { Link } from 'react-router'
 import { MAP_CENTER } from '../../../../shared/constants'
 import { api } from '../../app/api'
 import { CouncilIcon, NavigateIcon, PlusIcon } from '../../app/icons'
+import { prefersReducedMotion } from '../../app/motion'
 import { MAP_POLL_MS, reportsKey } from '../../app/queryClient'
 import { strings } from '../../app/strings'
 import { ErrorNotice } from '../../app/ui'
@@ -53,7 +54,7 @@ export function HomeScreen() {
   }, [])
 
   function recenter() {
-    mapRef.current?.setView([MAP_CENTER.lat, MAP_CENTER.lng], HOME_ZOOM, { animate: true })
+    mapRef.current?.setView([MAP_CENTER.lat, MAP_CENTER.lng], HOME_ZOOM, { animate: !prefersReducedMotion() })
   }
 
   // This map fills the screen, so the shell's header and navigation float over it. A popup that

@@ -126,6 +126,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 
 - The Privacy, Terms, About & contact pages and their navigation links were drafted and implemented with Codex (OpenAI).
 - The About, Privacy and Terms copy was revised with Codex (OpenAI) for clarity and current app behavior.
+- The Home map fixes and the motion rules (`web/src/app/motion.ts`, the motion and "Reduce motion" sections of `web/src/index.css`) were written with Claude Code (Anthropic). The reduced-motion rules follow the `accessible-animation` skill from `iart-ai/web-animation-skills` (MIT).
 
 ## License
 

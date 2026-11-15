@@ -56,7 +56,8 @@ function Frame() {
         </header>
       </div>
 
-      <main className={radar ? 'app-main-radar' : 'app-main'}>
+      {/* The key makes each screen a new element, so `screen-enter` fades it in on arrival. */}
+      <main key={location.pathname} className={`${radar ? 'app-main-radar' : 'app-main'} screen-enter`}>
         <Outlet />
       </main>
 

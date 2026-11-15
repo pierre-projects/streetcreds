@@ -9,6 +9,7 @@ import type { NeighborhoodId } from '../../../../shared/types'
 import { api } from '../../app/api'
 import { ChevronIcon } from '../../app/icons'
 import { LegalFooter } from '../../app/legal/LegalLinks'
+import { prefersReducedMotion } from '../../app/motion'
 import { getStoredPlayerId } from '../../app/player'
 import { leaderboardKey, MAP_POLL_MS, POLL_MS, reportsKey } from '../../app/queryClient'
 import { strings } from '../../app/strings'
@@ -199,7 +200,7 @@ export function BoardScreen() {
   function pick(reportId: string) {
     setSelectedId(reportId)
     // On a narrow screen the map is above the list, so bring it back into view.
-    mapRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    mapRef.current?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   }
 
   // The switches for the City's records, with how many reports are at a spot the City recorded
