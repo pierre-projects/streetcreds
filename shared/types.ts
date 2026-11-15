@@ -20,7 +20,7 @@ export interface Player {
   /** 2 to 20 characters, trimmed. */
   nickname: string;
   neighborhood: NeighborhoodId;
-  /** Running total. Changed only by awardPoints, with an atomic add. */
+  /** Running total. Changed only by awardPoints (add) or spendPoints (subtract), atomically. */
   points: number;
   /** Solana devnet public key. Null unless SOLANA_MODE is per-player. */
   walletAddress: string | null;
@@ -95,4 +95,75 @@ export interface LeaderboardRow {
   playerCount: number;
   /** Up to 3, highest first. Nicknames only. */
   topPlayers: { nickname: string; points: number }[];
+}
+
+/** Curated Local Deals partner. Kept in api/src/deals/partners.json, not in the database. */
+export interface Partner {
+  id: string;
+  name: string;
+  neighborhood: NeighborhoodId;
+  category: string;
+  lat: number;
+  lng: number;
+  /** Meters. Usually DEAL_UNLOCK_RADIUS_M. */
+  radiusMeters: number;
+  /** CIVIC at full price. */
+  baseCost: number;
+  /** CIVIC after a nearby report unlock. Must be < baseCost. */
+  unlockedCost: number;
+  /** What the player gets (same text at either cost). */
+  offer: string;
+}
+
+export type DealUnlockStatus = 'active' | 'redeemed';
+
+/** Table streetcreds-deal-unlocks. Key: id = unlock:{playerId}:{partnerId}. */
+export interface DealUnlock {
+  id: string;
+  playerId: string;
+  partnerId: string;
+  reportId: string;
+  createdAt: string;
+  status: DealUnlockStatus;
+  /** Empty until accounts link this player. */
+  accountId: string | null;
+}
+
+/** Table streetcreds-deal-redemptions. Key: id. */
+export interface DealRedemption {
+  id: string;
+  playerId: string;
+  partnerId: string;
+  pointsSpent: number;
+  usedUnlock: boolean;
+  /** Six-character demo code shown at the counter. */
+  code: string;
+  txSignature: string | null;
+  chainStatus: ChainStatus;
+  createdAt: string;
+  /** Empty until accounts link this player. */
+  accountId: string | null;
+}
+
+/** Partner row as the client receives it on GET /deals. */
+export interface DealPartnerView {
+  id: string;
+  name: string;
+  neighborhood: NeighborhoodId;
+  category: string;
+  lat: number;
+  lng: number;
+  baseCost: number;
+  unlockedCost: number;
+  offer: string;
+  unlocked: boolean;
+  currentCost: number;
+}
+
+/** Unlock payload attached to a successful report submit when proximity hits. */
+export interface DealUnlockView {
+  partnerId: string;
+  partnerName: string;
+  baseCost: number;
+  unlockedCost: number;
 }

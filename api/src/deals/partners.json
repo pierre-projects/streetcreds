@@ -1,0 +1,50 @@
+[
+  {
+    "id": "mill-coffee",
+    "name": "Mill Ave Coffee",
+    "neighborhood": "downtown-tempe",
+    "category": "cafe",
+    "lat": 33.4249,
+    "lng": -111.9402,
+    "radiusMeters": 200,
+    "baseCost": 100,
+    "unlockedCost": 50,
+    "offer": "Free drip coffee"
+  },
+  {
+    "id": "campus-bike",
+    "name": "Campus Bike Co-op",
+    "neighborhood": "asu-campus",
+    "category": "bikes",
+    "lat": 33.4184,
+    "lng": -111.9312,
+    "radiusMeters": 200,
+    "baseCost": 150,
+    "unlockedCost": 75,
+    "offer": "Tube patch"
+  },
+  {
+    "id": "south-books",
+    "name": "South Stack Books",
+    "neighborhood": "south-tempe",
+    "category": "bookstore",
+    "lat": 33.3918,
+    "lng": -111.9261,
+    "radiusMeters": 200,
+    "baseCost": 80,
+    "unlockedCost": 40,
+    "offer": "$2 off any used book"
+  },
+  {
+    "id": "north-pizza",
+    "name": "North Slice",
+    "neighborhood": "north-tempe",
+    "category": "food",
+    "lat": 33.4512,
+    "lng": -111.9248,
+    "radiusMeters": 200,
+    "baseCost": 120,
+    "unlockedCost": 60,
+    "offer": "Free garlic knots"
+  }
+]

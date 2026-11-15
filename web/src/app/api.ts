@@ -16,8 +16,11 @@ import type {
   CreateReportResponse,
   HealthResponse,
   LeaderboardResponse,
+  ListDealsResponse,
   ListReportsResponse,
   PlayerResponse,
+  RedeemDealRequest,
+  RedeemDealResponse,
   SubmitReportRequest,
   SubmitReportResponse,
   UploadUrlResponse,
@@ -53,6 +56,10 @@ export interface Api {
   listCouncilItems(playerId: string): Promise<CouncilListResponse>
   /** POST /quests/council/answer */
   answerCouncilItem(body: CouncilAnswerRequest): Promise<CouncilAnswerResponse>
+  /** GET /deals */
+  listDeals(playerId: string): Promise<ListDealsResponse>
+  /** POST /deals/:partnerId/redeem */
+  redeemDeal(partnerId: string, body: RedeemDealRequest): Promise<RedeemDealResponse>
 }
 
 const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
@@ -115,6 +122,8 @@ const realApi: Api = {
   listReports: () => request('/reports'),
   listCouncilItems: (playerId) => request(`/quests/council?playerId=${encodeURIComponent(playerId)}`),
   answerCouncilItem: (body) => post('/quests/council/answer', body),
+  listDeals: (playerId) => request(`/deals?playerId=${encodeURIComponent(playerId)}`),
+  redeemDeal: (partnerId, body) => post(`/deals/${encodeURIComponent(partnerId)}/redeem`, body),
 }
 
 const source: Api = USE_MOCKS ? mockApi : realApi
@@ -131,4 +140,5 @@ export const api: Api = {
   getPlayer: async (playerId) => remember(await source.getPlayer(playerId)),
   submitReport: async (reportId, body) => remember(await source.submitReport(reportId, body)),
   answerCouncilItem: async (body) => remember(await source.answerCouncilItem(body)),
+  redeemDeal: async (partnerId, body) => remember(await source.redeemDeal(partnerId, body)),
 }

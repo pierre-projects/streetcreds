@@ -103,6 +103,13 @@ export function HomeScreen() {
             body={strings.home.councilBody}
             points={POINTS.council}
           />
+          <LinkCard to="/deals">
+            <span>
+              <span className="block text-base text-ink">{strings.home.dealsTitle}</span>
+              <span className="mt-1 block text-sm text-muted">{strings.home.dealsBody}</span>
+            </span>
+            <Badge>{strings.home.dealsTitle}</Badge>
+          </LinkCard>
         </div>
       </section>
       <LegalFooter />

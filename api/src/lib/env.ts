@@ -8,6 +8,8 @@ const EnvSchema = z
     TABLE_PLAYERS: z.string().default('streetcreds-players'),
     TABLE_REPORTS: z.string().default('streetcreds-reports'),
     TABLE_AWARDS: z.string().default('streetcreds-awards'),
+    TABLE_DEAL_UNLOCKS: z.string().default('streetcreds-deal-unlocks'),
+    TABLE_DEAL_REDEMPTIONS: z.string().default('streetcreds-deal-redemptions'),
     PHOTO_BUCKET: z.string().default(''),
     WEB_ORIGINS: z.string().default('http://localhost:5173'),
     GEMINI_API_KEY: z.string().default(''),

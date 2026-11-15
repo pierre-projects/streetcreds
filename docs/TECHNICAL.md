@@ -122,6 +122,8 @@ Who may change which file, including the wiring lines each person may add to `in
 | `TABLE_PLAYERS` | api | `streetcreds-players` | No |
 | `TABLE_REPORTS` | api | `streetcreds-reports` | No |
 | `TABLE_AWARDS` | api | `streetcreds-awards` | No |
+| `TABLE_DEAL_UNLOCKS` | api | `streetcreds-deal-unlocks` | No |
+| `TABLE_DEAL_REDEMPTIONS` | api | `streetcreds-deal-redemptions` | No |
 | `PHOTO_BUCKET` | api | from the stack output | No |
 | `WEB_ORIGINS` | api | `http://localhost:5173,https://streetcreds.app,https://www.streetcreds.app,https://main.xxxx.amplifyapp.com` | No |
 | `GEMINI_API_KEY` | api | from Google AI Studio | **Yes** |
@@ -227,7 +229,7 @@ export interface LeaderboardRow {
 
 ### Database models
 
-Three DynamoDB tables, one item type each. Every table has the partition key `id` (string), no sort key and no indexes. The attribute names are exactly the field names of the TypeScript types, so an item read with the document client is already a valid `Player`, `Report` or `Award`. Store `null` fields as DynamoDB `NULL`; do not omit them.
+Five DynamoDB tables, one item type each (players, reports, awards, deal unlocks, deal redemptions). Every table has the partition key `id` (string), no sort key and no indexes. The attribute names are exactly the field names of the TypeScript types, so an item read with the document client is already a valid typed item. Store `null` fields as DynamoDB `NULL`; do not omit them.
 
 **`streetcreds-players`** holds `Player`.
 
@@ -400,8 +402,10 @@ Errors always look like this, with the matching HTTP status:
 | 8 | `GET /reports` | Sarah | P0 (the map that reads it is P1) |
 | 9 | `GET /quests/council` | Sarah | P1 |
 | 10 | `POST /quests/council/answer` | Sarah | P1 |
+| 11 | `GET /deals` | Pierre | P2 Local Deals — see `docs/PRD-LOCAL-DEALS.md` |
+| 12 | `POST /deals/:partnerId/redeem` | Pierre | P2 Local Deals |
 
-Routes 3 and 7 are not in the PRD's first API table. They exist because the home screen needs to refresh points, and because the player must be able to correct the label before points are awarded.
+Routes 3 and 7 are not in the PRD's first API table. They exist because the home screen needs to refresh points, and because the player must be able to correct the label before points are awarded. Routes 11–12 and the optional `unlock` on submit are the Local Deals stretch.
 
 **1. `GET /health`** returns `200 { "ok": true }`. It is defined in `api/src/index.ts`, not in a routes file.
 
@@ -441,7 +445,8 @@ Steps:
 5. `awardPoints(playerId, POINTS['report-new'], 'report-new', report.id)`.
 6. Append the current time to the player's `recentReportTimes`. Once the rate limit exists, write back the pruned list from `checkReportLimit` plus the current time, so the list stays short.
 
-Response: `200 { "report": Report, "award": Award, "player": Player, "merged": boolean }`.
+Response: `200 { "report": Report, "award": Award, "player": Player, "merged": boolean, "unlock"?: DealUnlockView }`.
+After awarding points, call `checkDealUnlock(playerId, lat, lng, report.id)`. If a curated partner is within its radius, persist an active unlock and include `unlock` on the response.
 
 **8. `GET /reports`**
 Response: `200 { "reports": PublicReport[] }`. Only `status: 'open'`, newest first, at most 200. `photoUrl` is a presigned `GetObject` URL that expires in 3600 seconds.
@@ -453,6 +458,14 @@ Response: `200 { "items": CouncilItemView[] }`. Never include `answerIndex`. `an
 Request: `{ "playerId": string, "itemId": string, "answerIndex": number }`.
 Steps: `404` for an unknown player or item. If the answer is wrong, respond `200 { "correct": false, "award": null, "player": Player }`; the player may try again. If it is right, `awardPoints(playerId, POINTS.council, 'council', itemId)`; a second correct answer gets `409 already_awarded`.
 Response when right: `200 { "correct": true, "award": Award, "player": Player }`.
+
+**11. `GET /deals?playerId={id}`**
+Response: `200 { "partners": DealPartnerView[] }`. Each partner includes `unlocked` and `currentCost` (neighborhood rate when an active unlock exists).
+
+**12. `POST /deals/:partnerId/redeem`**
+Request: `{ "playerId": string }`.
+Steps: resolve partner; charge `unlockedCost` if an active unlock exists, else `baseCost`; `spendPoints`; mark unlock redeemed when used; write a `DealRedemption` with a six-character demo code.
+Response: `200 { "redemption": DealRedemption, "player": Player }`. Errors: `insufficient_points` (409), `not_found`.
 
 ## 6. Core functions
 
@@ -858,7 +871,7 @@ Each milestone ends with the checkpoint from the matching phase in `docs/PHASES.
 | M4 | Polish | Own screens: loading, errors, small and large phones | Own screens: the same; backup video | Feature freeze. Bug fixes only after this |
 | M5 | Submit | Devpost page | README with credits; architecture slide | Submitted, demo rehearsed twice |
 
-P2 items (duplicate merge, budget quest, spending points, Spanish, streaks) are built only if M4 is finished early, and only when a human asks for one by name.
+P2 items (duplicate merge, budget quest, Local Deals per `docs/PRD-LOCAL-DEALS.md`, Spanish, streaks) are built only if M4 is finished early, and only when a human asks for one by name.
 
 ## 11. Conventions
 
@@ -887,7 +900,7 @@ These are settled. Do not redesign them during the hackathon.
 | `awardPoints` writes the award and then adds the points, as two separate calls | If the second call fails, the award exists without its points and a retry gets `already_awarded`. Accepted for the demo: it takes a DynamoDB failure between two calls a few milliseconds apart, and a transaction is not worth the time |
 | Pierre writes the scaffold and the API's shared core (`index.ts`, `lib/`) once, and each person wires their own routes | Nobody waits on the other person to add one line. See Ownership in `AGENTS.md` |
 | Player wallets are addresses only; secret keys are discarded | Minting needs only the address, and nothing sensitive is stored |
-| Spending points (P2) has no design yet | It needs a decision on how a player without a key spends; ask before building |
+| Local Deals (P2) product direction is locked in `docs/PRD-LOCAL-DEALS.md` | Agree the proposed `shared/` contract (LD0) before coding; spend is server-side deduct / treasury return, player never holds a key |
 | Devnet only, token has no value | Hackathon demo; no real money anywhere |
 
 ## 13. Acceptance checks
@@ -935,7 +948,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 
 **F7. Stretch (P2, only when asked)**
 - Budget quest with one "your $100 in taxes" question from the published city budget.
-- A pretend shop page where points can be spent.
+- Local Deals: curated partners, proximity cheaper-cost unlock, redeem (`docs/PRD-LOCAL-DEALS.md`).
 - Spanish toggle for all screens and summaries.
 
 ## References

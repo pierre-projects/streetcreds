@@ -12,6 +12,7 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   not_found: 'We could not find that.',
   already_submitted: 'This report was already submitted.',
   already_awarded: 'You already earned these points.',
+  insufficient_points: 'You do not have enough CIVIC for this deal yet.',
   not_street_problem: 'That photo does not look like a street problem. Try another photo.',
   rate_limited: 'You have sent 5 reports in the last hour. Try again later.',
   label_failed: 'We could not read that photo. Try again.',

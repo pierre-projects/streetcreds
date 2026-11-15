@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: StreetCreds API. One Lambda behind an HTTP API, three DynamoDB tables and one private photo bucket.
+Description: StreetCreds API. One Lambda behind an HTTP API, five DynamoDB tables and one private photo bucket.
 
 # Deploy with `npm run deploy` in api/ (humans only). Stack name: streetcreds. Region: us-east-2 (the AWS project is locked to it).
 # The answers to `sam deploy --guided` are saved in samconfig.toml, which is git-ignored.
@@ -85,6 +85,8 @@ Resources:
           TABLE_PLAYERS: !Ref PlayersTable
           TABLE_REPORTS: !Ref ReportsTable
           TABLE_AWARDS: !Ref AwardsTable
+          TABLE_DEAL_UNLOCKS: !Ref DealUnlocksTable
+          TABLE_DEAL_REDEMPTIONS: !Ref DealRedemptionsTable
           PHOTO_BUCKET: !Ref PhotoBucket
           WEB_ORIGINS: !Join [',', !Ref WebOrigins]
           GEMINI_API_KEY: !If [NoGeminiApiKey, '', !Ref GeminiApiKey]
@@ -101,6 +103,10 @@ Resources:
             TableName: !Ref ReportsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref AwardsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DealUnlocksTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DealRedemptionsTable
         - S3CrudPolicy:
             BucketName: !Ref PhotoBucket
       Events:
@@ -138,6 +144,30 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: streetcreds-awards
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  DealUnlocksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: streetcreds-deal-unlocks
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  DealRedemptionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: streetcreds-deal-redemptions
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: id

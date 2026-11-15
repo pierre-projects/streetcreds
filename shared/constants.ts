@@ -31,5 +31,8 @@ export const REPORT_LIMIT_PER_HOUR = 5;
 // Two reports of the same category closer than this are the same problem (P2).
 export const DUPLICATE_RADIUS_M = 30;
 
+/** Default walking distance for a Local Deals proximity unlock. */
+export const DEAL_UNLOCK_RADIUS_M = 200;
+
 // Tempe, Arizona. Default center of the map.
 export const MAP_CENTER = { lat: 33.4255, lng: -111.94 } as const;

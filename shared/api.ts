@@ -3,7 +3,19 @@
 // for the steps each route runs.
 // Agreed between Sarah and Pierre. Change only after both say yes.
 
-import type { Award, Category, CouncilItemView, LeaderboardRow, NeighborhoodId, Player, PublicReport, Report } from './types';
+import type {
+  Award,
+  Category,
+  CouncilItemView,
+  DealPartnerView,
+  DealRedemption,
+  DealUnlockView,
+  LeaderboardRow,
+  NeighborhoodId,
+  Player,
+  PublicReport,
+  Report,
+} from './types';
 
 // GET /health (Pierre)
 export interface HealthResponse {
@@ -59,6 +71,8 @@ export interface SubmitReportResponse {
   award: Award;
   player: Player;
   merged: boolean;
+  /** Present when the report was within walking distance of a curated partner. */
+  unlock?: DealUnlockView;
 }
 
 // GET /reports (Sarah). Open reports only, newest first, at most 200.
@@ -84,12 +98,27 @@ export interface CouncilAnswerResponse {
   player: Player;
 }
 
+// GET /deals?playerId={id} (Pierre)
+export interface ListDealsResponse {
+  partners: DealPartnerView[];
+}
+
+// POST /deals/:partnerId/redeem (Pierre)
+export interface RedeemDealRequest {
+  playerId: string;
+}
+export interface RedeemDealResponse {
+  redemption: DealRedemption;
+  player: Player;
+}
+
 // Errors. Every non-2xx response has this body.
 export const ERROR_CODES = {
   validation_failed: 400,
   not_found: 404,
   already_submitted: 409,
   already_awarded: 409,
+  insufficient_points: 409,
   not_street_problem: 422,
   rate_limited: 429,
   label_failed: 502,

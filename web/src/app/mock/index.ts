@@ -8,10 +8,11 @@
 // To see an error state on the report screen, change MOCK_REPORT_RESULT below.
 import { NICKNAME_MAX, NICKNAME_MIN, POINTS } from '../../../../shared/constants'
 import type { ErrorCode } from '../../../../shared/api'
-import type { Award, Player, PublicReport, QuestType, Report } from '../../../../shared/types'
+import type { Award, DealUnlockView, Player, PublicReport, QuestType, Report } from '../../../../shared/types'
 import type { Api } from '../api'
 import { ApiError } from '../apiError'
 import { MOCK_PHOTO_URL, mockCouncilItems, mockLabel, mockLeaderboard, mockPlayer, mockReports } from './fixtures'
+import { distanceMeters, mockPartners } from './partners'
 
 /** What POST /reports does with every photo: 'ok', or one of the errors the real route can return. */
 const MOCK_REPORT_RESULT: 'ok' | 'not_street_problem' | 'label_failed' | 'rate_limited' = 'ok'
@@ -27,6 +28,7 @@ const STATUS: Record<ErrorCode, number> = {
   not_found: 404,
   already_submitted: 409,
   already_awarded: 409,
+  insufficient_points: 409,
   not_street_problem: 422,
   rate_limited: 429,
   label_failed: 502,
@@ -38,6 +40,7 @@ const MESSAGE: Record<ErrorCode, string> = {
   not_found: 'We could not find that.',
   already_submitted: 'This report was already submitted.',
   already_awarded: 'You already earned these points.',
+  insufficient_points: 'You do not have enough CIVIC for this deal yet.',
   not_street_problem: 'That photo does not look like a street problem. Try another photo.',
   rate_limited: 'You have sent 5 reports in the last hour. Try again later.',
   label_failed: 'We could not read that photo. Try again.',
@@ -53,7 +56,29 @@ let player: Player = { ...mockPlayer }
 const drafts = new Map<string, Report>()
 const submitted: PublicReport[] = []
 const answered = new Set<string>()
+/** Partner ids with an active neighborhood-rate unlock. */
+const activeUnlocks = new Set<string>()
 let counter = 0
+
+function unlockNear(lat: number, lng: number): DealUnlockView | undefined {
+  let nearest = null as (typeof mockPartners)[number] | null
+  let nearestDistance = Infinity
+  for (const partner of mockPartners) {
+    const d = distanceMeters({ lat, lng }, { lat: partner.lat, lng: partner.lng })
+    if (d <= partner.radiusMeters && d < nearestDistance) {
+      nearest = partner
+      nearestDistance = d
+    }
+  }
+  if (!nearest) return undefined
+  activeUnlocks.add(nearest.id)
+  return {
+    partnerId: nearest.id,
+    partnerName: nearest.name,
+    baseCost: nearest.baseCost,
+    unlockedCost: nearest.unlockedCost,
+  }
+}
 
 function award(questType: QuestType, refId: string): Award {
   const points = POINTS[questType]
@@ -157,7 +182,8 @@ export const mockApi: Api = {
     }
     drafts.set(reportId, report)
     submitted.unshift({ ...report, photoUrl: MOCK_PHOTO_URL })
-    return { report, award: award('report-new', report.id), player, merged: false }
+    const unlock = unlockNear(body.lat, body.lng)
+    return { report, award: award('report-new', report.id), player, merged: false, ...(unlock ? { unlock } : {}) }
   },
 
   async listReports() {
@@ -189,5 +215,56 @@ export const mockApi: Api = {
     if (answered.has(item.id)) fail('already_awarded')
     answered.add(item.id)
     return { correct: true, award: award('council', item.id), player }
+  },
+
+  async listDeals() {
+    await wait(200)
+    return {
+      partners: mockPartners.map((partner) => {
+        const unlocked = activeUnlocks.has(partner.id)
+        return {
+          id: partner.id,
+          name: partner.name,
+          neighborhood: partner.neighborhood,
+          category: partner.category,
+          lat: partner.lat,
+          lng: partner.lng,
+          baseCost: partner.baseCost,
+          unlockedCost: partner.unlockedCost,
+          offer: partner.offer,
+          unlocked,
+          currentCost: unlocked ? partner.unlockedCost : partner.baseCost,
+        }
+      }),
+    }
+  },
+
+  async redeemDeal(partnerId) {
+    await wait()
+    const partner = mockPartners.find((p) => p.id === partnerId)
+    if (!partner) fail('not_found')
+    const usedUnlock = activeUnlocks.has(partner.id)
+    const cost = usedUnlock ? partner.unlockedCost : partner.baseCost
+    if (player.points < cost) fail('insufficient_points', `You need ${cost} CIVIC for this deal.`)
+    player = { ...player, points: player.points - cost }
+    if (usedUnlock) activeUnlocks.delete(partner.id)
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    let code = ''
+    for (let i = 0; i < 6; i += 1) code += alphabet[Math.floor(Math.random() * alphabet.length)]
+    return {
+      redemption: {
+        id: `mock-redeem-${++counter}`,
+        playerId: player.id,
+        partnerId: partner.id,
+        pointsSpent: cost,
+        usedUnlock,
+        code,
+        txSignature: null,
+        chainStatus: MOCK_CHAIN_STATUS,
+        createdAt: new Date().toISOString(),
+        accountId: null,
+      },
+      player,
+    }
   },
 }
