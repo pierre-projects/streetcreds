@@ -6,7 +6,7 @@ This file is the implementation spec for StreetCreds: stack, data models, API co
 
 **Priorities.** P0 must work for the demo, P1 is added once P0 works on a phone, P2 is built only when a human asks for it by name. Each route in section 5 and each milestone in section 10 carries its priority.
 
-**Status on 2026-11-14:** the contract in `shared/` (constants, data fields, API shapes) and Pierre's Phases 1 and 2 on the API side exist. In `api/`: routes 1 to 4 (`GET /health`, `POST /players`, `GET /players/:id`, `GET /leaderboard`) against the real tables; a devnet address for each new player in `per-player` mode; the real `awardPoints`, which mints with a 10-second limit and leaves the award `pending` if devnet does not answer; `mintPoints`; and the Solana setup, mint-test and deploy-secrets scripts. The Solana library is loaded on first use with `await import('./solana')`, so routes that never mint are not slowed by it; keep it that way. In `web/`: the app shell (routing, layout, the `api` object, mock mode), the join screen, the home screen, the leaderboard screen and the map screen with `buildCityReport`. `web/src/app/solana.ts` builds the explorer links for a transaction and for a wallet. `strings.categories` and `strings.severities` in `web/src/app/strings.ts` hold the names players see for the contract's categories and severities; quest screens should use them too. Routes 5 to 10 and the quest screens are still to build. Until route 8 exists, the map shows its error state on the live site. Other code can import `isConditionalCheckFailed` from `api/src/players/store.ts` to recognize a refused conditional write.
+**Status on 2026-11-14:** the contract in `shared/` (constants, data fields, API shapes) and Pierre's Phases 1 and 2 on the API side exist. In `api/`: routes 1 to 4 (`GET /health`, `POST /players`, `GET /players/:id`, `GET /leaderboard`) against the real tables; a devnet address for each new player in `per-player` mode; the real `awardPoints`, which mints with a 10-second limit and leaves the award `pending` if devnet does not answer; `mintPoints`; and the Solana setup, mint-test and deploy-secrets scripts. The Solana library is loaded on first use with `await import('./solana')`, so routes that never mint are not slowed by it; keep it that way. In `web/`: the app shell (routing, layout, the `api` object, mock mode), the join screen, the home screen, the leaderboard screen, the map screen with `buildCityReport`, and the big-screen live board at `/board`. `web/src/app/solana.ts` builds the explorer links for a transaction and for a wallet. `strings.categories` and `strings.severities` in `web/src/app/strings.ts` hold the names players see for the contract's categories and severities; quest screens should use them too. Routes 5 to 10 and the quest screens are still to build. Until route 8 exists, the map shows its error state on the live site. Other code can import `isConditionalCheckFailed` from `api/src/players/store.ts` to recognize a refused conditional write.
 
 **Names.** The product is written StreetCreds. In code, resource names and storage keys it is `streetcreds`: the stack is `streetcreds`, the tables are `streetcreds-*`, and the stored player key is `streetcreds.playerId`. The site is planned for `https://streetcreds.app`. The points token keeps the symbol CIVIC.
 
@@ -594,7 +594,8 @@ Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods pres
 
 | Path | Screen | Owner | Data |
 | --- | --- | --- | --- |
-| `/` | Redirect to `/join` or `/home` | Pierre | stored player id |
+| `/` | Redirect: to `/board` on a screen 1024 px wide or more, otherwise to `/join` or `/home` | Pierre | screen width, stored player id |
+| `/board` | Live board for a big screen: map, neighborhood standings, list of open reports. No joining needed | Pierre | routes 4 and 8 |
 | `/join` | Nickname and neighborhood | Pierre | `POST /players` |
 | `/home` | Points, neighborhood rank, quest cards | Pierre | `GET /players/:id`, `GET /leaderboard` |
 | `/report` | Report quest, one screen with steps | Sarah | routes 5, 6, 7 |
@@ -605,7 +606,7 @@ Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods pres
 
 ### Shared pieces (Pierre builds first)
 
-- **`app/App.tsx`**: registers all eight paths from the start. Until Sarah's screens exist, `/report`, `/council` and `/council/:itemId` render a placeholder; she swaps in her screens by changing those route lines.
+- **`app/App.tsx`**: registers all nine paths from the start. Until Sarah's screens exist, `/report`, `/council` and `/council/:itemId` render a placeholder; she swaps in her screens by changing those route lines.
 - **`app/api.ts`**: one `request<T>(path, init)` helper that prefixes `VITE_API_URL`, parses JSON, and throws `ApiError { status, code, message }` for non-2xx responses. It exports one object, `api`, with one typed function per route for all ten routes (Pierre writes Sarah's six as well, so her screens can start on mocks), plus `api.uploadPhoto(uploadUrl, blob)` for the direct `PUT` to the bucket. Screens call `api.createReport(...)` and so on, and never call `fetch` themselves. When `VITE_USE_MOCKS` is `true`, the same functions answer from `app/mock/` after a short delay. The mock keeps a little state while the tab is open (points, submitted reports, answered council items) and resets on reload. Its example data is typed TypeScript in `app/mock/fixtures.ts`, so a contract change breaks the build instead of letting the examples drift; Sarah may change the report and council examples. To see an error state, change `MOCK_REPORT_RESULT` at the top of `app/mock/index.ts`.
 - **`app/player.ts`**: the player id is stored in `localStorage` under `streetcreds.playerId`. `usePlayer()` loads the player with TanStack Query and refetches every 4 seconds. On `404`, clear the id and go to `/join`.
 - **`app/strings.ts`**: every user-facing string for the shell and the player screens, in one object keyed by name. Quest screens keep theirs in `features/quests/strings.ts`, in the same shape, so Sarah never has to edit Pierre's file. Screens read their text from these files. This is what makes the P2 Spanish toggle a small job.
@@ -632,7 +633,18 @@ Camera capture and geolocation need HTTPS or `localhost`. They do not work on `h
 
 - `react-leaflet` `MapContainer` centered on `MAP_CENTER`, zoom 14. Import `leaflet/dist/leaflet.css` and give the container an explicit height, or the map renders blank.
 - Tiles: `https://tile.openstreetmap.org/{z}/{x}/{y}.png` with the attribution `© OpenStreetMap contributors`. The attribution is required.
-- One `CircleMarker` per report, radius `6 + 2 * Math.min(count, 6)`, color by severity. Popup: category, description, count, photo, and a "Copy city report" button.
+- One `Marker` per report with a `divIcon`: a round pin `20 + 4 * Math.min(count, 6)` px wide, colored by severity, with the count written on it from 2 up, centered in a 44 px touch area. Popup: category, description, count, photo, and a "Copy city report" button.
+- The tiles are drawn in grey (a CSS filter in `web/src/index.css`), so the pins are the only color. After the first load the map zooms out once if a report is outside the opening view.
+- **Grouped pins.** Reports whose pins would overlap at the current zoom (closer than 48 px) are drawn as one black pin with the number of reports in it and a ring in the color of the most serious one. Tapping it zooms in until they come apart; at the closest zoom (18) every report has its own pin. The grouping is `groupPins()` in `mapReports.ts`, written by hand so no clustering library is needed.
+- **Filters.** `ReportFilters.tsx` draws a switch for each severity (they are also the color key), a menu of types and a line such as "Showing 15 of 60 open reports" with "Show all". The phone uses its short form: severity switches only. The filter applies to the pins and, on the board, to the list.
+- The map itself is `ReportsMap.tsx`, used by both `MapScreen.tsx` (the phone screen) and `BoardScreen.tsx`. `mapReports.ts` holds the pure helpers they share: sorting, counting, filtering and grouping (has a test).
+
+### Live board (Pierre)
+
+- `/board` is the view for a big screen: a projector during the game, a judge's laptop, or someone at the city looking at where the street problems are. It needs no player, so nobody has to join to see it.
+- From 1024 px wide it fills the window: the neighborhood standings in a strip across the top (route 4, every 4 seconds), `ReportsMap` on the left, and on the right a panel with the filters and every open report (route 8, every 10 seconds), most serious first, then most reported, then newest. Only the list scrolls. It shows 20 rows at a time, with a "Show 20 more" button. Narrower, the same parts stack.
+- Picking a report in the list opens its popup on the map, zooming in first if the report is inside a group. Opening a pin marks its row in the list. "Copy city report" is in the popup, as on the phone.
+- On a wide screen `/` opens the board. The phone layout shows a "Live board" link in the empty space beside the column, and the board has a "Play" button back to `/join` or `/home`.
 - `cityReport.ts` builds the clipboard text (pure function, has a test):
 
 ```

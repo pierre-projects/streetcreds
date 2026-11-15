@@ -2,6 +2,7 @@
 // and the bottom navigation. Screens render where <Outlet /> is.
 import type { ReactNode } from 'react'
 import { Navigate, NavLink, Outlet } from 'react-router'
+import { BoardLink } from './BoardLink'
 import { HomeIcon, LeaderboardIcon, MapIcon } from './icons'
 import { getStoredPlayerId, usePlayer } from './player'
 import { strings } from './strings'
@@ -26,6 +27,7 @@ function Frame() {
 
   return (
     <div className="app-column flex flex-col">
+      <BoardLink />
       <header className="app-header">
         <span className="app-brand"><LogoMark />{strings.appName}</span>
         <div className="flex min-w-0 items-center gap-2 text-sm" aria-live="polite">

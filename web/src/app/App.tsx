@@ -1,9 +1,10 @@
-// Game paths match docs/TECHNICAL.md section 7; /design is a temporary ninth route outside that list.
+// Paths match docs/TECHNICAL.md section 7; /design is a temporary route outside that list.
 //
 // Screens that are not built yet show <ComingSoon />. To put a real screen in, import it and
 // replace the `element` on its line. Sarah: the three lines marked "Sarah" are yours to change.
 import { createBrowserRouter, Navigate } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
+import { BoardScreen } from '../features/players/BoardScreen'
 import { HomeScreen } from '../features/players/HomeScreen'
 import { LeaderboardScreen } from '../features/players/LeaderboardScreen'
 import { MapScreen } from '../features/players/MapScreen'
@@ -13,8 +14,17 @@ import { Layout } from './Layout'
 import { getStoredPlayerId } from './player'
 import { strings } from './strings'
 
-/** `/` sends a joined player home and everyone else to the join screen. */
+/** Wide enough for the board to fill the window. The same width as Tailwind's `lg`, which its layout uses. */
+const WIDE_SCREEN = '(min-width: 1024px)'
+
+/**
+ * `/` opens the live board on a wide screen, where there is room for it and no camera to play with.
+ * On a phone it sends a joined player home and everyone else to the join screen.
+ */
 function Start() {
+  if (window.matchMedia(WIDE_SCREEN).matches) {
+    return <Navigate to="/board" replace />
+  }
   return <Navigate to={getStoredPlayerId() === null ? '/join' : '/home'} replace />
 }
 
@@ -22,6 +32,8 @@ const router = createBrowserRouter([
   { path: '/', element: <Start /> },
   // No navigation around this one: nobody has joined yet.
   { path: '/join', element: <JoinScreen /> },
+  // The big-screen view. Open to everyone: nobody has to join to watch.
+  { path: '/board', element: <BoardScreen /> },
   { path: '/design', lazy: () => import('./design/DesignScreen') },
   {
     element: <Layout />,

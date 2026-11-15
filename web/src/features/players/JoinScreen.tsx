@@ -7,6 +7,7 @@ import { Navigate, useNavigate } from 'react-router'
 import { NEIGHBORHOODS, NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
 import type { NeighborhoodId } from '../../../../shared/types'
 import { api } from '../../app/api'
+import { BoardLink } from '../../app/BoardLink'
 import { getStoredPlayerId, storePlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
 import { Button, ErrorNotice, LogoMark, OptionCard, ScreenHeader, TextField } from '../../app/ui'
@@ -50,6 +51,7 @@ export function JoinScreen() {
 
   return (
     <main className="app-column flex flex-col px-4 py-8">
+      <BoardLink />
       <div className="mb-4"><LogoMark /></div>
       <ScreenHeader title={strings.appName} subtitle={strings.tagline} />
 
