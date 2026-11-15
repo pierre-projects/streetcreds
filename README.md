@@ -123,6 +123,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The temporary design system (`web/src/app/ui/`, `/design`) was generated with Codex (OpenAI), following the StreetCreds landing page.
 - The soft glass radar HUD redesign (tokens, Outfit self-host, floating frost chrome, map-first home) was implemented with Cursor (Composer).
 - Outfit by Rodrigo Fuenzalida / Smartsheet Inc (The Outfit Project Authors), under the SIL Open Font License (see `web/public/fonts/OFL.txt`).
+- The StreetCreds logo mark, wordmark, favicon and app icon in `web/public/brand/` and the favicon / apple-touch icons were taken from the StreetCreds_Logo_Pack asset set (white S on orange / wordmark masters), resized for the web app.
 
 - The Privacy, Terms, About & contact pages and their navigation links were drafted and implemented with Codex (OpenAI).
 - The About, Privacy and Terms copy was revised with Codex (OpenAI) for clarity and current app behavior.
