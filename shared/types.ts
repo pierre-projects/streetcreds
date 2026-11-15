@@ -136,6 +136,14 @@ export interface LeaderboardRow {
   topPlayers: { nickname: string; points: number }[];
 }
 
+/** One player on the players board, which ranks people from every neighborhood together. A nickname only, never an id. */
+export interface TopPlayer {
+  nickname: string;
+  points: number;
+  /** The neighborhood the player joined in. Their points count for it wherever they were earned. */
+  neighborhood: NeighborhoodId;
+}
+
 /** Curated Local Deals partner. Kept in api/src/deals/partners.json, not in the database. */
 export interface Partner {
   id: string;

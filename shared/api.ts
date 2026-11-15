@@ -15,6 +15,7 @@ import type {
   Player,
   PublicReport,
   Report,
+  TopPlayer,
 } from './types';
 
 // GET /health (Pierre)
@@ -67,6 +68,8 @@ export interface PlayerReportsResponse {
 export interface LeaderboardResponse {
   /** All four neighborhoods, highest points first. */
   neighborhoods: LeaderboardRow[];
+  /** Up to 10 players who have points, from any neighborhood, highest points first. */
+  players: TopPlayer[];
   updatedAt: string;
 }
 
