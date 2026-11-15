@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Every color in the app is defined here once. Use the utilities they create
+   (bg-page, bg-surface, text-ink, text-muted, bg-accent, text-severity-high, ...)
+   and never a raw color in a component. */
+@theme {
+  --color-page: #f4f6f1;
+  --color-surface: #ffffff;
+  --color-line: #dfe5dc;
+  --color-ink: #16211b;
+  --color-muted: #55635a;
+  --color-accent: #0f7a4f;
+  --color-on-accent: #ffffff;
+  --color-severity-low: #2f7d32;
+  --color-severity-medium: #b26a00;
+  --color-severity-high: #c62828;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html {
+  background: var(--color-page);
+  color: var(--color-ink);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}

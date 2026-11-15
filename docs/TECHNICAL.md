@@ -6,7 +6,7 @@ This file is the implementation spec for StreetCreds: stack, data models, API co
 
 **Priorities.** P0 must work for the demo, P1 is added once P0 works on a phone, P2 is built only when a human asks for it by name. Each route in section 5 and each milestone in section 10 carries its priority.
 
-**Status on 2026-11-14:** only the contract in `shared/` exists (constants, data fields, API shapes). Everything else is still to build.
+**Status on 2026-11-14:** the contract in `shared/` (constants, data fields, API shapes) and the Phase 0 scaffold exist: `web/` with a placeholder page, and `api/` with `GET /health`, a stand-in `GET /leaderboard`, the shared core in `src/lib/` and the deploy template. Nothing is deployed. Everything else is still to build.
 
 **Names.** The product is written StreetCreds. In code, resource names and storage keys it is `streetcreds`: the stack is `streetcreds`, the tables are `streetcreds-*`, and the stored player key is `streetcreds.playerId`. The site is planned for `https://streetcreds.app`. The points token keeps the symbol CIVIC.
 
@@ -105,7 +105,7 @@ streetcreds/
       seed.ts                       demo data for development (Pierre)
 ```
 
-`web/vite.config.ts` needs `server.fs.allow: ['..']` and `web/tsconfig.json` needs `"include": ["src", "../shared"]` so the relative imports of `shared/` work. `api/tsconfig.json` needs the same include.
+`web/vite.config.ts` needs `server.fs.allow: ['..']` and `web/tsconfig.app.json` needs `"include": ["src", "../shared"]` so the relative imports of `shared/` work. `api/tsconfig.json` needs the same include.
 
 Who may change which file, including the wiring lines each person may add to `index.ts` and `App.tsx`, is in `AGENTS.md` under Ownership.
 
