@@ -27,6 +27,7 @@ In progress during the hackathon. So far the repo holds the plan and the shared 
 | File | What's in it | Read it when |
 | --- | --- | --- |
 | [PRD.md](PRD.md) | The product: scope and priorities, user flow, feature checklists, team roles, build plan, demo script, risks | You want to know what we're building and why |
+| [PHASES.md](PHASES.md) | Sarah's and Pierre's work, phase by phase, as checklists with shared checkpoints | You want to know what to do next |
 | [TECHNICAL.md](TECHNICAL.md) | The implementation spec: stack and versions, data models, API contract, core functions, setup, development guide, build order | You're writing code |
 | [AGENTS.md](AGENTS.md) | Rules for AI coding agents: hard rules, who owns which folders, commands, definition of done | You point Cursor, Claude Code or another agent at this repo |
 
@@ -49,7 +50,7 @@ The phone uploads photos straight to S3 and sends everything else through the AP
 
 ```
 streetcreds/
-  PRD.md  TECHNICAL.md  AGENTS.md  README.md
+  PRD.md  PHASES.md  TECHNICAL.md  AGENTS.md  README.md
   shared/       the contract both sides import: constants, data types, API types
   api/          the backend (planned)
   web/          the phone web app (planned)
