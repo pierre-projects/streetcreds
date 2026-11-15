@@ -56,14 +56,14 @@ Do not run sam deploy or anything else that creates cloud resources: print each 
 
 ## Phase 1. Skeleton (about 20% of the time)
 
-- [ ] **Solana first, 90-minute limit.** `solana-setup.ts` creates the treasury and the CIVIC token.
-- [ ] `mintPoints` written. One test mint sent with `mint-test.ts` and opened on the explorer. If not working at 90 minutes: switch to shared-wallet mode, or leave Solana off, and move on.
-- [ ] App shell: routing for all eight paths (placeholders for Sarah's three screens), layout with header and bottom navigation, the strings file.
-- [ ] API helper with a typed function and a mock fixture for all ten routes, Sarah's six included. Tell Sarah when it's merged: her report screen needs it.
-- [ ] `POST /players`, `GET /players/:id` and `GET /leaderboard` work against the real table.
-- [ ] Join screen and home screen work on a phone.
-- [ ] `awardPoints` stub (database only) merged. Sarah is told it's ready.
-- [ ] `npm run check` passes in `api/` and `web/`.
+- [x] **Solana first, 90-minute limit.** `solana-setup.ts` creates the treasury and the CIVIC token.
+- [x] `mintPoints` written. One test mint sent with `mint-test.ts` and opened on the explorer. If not working at 90 minutes: switch to shared-wallet mode, or leave Solana off, and move on.
+- [x] App shell: routing for all eight paths (placeholders for Sarah's three screens), layout with header and bottom navigation, the strings file.
+- [x] API helper with a typed function and a mock fixture for all ten routes, Sarah's six included. Tell Sarah when it's merged: her report screen needs it.
+- [x] `POST /players`, `GET /players/:id` and `GET /leaderboard` work against the real table.
+- [x] Join screen and home screen work on a phone.
+- [x] `awardPoints` stub (database only) merged. Sarah is told it's ready.
+- [x] `npm run check` passes in `api/` and `web/`.
 
 Prompt:
 
