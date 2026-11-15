@@ -14,16 +14,29 @@ import { MAP_CENTER } from '../../../../shared/constants'
 import type { PublicReport, Severity } from '../../../../shared/types'
 import { strings } from '../../app/strings'
 import { Button } from '../../app/ui'
+import { type CityRecord, TEMPE_311_FORM_URL } from './cityRecords'
+import { CityRecordsLayer } from './CityRecordsLayer'
 import { buildCityReport } from './cityReport'
-import { groupPins, type PinGroup, type PinnedReport, reportCount, SEVERITY_TEXT, worstSeverity } from './mapReports'
+import { cityFinding } from './cityText'
+import { renewPhotoUrl, steadyPhotoUrl } from './photoUrls'
+import {
+  groupPins,
+  type PinGroup,
+  type PinnedReport,
+  POPUP_WIDTH,
+  reportCount,
+  SEVERITY_TEXT,
+  TAP_PX,
+  worstSeverity,
+} from './mapReports'
 
 const ZOOM = 14
 /** As far in as the map goes. Here every report gets its own pin, however close its neighbors are. */
 const MAX_ZOOM = 18
-/** The smallest area a finger hits reliably. Every pin is at least this big to touch. */
-const TAP_PX = 44
-/** Width of the popup's content. With its border it fits a 320 px wide phone. */
-const POPUP_WIDTH = 256
+
+// The same empty values every time, for a map that is given no City records.
+const NO_RECORDS: CityRecord[] = []
+const NO_MATCHES: ReadonlyMap<string, CityRecord> = new Map()
 
 // Pin colors. These classes are defined in index.css.
 const SEVERITY_PIN: Record<Severity, string> = {
@@ -101,17 +114,29 @@ function FitToPins({ pins }: { pins: PinnedReport[] }) {
 
 type CopyState = { reportId: string; ok: boolean } | null
 
-function ReportPopup({ report, copy, onCopy }: { report: PublicReport; copy: CopyState; onCopy: () => void }) {
+interface ReportPopupProps {
+  report: PublicReport
+  /** The City's own record of this spot, when it has one. */
+  cityRecord?: CityRecord
+  copy: CopyState
+  onCopy: () => void
+}
+
+function ReportPopup({ report, cityRecord, copy, onCopy }: ReportPopupProps) {
   const category = strings.categories[report.category]
   const copied = copy?.reportId === report.id ? copy : null
   const note = copied === null ? strings.map.copyHint : copied.ok ? strings.map.copied : strings.map.copyFailed
   return (
     <div className="flex flex-col font-sans text-sm text-ink">
       <img
-        src={report.photoUrl}
+        src={steadyPhotoUrl(report)}
         alt={strings.map.photoAlt(category)}
         loading="lazy"
         className="h-28 w-full border-b border-ink bg-page object-cover"
+        onError={(event) => {
+          const fresh = renewPhotoUrl(report)
+          if (fresh !== null) event.currentTarget.src = fresh
+        }}
       />
       <div className="flex flex-col gap-2 p-4">
         <div>
@@ -120,14 +145,22 @@ function ReportPopup({ report, copy, onCopy }: { report: PublicReport; copy: Cop
             {strings.map.severity(strings.severities[report.severity])}
           </p>
         </div>
-        {/* Cut off after four lines so the popup always fits inside the map. The copied report has it all. */}
-        <p className="line-clamp-4">{report.description}</p>
+        {/* Cut off after four lines so the popup always fits inside the map. The copied report has it all.
+            With a City record there are two lines fewer, which the City's line takes. */}
+        <p className={cityRecord ? 'line-clamp-2' : 'line-clamp-4'}>{report.description}</p>
+        {cityRecord && <p className="line-clamp-2 text-xs">{strings.city.matchNote(cityFinding(cityRecord))}</p>}
         <p className="text-xs text-muted">{strings.map.reportedTimes(reportCount(report))}</p>
         <Button onClick={onCopy}>{strings.map.copy}</Button>
-        {/* Always two lines tall, so the popup does not change size when the text does. */}
-        <p role="status" className={`min-h-8 text-xs ${copied?.ok === false ? 'text-severity-high' : 'text-muted'}`}>
-          {note}
-        </p>
+        {/* Always one link tall, so the popup does not change size when the text does. The link is
+            the City's own form, where the copied report gets pasted. */}
+        <div className="flex min-h-11 items-center justify-between gap-3">
+          <p role="status" className={`text-xs ${copied?.ok === false ? 'text-severity-high' : 'text-muted'}`}>
+            {note}
+          </p>
+          <a className="popup-link shrink-0" href={TEMPE_311_FORM_URL} target="_blank" rel="noopener noreferrer" aria-label={strings.city.tell311Label}>
+            {strings.city.openForm}
+          </a>
+        </div>
       </div>
     </div>
   )
@@ -135,6 +168,7 @@ function ReportPopup({ report, copy, onCopy }: { report: PublicReport; copy: Cop
 
 interface ReportPinProps {
   report: PinnedReport
+  cityRecord?: CityRecord
   copy: CopyState
   onCopy: (report: PublicReport) => void
   onOpenChange?: (reportId: string, open: boolean) => void
@@ -142,7 +176,7 @@ interface ReportPinProps {
   selected: boolean
 }
 
-function ReportPin({ report, copy, onCopy, onOpenChange, selected }: ReportPinProps) {
+function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected }: ReportPinProps) {
   const count = reportCount(report)
   // Kept the same between refreshes: a new array would make Leaflet move the pin and its popup again.
   const position = useMemo<[number, number]>(() => [report.lat, report.lng], [report.lat, report.lng])
@@ -188,7 +222,7 @@ function ReportPin({ report, copy, onCopy, onOpenChange, selected }: ReportPinPr
         autoPanPaddingTopLeft={[8, 16]}
         autoPanPaddingBottomRight={[8, 8]}
       >
-        <ReportPopup report={report} copy={copy} onCopy={() => onCopy(report)} />
+        <ReportPopup report={report} cityRecord={cityRecord} copy={copy} onCopy={() => onCopy(report)} />
       </Popup>
     </Marker>
   )
@@ -220,12 +254,14 @@ function GroupPin({ group }: { group: PinGroup }) {
 
 interface PinLayerProps {
   pins: PinnedReport[]
+  /** The City's record of the same spot, by report id. */
+  matches: ReadonlyMap<string, CityRecord>
   selectedId: string | null
   onOpenChange?: (reportId: string, open: boolean) => void
 }
 
 /** Every pin and group, for the zoom the map is at. Must be inside the MapContainer. */
-function PinLayer({ pins, selectedId, onOpenChange }: PinLayerProps) {
+function PinLayer({ pins, matches, selectedId, onOpenChange }: PinLayerProps) {
   const [copy, setCopy] = useState<CopyState>(null)
   const [zoom, setZoom] = useState<number | null>(null)
   const map = useMapEvents({ zoomend: () => setZoom(map.getZoom()) })
@@ -239,12 +275,15 @@ function PinLayer({ pins, selectedId, onOpenChange }: PinLayerProps) {
     [pins, currentZoom],
   )
 
-  const copyReport = useCallback((report: PublicReport) => {
-    navigator.clipboard.writeText(buildCityReport(report)).then(
-      () => setCopy({ reportId: report.id, ok: true }),
-      () => setCopy({ reportId: report.id, ok: false }),
-    )
-  }, [])
+  const copyReport = useCallback(
+    (report: PublicReport) => {
+      navigator.clipboard.writeText(buildCityReport(report, matches.get(report.id))).then(
+        () => setCopy({ reportId: report.id, ok: true }),
+        () => setCopy({ reportId: report.id, ok: false }),
+      )
+    },
+    [matches],
+  )
 
   // Bringing the report that something outside the map picked to a pin of its own. Once it has
   // one, that pin opens its popup itself (see ReportPin).
@@ -293,6 +332,7 @@ function PinLayer({ pins, selectedId, onOpenChange }: PinLayerProps) {
           <ReportPin
             key={only.id}
             report={only}
+            cityRecord={matches.get(only.id)}
             copy={copy}
             onCopy={copyReport}
             onOpenChange={onOpenChange}
@@ -312,10 +352,22 @@ interface ReportsMapProps {
   selectedId?: string | null
   /** Called when a pin's popup opens (true) or closes (false). Keep it the same function between renders. */
   onOpenChange?: (reportId: string, open: boolean) => void
+  /** The City's accessibility records to draw under the reports. Keep the array the same between renders. */
+  cityRecords?: CityRecord[]
+  /** For reports at a spot the City recorded too: that record, by report id. Keep the map the same between renders. */
+  matches?: ReadonlyMap<string, CityRecord>
 }
 
 /** Fills its parent, which must have a height: without one Leaflet draws nothing. */
-export function ReportsMap({ pins, selectedId = null, onOpenChange }: ReportsMapProps) {
+export function ReportsMap({
+  pins,
+  selectedId = null,
+  onOpenChange,
+  cityRecords = NO_RECORDS,
+  matches = NO_MATCHES,
+}: ReportsMapProps) {
+  // The City records that a player's report is at. Their pins are filled in.
+  const reportedIds = useMemo(() => new Set([...matches.values()].map((record) => record.id)), [matches])
   return (
     <MapContainer center={[MAP_CENTER.lat, MAP_CENTER.lng]} zoom={ZOOM} maxZoom={MAX_ZOOM} className="h-full w-full">
       <TileLayer
@@ -323,7 +375,8 @@ export function ReportsMap({ pins, selectedId = null, onOpenChange }: ReportsMap
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
       <FitToPins pins={pins} />
-      <PinLayer pins={pins} selectedId={selectedId} onOpenChange={onOpenChange} />
+      <CityRecordsLayer records={cityRecords} reportedIds={reportedIds} />
+      <PinLayer pins={pins} matches={matches} selectedId={selectedId} onOpenChange={onOpenChange} />
     </MapContainer>
   )
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PublicReport } from '../../../../shared/types'
+import type { CityRecord } from './cityRecords'
 import { buildCityReport } from './cityReport'
 
 const report: PublicReport = {
@@ -47,5 +48,29 @@ describe('buildCityReport', () => {
 
   it('says so when a report has no location', () => {
     expect(buildCityReport({ ...report, lat: null, lng: null })).toContain('Location: not recorded')
+  })
+
+  it('adds the City’s own record of the spot after the location', () => {
+    const ramp: CityRecord = {
+      id: '260515171717',
+      kind: 'curb-ramp',
+      lat: 33.4215,
+      lng: -111.934,
+      where: 'S MILL AVE & W BROADWAY RD, SW corner',
+      surveyed: '2017-05-19',
+      cityFix: null,
+    }
+    expect(buildCityReport(report, ramp).split('\n').slice(3, 6)).toEqual([
+      'Location: 33.42150, -111.93400 (https://www.google.com/maps?q=33.42150,-111.93400)',
+      'City ADA survey: This corner has no curb ramp. S MILL AVE & W BROADWAY RD, SW corner. Record 260515171717, surveyed 2017-05-19, listed as awaiting repair.',
+      'Reports: 3',
+    ])
+  })
+
+  it('points at a City record that has no id by its survey layer and row', () => {
+    const slab: CityRecord = { id: '8:25', kind: 'uneven-sidewalk', lat: 33.42, lng: -111.94, where: 'S MILL AVE', surveyed: null, cityFix: null, heightIn: 1.3 }
+    expect(buildCityReport(report, slab)).toContain(
+      'City ADA survey: A slab is lifted 1.3 in. S MILL AVE. Survey layer 8, row 25, listed as awaiting repair.',
+    )
   })
 })

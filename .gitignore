@@ -15,6 +15,10 @@ samconfig.toml
 *.pem
 *.key
 
+# Pages saved from the City's map server for `npm run city-records`. The file built from them
+# (web/public/data/city-records.json) is committed; these are not.
+api/city-raw/
+
 # Logs
 *.log
 npm-debug.log*

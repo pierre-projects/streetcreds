@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { PublicReport } from '../../../../shared/types'
 import {
+  ageMinutes,
   applyFilter,
+  byMostReported,
+  byNewest,
   bySeriousness,
   countByCategory,
   countBySeverity,
@@ -65,6 +68,37 @@ describe('bySeriousness', () => {
       'medium',
       'low',
     ])
+  })
+})
+
+describe('byNewest and byMostReported', () => {
+  const reports = [
+    report({ id: 'old-high', severity: 'high', submittedAt: '2026-11-14T10:00:00.000Z' }),
+    report({ id: 'new-low-often', severity: 'low', count: 5, submittedAt: '2026-11-14T12:00:00.000Z' }),
+    report({ id: 'mid-medium-often', severity: 'medium', count: 5, submittedAt: '2026-11-14T11:00:00.000Z' }),
+  ]
+
+  it('byNewest puts the latest report first', () => {
+    expect([...reports].sort(byNewest).map((r) => r.id)).toEqual(['new-low-often', 'mid-medium-often', 'old-high'])
+  })
+
+  it('byMostReported puts the most reported first, and the more serious first among equals', () => {
+    expect([...reports].sort(byMostReported).map((r) => r.id)).toEqual(['mid-medium-often', 'new-low-often', 'old-high'])
+  })
+})
+
+describe('ageMinutes', () => {
+  const made = report({ submittedAt: '2026-11-14T18:00:00.000Z' })
+
+  it('counts whole minutes since the report was made', () => {
+    expect(ageMinutes(made, Date.parse('2026-11-14T18:00:59.000Z'))).toBe(0)
+    expect(ageMinutes(made, Date.parse('2026-11-14T18:12:30.000Z'))).toBe(12)
+    expect(ageMinutes(made, Date.parse('2026-11-14T21:00:00.000Z'))).toBe(180)
+  })
+
+  it('is null for a time in the future or one that cannot be read', () => {
+    expect(ageMinutes(made, Date.parse('2026-11-14T17:00:00.000Z'))).toBeNull()
+    expect(ageMinutes(report({ submittedAt: 'not a date' }), Date.now())).toBeNull()
   })
 })
 

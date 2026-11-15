@@ -1,4 +1,4 @@
-// Small line icons for the bottom navigation. Inline SVG, so there is no icon library to load.
+// Small line icons for the navigation and the board. Inline SVG, so there is no icon library to load.
 import type { ReactNode } from 'react'
 
 function Icon({ children }: { children: ReactNode }) {
@@ -44,6 +44,15 @@ export function MapIcon() {
     <Icon>
       <path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.800 12 21 12 21Z" />
       <circle cx="12" cy="9.5" r="2.5" />
+    </Icon>
+  )
+}
+
+/** Points down. The City panel on the board turns it over when the panel is folded away. */
+export function ChevronIcon() {
+  return (
+    <Icon>
+      <path d="m6 9 6 6 6-6" />
     </Icon>
   )
 }
