@@ -58,8 +58,8 @@ Until these are done, no sign-in control shows and the game runs as guest-only.
 
 1. In the Google Cloud console, create an OAuth client of type "Web application". Add every address the site is served from as an authorized JavaScript origin: `https://streetcreds.app`, `https://www.streetcreds.app`, the Amplify address, and `http://localhost:5173`.
 2. Put the client id in `api/.env` as `GOOGLE_CLIENT_ID` and in `web/.env` as `VITE_GOOGLE_CLIENT_ID`. It is public, not a secret.
-3. Deploy the API with the client id. This creates the two tables and lets the browser send the `authorization` header. Add `GoogleClientId=<client id>` to the `parameter_overrides` line in `api/samconfig.toml`, beside the values already there, then run `npm run deploy` in `api/`. Do not pass `--parameter-overrides` on the command line by itself: check first that it does not replace the saved values, which include the Gemini key and the Solana settings.
-4. Set `VITE_GOOGLE_CLIENT_ID` in the Amplify console and push, so the site rebuilds.
+3. Deploy the API with the client id. This creates the two tables and lets the browser send the `authorization` header. Add `GoogleClientId=\"<client id>\"` to the `parameter_overrides` line in `api/samconfig.toml`, in the same `Key=\"value\"` form as the settings already there, then run `npm run deploy` in `api/`. Only add it once the `template.yaml` being deployed has the `GoogleClientId` parameter, or the deploy is refused. The secrets are not in that file and are not touched: `deploy-secrets` relies on a parameter that is left out keeping the value the live API already has.
+4. Only after step 3, set `VITE_GOOGLE_CLIENT_ID` in the Amplify console and redeploy the site. The order matters: that variable is what makes the sign-in buttons appear, and an API without the new routes answers them wrongly ("Continue with Google" would quietly make a guest player).
 
 ## Known limits
 
