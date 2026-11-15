@@ -7,7 +7,7 @@ import { api } from '../../app/api'
 import { usePlayer } from '../../app/player'
 import { leaderboardKey, POLL_MS } from '../../app/queryClient'
 import { strings } from '../../app/strings'
-import { Badge, Card, ErrorNotice, ScreenHeader } from '../../app/ui'
+import { Badge, ErrorNotice, ScreenHeader, cx } from '../../app/ui'
 
 function neighborhoodName(id: NeighborhoodId): string {
   return NEIGHBORHOODS.find((n) => n.id === id)?.name ?? id
@@ -22,58 +22,60 @@ export function LeaderboardScreen() {
   })
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="leaderboard">
       <ScreenHeader title={strings.leaderboard.title} subtitle={strings.leaderboard.subtitle} />
 
-      {leaderboard.isPending && <p className="text-muted">{strings.leaderboard.loading}</p>}
+      {leaderboard.isPending && <p className="leaderboard-status">{strings.leaderboard.loading}</p>}
 
       {leaderboard.isError && !leaderboard.data && (
-        <ErrorNotice message={leaderboard.error.message} fallback={strings.leaderboard.error} onRetry={() => void leaderboard.refetch()} retryLabel={strings.leaderboard.retry} />
+        <ErrorNotice
+          message={leaderboard.error.message}
+          fallback={strings.leaderboard.error}
+          onRetry={() => void leaderboard.refetch()}
+          retryLabel={strings.leaderboard.retry}
+        />
       )}
 
-      {leaderboard.data && (
-        <ol className="flex flex-col gap-3" aria-live="polite">
+      {leaderboard.data && leaderboard.data.neighborhoods.length === 0 && (
+        <p className="leaderboard-status">{strings.leaderboard.empty}</p>
+      )}
+
+      {leaderboard.data && leaderboard.data.neighborhoods.length > 0 && (
+        <ol className="leaderboard-list" aria-live="polite">
           {leaderboard.data.neighborhoods.map((row, index) => {
             const mine = player.data?.neighborhood === row.neighborhood
             return (
-              <Card as="li" key={row.neighborhood} selected={mine}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-baseline gap-3">
-                    <span className="shrink-0 text-lg font-mono tabular-nums text-muted">
-                      {strings.leaderboard.rank(index + 1)}
-                    </span>
+              <li key={row.neighborhood} className={cx('leaderboard-row', mine && 'is-yours')}>
+                <div className="leaderboard-row-main">
+                  <div className="leaderboard-row-identity">
+                    <span className="leaderboard-rank">{strings.leaderboard.rank(index + 1)}</span>
                     <div className="min-w-0">
-                      <h2 className="truncate text-lg text-ink">{neighborhoodName(row.neighborhood)}</h2>
-                      <p className="text-sm text-muted">{strings.leaderboard.players(row.playerCount)}</p>
+                      <div className="leaderboard-name-row">
+                        <h2 className="leaderboard-name">{neighborhoodName(row.neighborhood)}</h2>
+                        {mine && <Badge className="leaderboard-yours">{strings.leaderboard.yours}</Badge>}
+                      </div>
+                      <p className="leaderboard-players">{strings.leaderboard.players(row.playerCount)}</p>
                     </div>
                   </div>
-                  <span className="shrink-0 text-xl font-mono tabular-nums text-ink">
-                    {strings.leaderboard.points(row.points)}
-                  </span>
+                  <span className="leaderboard-points">{strings.leaderboard.points(row.points)}</span>
                 </div>
 
-                {mine && (
-                  <Badge className="mt-2">
-                    {strings.leaderboard.yours}
-                  </Badge>
-                )}
-
                 {row.topPlayers.length > 0 ? (
-                  <ol className="mt-3 border-t border-dotted border-line pt-2">
+                  <ol className="leaderboard-tops">
                     {row.topPlayers.map((top, place) => (
-                      <li key={`${top.nickname}-${place}`} className="flex items-center justify-between gap-3 py-1 text-sm">
-                        <span className="min-w-0 truncate text-ink">
-                          <span className="mr-2 tabular-nums text-muted">{place + 1}.</span>
+                      <li key={`${top.nickname}-${place}`} className="leaderboard-top">
+                        <span className="leaderboard-top-name">
+                          <span className="leaderboard-top-place">{place + 1}.</span>
                           {top.nickname}
                         </span>
-                        <span className="shrink-0 font-mono tabular-nums text-muted">{strings.leaderboard.points(top.points)}</span>
+                        <span className="leaderboard-top-points">{strings.leaderboard.points(top.points)}</span>
                       </li>
                     ))}
                   </ol>
                 ) : (
-                  <p className="mt-3 border-t border-dotted border-line pt-2 text-sm text-muted">{strings.leaderboard.noPlayers}</p>
+                  <p className="leaderboard-tops leaderboard-tops-empty">{strings.leaderboard.noPlayers}</p>
                 )}
-              </Card>
+              </li>
             )
           })}
         </ol>

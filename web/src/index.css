@@ -305,6 +305,53 @@ body {
   .board-link {
     @apply fixed left-6 top-3 z-20 hidden min-h-11 items-center gap-2 rounded-pill border border-ink/10 bg-surface/90 px-4 text-sm text-ink shadow-float backdrop-blur-md hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink lg:inline-flex;
   }
+
+  /* Leaderboard: frost rows that read as a live board, not a dense table. */
+  .leaderboard { @apply flex flex-col gap-4; }
+  .leaderboard-status { @apply text-sm text-muted; }
+  .leaderboard-list { @apply flex flex-col gap-3; }
+  .leaderboard-row {
+    border-radius: var(--radius-card);
+    border: 1px solid rgb(10 10 10 / .08);
+    background: var(--surface-frost-strong);
+    padding: 1rem;
+    box-shadow: var(--shadow-float);
+    backdrop-filter: blur(var(--blur-frost));
+    -webkit-backdrop-filter: blur(var(--blur-frost));
+    animation: hud-enter 0.4s ease-out backwards;
+  }
+  .leaderboard-row:nth-child(1) { animation-delay: 0.04s; }
+  .leaderboard-row:nth-child(2) { animation-delay: 0.08s; }
+  .leaderboard-row:nth-child(3) { animation-delay: 0.12s; }
+  .leaderboard-row:nth-child(4) { animation-delay: 0.16s; }
+  .leaderboard-row.is-yours {
+    border-color: transparent;
+    background: color-mix(in srgb, var(--color-accent) 10%, white);
+    box-shadow: var(--shadow-float);
+  }
+  .leaderboard-row-main { @apply flex items-start justify-between gap-3; }
+  .leaderboard-row-identity { @apply flex min-w-0 items-baseline gap-3; }
+  .leaderboard-rank {
+    @apply shrink-0 text-lg font-bold tabular-nums text-muted;
+  }
+  .leaderboard-row.is-yours .leaderboard-rank { @apply text-accent; }
+  .leaderboard-name-row { @apply flex min-w-0 flex-wrap items-center gap-2; }
+  .leaderboard-name { @apply truncate text-lg font-bold text-ink; }
+  .leaderboard-yours { @apply px-2.5 py-0.5 text-[11px]; }
+  .leaderboard-players { @apply mt-0.5 text-sm text-muted; }
+  .leaderboard-points {
+    @apply shrink-0 text-xl font-bold tabular-nums text-ink;
+  }
+  .leaderboard-tops {
+    @apply mt-3 border-t border-ink/10 pt-2;
+  }
+  .leaderboard-tops-empty { @apply text-sm text-muted; }
+  .leaderboard-top {
+    @apply flex min-h-11 items-center justify-between gap-3 text-sm;
+  }
+  .leaderboard-top-name { @apply min-w-0 truncate text-ink; }
+  .leaderboard-top-place { @apply mr-2 tabular-nums text-muted; }
+  .leaderboard-top-points { @apply shrink-0 font-medium tabular-nums text-muted; }
 }
 
 /* Leaflet ships unlayered CSS, so these overrides are unlayered too. */
@@ -520,7 +567,8 @@ html:has(.app-main-radar) { overscroll-behavior: none; }
   .app-nav,
   .radar-dock,
   .pin-stack,
-  .screen-enter {
+  .screen-enter,
+  .leaderboard-row {
     animation-name: fade-in !important;
     animation-duration: 150ms !important;
     animation-delay: 0s !important;
