@@ -3,6 +3,7 @@
 // and makes a second language a small job later.
 // Quest screens keep their own strings in features/quests/strings.ts, in the same shape.
 import { APP_NAME } from '../../../shared/constants'
+import type { Category, Severity } from '../../../shared/types'
 
 export const strings = {
   appName: APP_NAME,
@@ -61,12 +62,43 @@ export const strings = {
     retry: 'Try again',
   },
 
+  // The names players see for the contract's categories and severities. Quest screens use these too.
+  categories: {
+    pothole: 'Pothole',
+    streetlight: 'Streetlight',
+    graffiti: 'Graffiti',
+    'blocked-sidewalk': 'Blocked sidewalk',
+    other: 'Other',
+  } satisfies Record<Category, string>,
+
+  severities: {
+    low: 'Low',
+    medium: 'Medium',
+    high: 'High',
+  } satisfies Record<Severity, string>,
+
+  map: {
+    title: 'Map',
+    subtitle: 'Street problems players have reported. Tap a pin for details.',
+    loading: 'Loading reports…',
+    error: 'Could not load the reports.',
+    retry: 'Try again',
+    empty: 'No reports yet. Be the first to report a problem.',
+    count: (count: number) => (count === 1 ? '1 open report' : `${count} open reports`),
+    legend: 'Color shows how serious it is. Bigger pins have been reported more often.',
+    severity: (label: string) => `${label} severity`,
+    reportedTimes: (count: number) => (count === 1 ? 'Reported once' : `Reported ${count} times`),
+    photoAlt: (category: string) => `Photo of the reported problem: ${category.toLowerCase()}`,
+    copy: 'Copy city report',
+    copied: 'Copied. Paste it into the city’s report form.',
+    copyFailed: 'Could not copy. Try again.',
+  },
+
   comingSoon: {
     body: 'This part of the game is still being built.',
     backHome: 'Back to home',
     report: 'Report a street problem',
     council: 'Council quest',
-    map: 'Map',
   },
 
   errors: {
