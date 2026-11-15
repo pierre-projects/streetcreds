@@ -3,7 +3,7 @@
 //                             npm run deploy-secrets -- --dry-run   (shows what it would send)
 //
 // Use it when one of these changes in api/.env and the live API should get it:
-//   GEMINI_API_KEY, SOLANA_MODE, CIVIC_MINT, SOLANA_TREASURY_SECRET
+//   GEMINI_API_KEY, SOLANA_MODE, CIVIC_MINT, SOLANA_TREASURY_SECRET, SOLANA_RPC_URL
 // Every other deploy is plain  npm run deploy,  which keeps whatever this command last set.
 //
 // The values go straight from api/.env to AWS. They are never printed, and any that appear in
@@ -15,11 +15,13 @@ import path from 'node:path';
 const API_DIR = path.resolve(__dirname, '..');
 const SAMCONFIG = path.join(API_DIR, 'samconfig.toml');
 const MODES = ['off', 'per-player', 'shared'];
+const PUBLIC_RPC_URL = 'https://api.devnet.solana.com';
 
 const mode = process.env.SOLANA_MODE || 'off';
 const mint = process.env.CIVIC_MINT || '';
 const treasurySecret = process.env.SOLANA_TREASURY_SECRET || '';
 const geminiKey = process.env.GEMINI_API_KEY || '';
+const rpcUrl = (process.env.SOLANA_RPC_URL || '').trim();
 
 function fail(message: string): never {
   console.error(`\n${message}`);
@@ -76,6 +78,18 @@ async function main(): Promise<void> {
     fail(`SOLANA_MODE is ${mode}, but CIVIC_MINT or SOLANA_TREASURY_SECRET is missing from api/.env. Run  npm run solana-setup  first.`);
   }
 
+  let rpcHost = '';
+  if (rpcUrl !== '') {
+    try {
+      rpcHost = new URL(rpcUrl).host;
+    } catch {
+      fail('SOLANA_RPC_URL in api/.env is not a valid address.');
+    }
+    if (rpcUrl.includes('mainnet')) {
+      fail('SOLANA_RPC_URL in api/.env points at mainnet. StreetCreds runs on Solana devnet only.');
+    }
+  }
+
   // Non-secret settings: keep what is saved, and set the two Solana ones from api/.env.
   const plain = savedOverrides();
   plain.set('SolanaMode', mode);
@@ -85,10 +99,24 @@ async function main(): Promise<void> {
   const secret = new Map<string, string>();
   if (mode !== 'off') secret.set('SolanaTreasurySecret', treasurySecret);
   if (geminiKey !== '') secret.set('GeminiApiKey', geminiKey);
+  // The Solana address counts as a secret, because a dedicated one holds an access key.
+  // The free public address is sent as "none", which the template reads as "use the public one".
+  const dedicated = rpcUrl !== '' && rpcUrl !== PUBLIC_RPC_URL;
+  if (rpcUrl !== '') secret.set('SolanaRpcUrl', dedicated ? rpcUrl : 'none');
+
+  // Each value travels as one quoted argument. These characters would break that quoting.
+  for (const [name, value] of secret) {
+    if (/["%\s]/.test(value)) {
+      fail(`${name} in api/.env contains a space, a double quote or a percent sign, which this command cannot send safely.`);
+    }
+  }
 
   console.log('Deploying the API with these settings from api/.env:');
   console.log(`  SolanaMode            ${mode}`);
   console.log(`  CivicMint             ${plain.get('CivicMint')}`);
+  console.log(
+    `  SolanaRpcUrl          ${rpcUrl === '' ? 'not in api/.env; the live API keeps the one it has' : dedicated ? `${rpcHost} (dedicated; the rest of the address is hidden)` : `${rpcHost} (the free public address)`}`,
+  );
   console.log(`  SolanaTreasurySecret  ${secret.has('SolanaTreasurySecret') ? '(hidden)' : 'not sent'}`);
   console.log(`  GeminiApiKey          ${secret.has('GeminiApiKey') ? '(hidden)' : 'not in api/.env; the live API keeps the one it has'}`);
   console.log(`  Kept as they are      ${[...plain.keys()].filter((key) => key !== 'SolanaMode' && key !== 'CivicMint').join(', ')}`);
@@ -103,7 +131,9 @@ async function main(): Promise<void> {
   if (build.status !== 0) fail('The build failed, so nothing was deployed.');
 
   const overrides = [...plain, ...secret].map(([key, value]) => `"${key}=${value}"`);
-  const code = await run('sam', ['deploy', '--template-file', 'template.yaml', '--parameter-overrides', ...overrides], [...secret.values()]);
+  // Short values such as "none" are not secrets, and hiding them would garble SAM's output.
+  const toHide = [...secret.values()].filter((value) => value.length >= 12);
+  const code = await run('sam', ['deploy', '--template-file', 'template.yaml', '--parameter-overrides', ...overrides], toHide);
   if (code !== 0) fail('The deploy did not finish. Nothing in samconfig.toml was changed.');
 
   saveOverrides(plain);

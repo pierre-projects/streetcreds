@@ -41,10 +41,17 @@ Parameters:
     Default: none
     Description: Address of the CIVIC mint on devnet. Leave as none while SolanaMode is off.
 
+  SolanaRpcUrl:
+    Type: String
+    NoEcho: true
+    Default: none
+    Description: A dedicated Solana DEVNET address. It usually contains an access key, so it is a secret. Type none to use the free public address.
+
 Conditions:
   NoGeminiApiKey: !Equals [!Ref GeminiApiKey, none]
   NoSolanaTreasurySecret: !Equals [!Ref SolanaTreasurySecret, none]
   NoCivicMint: !Equals [!Ref CivicMint, none]
+  NoSolanaRpcUrl: !Equals [!Ref SolanaRpcUrl, none]
 
 Resources:
   HttpApi:
@@ -83,7 +90,8 @@ Resources:
           GEMINI_API_KEY: !If [NoGeminiApiKey, '', !Ref GeminiApiKey]
           GEMINI_MODEL: !Ref GeminiModel
           SOLANA_MODE: !Ref SolanaMode
-          SOLANA_RPC_URL: https://api.devnet.solana.com
+          # The free public address is rate-limited. A dedicated one is set with `npm run deploy-secrets`.
+          SOLANA_RPC_URL: !If [NoSolanaRpcUrl, 'https://api.devnet.solana.com', !Ref SolanaRpcUrl]
           SOLANA_TREASURY_SECRET: !If [NoSolanaTreasurySecret, '', !Ref SolanaTreasurySecret]
           CIVIC_MINT: !If [NoCivicMint, '', !Ref CivicMint]
       Policies:

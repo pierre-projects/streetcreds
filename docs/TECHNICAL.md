@@ -124,7 +124,7 @@ Who may change which file, including the wiring lines each person may add to `in
 | `GEMINI_API_KEY` | api | from Google AI Studio | **Yes** |
 | `GEMINI_MODEL` | api | `gemini-3.8-flash` | No |
 | `SOLANA_MODE` | api | `off`, `per-player` or `shared` | No |
-| `SOLANA_RPC_URL` | api | `https://api.devnet.solana.com` | No |
+| `SOLANA_RPC_URL` | api | `https://api.devnet.solana.com`, or a dedicated devnet address from a provider | **Yes**, when it holds an access key |
 | `SOLANA_TREASURY_SECRET` | api | base64 of the 64-byte secret key | **Yes** |
 | `CIVIC_MINT` | api | the mint address printed by `solana-setup.ts` | No |
 
@@ -664,7 +664,7 @@ Reported with StreetCreds on 2026-11-14
 | Three `AWS::DynamoDB::Table` | Names from section 4, key `id` (S), `BillingMode: PAY_PER_REQUEST` |
 | `AWS::S3::Bucket` | All public access blocked. CORS: methods `PUT, GET`, origins from `WebOrigins`, headers `*` |
 | Function policies | `DynamoDBCrudPolicy` for each table, `S3CrudPolicy` for the bucket |
-| Parameters | `WebOrigins`, `GeminiApiKey` (NoEcho), `GeminiModel`, `SolanaMode`, `SolanaTreasurySecret` (NoEcho), `CivicMint` |
+| Parameters | `WebOrigins`, `GeminiApiKey` (NoEcho), `GeminiModel`, `SolanaMode`, `SolanaTreasurySecret` (NoEcho), `CivicMint`, `SolanaRpcUrl` (NoEcho) |
 | Outputs | `ApiUrl`, `PhotoBucketName` |
 
 Notes:
@@ -732,7 +732,7 @@ The Solana CLI is not required. `api/scripts/solana-setup.ts` does the same job 
    - Create the API's shared core: `api/src/index.ts` with `GET /health` and the error handler, `api/src/local.ts`, and `api/src/lib/env.ts`, `db.ts` and `errors.ts`. Pierre writes these once; after the first checkpoint they change only by agreement.
    - Write `api/template.yaml` in full from section 8, with the three tables and the bucket, so the first deploy creates everything Sarah needs.
 2. **Contract (both).** `shared/` is already written. Read its three files together once. From here on they change only by agreement.
-3. **First deploy (Pierre).** In `api/`: `npm run build`, then `sam deploy --guided --template-file template.yaml` with region `us-east-2` and `SolanaMode=off`. The guided deploy will not accept an empty answer for a secret, so type `none` for the Gemini key (if you don't have it yet), the treasury secret and the mint; the template turns `none` into an empty value. Every deploy after that is `npm run deploy`. Save the answers to `samconfig.toml`. Note `ApiUrl` and `PhotoBucketName` and send both to Sarah.
+3. **First deploy (Pierre).** In `api/`: `npm run build`, then `sam deploy --guided --template-file template.yaml` with region `us-east-2` and `SolanaMode=off`. The guided deploy will not accept an empty answer for a secret, so type `none` for the Gemini key (if you don't have it yet), the treasury secret, the mint and the Solana address; the template turns `none` into an empty value, or for the Solana address into the free public one. Every deploy after that is `npm run deploy`. Save the answers to `samconfig.toml`. Note `ApiUrl` and `PhotoBucketName` and send both to Sarah.
 4. **Local env (both).** Copy `api/.env.example` to `api/.env` and fill it from the stack outputs. Copy `web/.env.example` to `web/.env` with `VITE_API_URL=http://localhost:3001`.
 5. **Hosting (Pierre).** Connect Amplify as in section 8. Add the Amplify URL to `WebOrigins` and redeploy. Start the `streetcreds.app` custom domain at the same time, because DNS takes a while.
 6. **Solana (Pierre, 90-minute limit).** In `api/`, run `npm run solana-setup`. It is safe to run again; each run continues where the last one stopped. It:
@@ -778,7 +778,8 @@ The acceptance checks for each feature are in section 13. Run them on a real pho
 ### Deploying and logs
 
 - API: `npm run deploy` in `api/` (humans only). Logs: `sam logs --stack-name streetcreds --tail`.
-- Secrets and Solana settings: `npm run deploy-secrets` in `api/` (humans only). It deploys with `GEMINI_API_KEY`, `SOLANA_MODE`, `CIVIC_MINT` and `SOLANA_TREASURY_SECRET` taken from `api/.env`, without printing them or asking you to paste them, and saves the mode and mint in `samconfig.toml` so later plain deploys keep them. A secret that is not in `api/.env` is left as it is on the live API. Add `-- --dry-run` to see what it would send. Run it when one of those four values changes; use `npm run deploy` for everything else.
+- Secrets and Solana settings: `npm run deploy-secrets` in `api/` (humans only). It deploys with `GEMINI_API_KEY`, `SOLANA_MODE`, `CIVIC_MINT`, `SOLANA_TREASURY_SECRET` and `SOLANA_RPC_URL` taken from `api/.env`, without printing them or asking you to paste them, and saves the mode and mint in `samconfig.toml` so later plain deploys keep them. A secret that is not in `api/.env` is left as it is on the live API. Add `-- --dry-run` to see what it would send. Run it when one of those five values changes; use `npm run deploy` for everything else.
+- A dedicated Solana address: the free public devnet address refuses requests after about ten in quick succession, which shows up as awards left `pending` when many people play at once. To avoid it, get a devnet address from a provider (they have free tiers), put it in `api/.env` as `SOLANA_RPC_URL`, and run `npm run deploy-secrets`. That address usually contains an access key, so it is treated as a secret: it is never printed, and error messages have it removed before they are logged (`api/src/points/redact.ts`). It must be a devnet address; a mainnet one is refused.
 - Web: push to `main`; Amplify builds it.
 - Never log photo data, base64 strings or secrets. Log one JSON line per request: route, status, player id, milliseconds.
 
@@ -798,7 +799,7 @@ The acceptance checks for each feature are in section 13. Run them on a real pho
 | `ValidationException: ... reserved keyword` | `status` or `count` used directly in an expression | Alias with `ExpressionAttributeNames` |
 | Solana types or imports do not exist | `@solana/web3.js` 3.x was installed | `npm i @solana/web3.js@1` |
 | Airdrop fails with 429 | Devnet faucet rate limit | Use https://faucet.solana.com with the treasury address |
-| Awards stay `pending` | Devnet is slow, or the treasury is out of SOL | Check the treasury balance; points still count, so carry on |
+| Awards stay `pending` | Devnet is slow, the treasury is out of SOL, or the free public Solana address is refusing requests (`429 Too Many Requests` in the logs) | Check the treasury balance. For the 429, switch to a dedicated address (see "Deploying and logs"). Points still count either way |
 | `interactions` is undefined on the Gemini client | `@google/genai` is older than 2.3.0 | Update the package |
 | Lambda times out at 29 s | Gemini or Solana hung | Check the per-call limits in section 6 are in place |
 

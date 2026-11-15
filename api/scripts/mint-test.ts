@@ -7,8 +7,15 @@
 // It sends devnet transactions and never touches the database.
 import { Keypair } from '@solana/web3.js';
 import { env } from '../src/lib/env';
+import { redactRpcUrl } from '../src/points/redact';
 import { explorerTxUrl, mintPoints } from '../src/points/solana';
 import { withLimit } from '../src/points/withLimit';
+
+/** One line of an error, with the Solana address taken out: that address can hold an access key. */
+function describe(error: unknown): string {
+  const text = error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error);
+  return redactRpcUrl(text, env.SOLANA_RPC_URL);
+}
 
 const WAIT_LIMIT_MS = 30_000;
 // awardPoints waits this long before leaving an award "pending".
@@ -28,6 +35,8 @@ async function main(): Promise<void> {
     id: `mint-test-${Date.now()}`,
     walletAddress: env.SOLANA_MODE === 'per-player' ? Keypair.generate().publicKey.toBase58() : null,
   };
+  // Only the host is printed, never the full address.
+  console.log(`Solana address: ${new URL(env.SOLANA_RPC_URL).host}`);
   console.log(`Mode: ${env.SOLANA_MODE}. Sending ${count} test mint${count === 1 ? '' : 's'} of 1 CIVIC each.\n`);
 
   let succeeded = 0;
@@ -41,7 +50,7 @@ async function main(): Promise<void> {
       if (ms <= AWARD_LIMIT_MS) withinAwardLimit++;
       console.log(`${i}. sent in ${(ms / 1000).toFixed(1)} s  ${explorerTxUrl(signature)}`);
     } catch (error) {
-      console.log(`${i}. FAILED after ${((Date.now() - start) / 1000).toFixed(1)} s: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`);
+      console.log(`${i}. FAILED after ${((Date.now() - start) / 1000).toFixed(1)} s: ${describe(error)}`);
     }
   }
 
@@ -52,6 +61,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error(`Mint test failed: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(`Mint test failed: ${describe(error)}`);
   process.exitCode = 1;
 });
