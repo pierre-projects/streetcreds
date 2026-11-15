@@ -1,5 +1,25 @@
 import { locationFixError, locationMessages, MAX_ACCURACY_METERS, type LocationPurpose } from '../../../shared/location'
 import type { LocationFix } from '../../../shared/types'
+import { strings } from './strings'
+
+/**
+ * What to tell a player whose browser refused the request. The page sees one error for three
+ * different causes, and each needs a different fix:
+ *
+ * - the page was not loaded over https, where no browser gives a position;
+ * - on an iPhone or iPad, the browser app itself has no location permission. iOS then refuses
+ *   without ever asking, even with Location Services on, and the switch is in the Settings app,
+ *   not in the browser;
+ * - the player said no to this site.
+ */
+export function blockedMessage(): string {
+  if (globalThis.isSecureContext === false) return strings.location.notSecure
+  const nav = globalThis.navigator
+  const userAgent = nav?.userAgent ?? ''
+  // An iPad reports itself as a Mac, so it is told apart by its touch screen.
+  const appleMobile = /iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && (nav?.maxTouchPoints ?? 0) > 1)
+  return appleMobile ? strings.location.blockedOnIphone : locationMessages.denied
+}
 
 /**
  * How long one action waits for a reading that is precise enough. A phone's first reading is
@@ -64,7 +84,7 @@ export function readCurrentLocation(purpose: LocationPurpose = 'report'): Promis
       },
       (error) => {
         // Blocked: waiting will not change that.
-        if (error.code === 1) finish(locationMessages.denied)
+        if (error.code === 1) finish(blockedMessage())
         // The browser's own limit for a first reading. Ours matches it, so this is the end.
         else if (error.code === 3) finish(refused ?? locationMessages.timeout)
         // No position right now. With nothing received yet, say so at once. After a rough

@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { BoardLink } from './BoardLink'
-import { CoinIcon, HomeIcon, LeaderboardIcon, MapIcon } from './icons'
+import { CoinIcon, HomeIcon, LeaderboardIcon, MapIcon, ProfileIcon } from './icons'
 import { getStoredPlayerId, usePlayer } from './player'
 import { strings } from './strings'
 import { Wordmark } from './ui'
@@ -14,6 +14,7 @@ const NAV_ITEMS: { to: string; label: string; icon: ReactNode }[] = [
   { to: '/home', label: strings.nav.home, icon: <HomeIcon /> },
   { to: '/leaderboard', label: strings.nav.leaderboard, icon: <LeaderboardIcon /> },
   { to: '/map', label: strings.nav.map, icon: <MapIcon /> },
+  { to: '/profile', label: strings.nav.profile, icon: <ProfileIcon /> },
 ]
 
 /** Screens that are one quest from start to finish. */

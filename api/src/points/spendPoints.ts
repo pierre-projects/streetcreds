@@ -4,7 +4,7 @@ import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { Player } from '../../../shared/types';
 import { db, TABLES } from '../lib/db';
 import { ApiError } from '../lib/errors';
-import { isConditionalCheckFailed } from '../players/store';
+import { isConditionalCheckFailed, toPlayer } from '../players/store';
 
 /**
  * Subtracts `points` from the player's balance in one atomic step.
@@ -27,7 +27,7 @@ export async function spendPoints(playerId: string, points: number): Promise<Pla
         ReturnValues: 'ALL_NEW',
       }),
     );
-    return result.Attributes as Player;
+    return toPlayer(result.Attributes ?? {});
   } catch (error) {
     if (isConditionalCheckFailed(error)) {
       throw new ApiError('insufficient_points', `You need ${points} CIVIC for this deal.`);

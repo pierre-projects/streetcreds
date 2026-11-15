@@ -2,7 +2,7 @@
 
 This file is the implementation spec for StreetCreds: stack, data models, API contract, core functions, setup and build order. Rules for coding agents are in `AGENTS.md` at the repo root. The product reasoning, demo script and risks are in the PRD (`docs/PRD.md`). Where this file and the PRD differ on an implementation detail, this file wins.
 
-**The product in four lines.** A phone web app, no install and no login. A player joins with a nickname; their location assigns a neighborhood. They earn points by completing quests: photograph a street problem (Gemini labels it), or read a short summary of a real city council item and answer one question. Points are minted as a token on Solana devnet, and neighborhoods compete on a live leaderboard.
+**The product in four lines.** A phone web app, no install, and no login needed to play. A player joins with a nickname; their location assigns a neighborhood. Signing in with Google is optional and keeps a player's points and reports on any device (see `docs/ACCOUNTS.md`). They earn points by completing quests: photograph a street problem (Gemini labels it), or read a short summary of a real city council item and answer one question. Points are minted as a token on Solana devnet, and neighborhoods compete on a live leaderboard.
 
 **Location update approved by Pierre on 2026-11-15:** joining and report submission require a current device location inside Tempe. The API assigns a new player's neighborhood and rejects remote reports. No manual neighborhood or report-pin selection. See [LOCATION-BASED-PLAY.md](LOCATION-BASED-PLAY.md) for game zones, limits, existing-player behavior and the browser-location limitation.
 
@@ -132,6 +132,10 @@ Who may change which file, including the wiring lines each person may add to `in
 | `WEB_ORIGINS` | api | `http://localhost:5173,https://streetcreds.app,https://www.streetcreds.app,https://main.xxxx.amplifyapp.com` | No |
 | `GEMINI_API_KEY` | api | from Google AI Studio | **Yes** |
 | `GEMINI_MODEL` | api | `gemini-3.8-flash` | No |
+| `TABLE_ACCOUNTS` | api | `streetcreds-accounts` | No |
+| `TABLE_SESSIONS` | api | `streetcreds-sessions` | No |
+| `GOOGLE_CLIENT_ID` | api | The Google OAuth client id (type "Web application"). Empty turns sign-in off | No, it is public |
+| `VITE_GOOGLE_CLIENT_ID` | web | The same client id. Empty hides every sign-in control | No, it is public |
 | `SOLANA_MODE` | api | `off`, `per-player` or `shared` | No |
 | `SOLANA_RPC_URL` | api | `https://api.devnet.solana.com`, or a dedicated devnet address from a provider | **Yes**, when it holds an access key |
 | `SOLANA_TREASURY_SECRET` | api | base64 of the 64-byte secret key | **Yes** |
@@ -181,6 +185,21 @@ export interface Player {
   walletAddress: string | null;  // devnet public key; null unless SOLANA_MODE is per-player
   recentReportTimes: string[];   // ISO times of submitted reports in the last hour
   createdAt: string;             // ISO 8601 UTC
+  accountId: string | null;      // set once the player is saved to a sign-in account; null for a guest
+}
+
+// Server only, never sent to the client.
+export interface Account {
+  id: string;                    // `google:{sub}`: Google's opaque id for the account
+  accountId: string;             // uuid, copied into Player.accountId
+  playerId: string;
+  createdAt: string;
+}
+export interface Session {
+  id: string;                    // SHA-256 (hex) of the session token
+  playerId: string;
+  createdAt: string;
+  expiresAt: number;             // epoch seconds; the table's time-to-live attribute
 }
 
 export interface Report {
@@ -233,7 +252,7 @@ export interface LeaderboardRow {
 
 ### Database models
 
-Five DynamoDB tables, one item type each (players, reports, awards, deal unlocks, deal redemptions). Every table has the partition key `id` (string), no sort key and no indexes. The attribute names are exactly the field names of the TypeScript types, so an item read with the document client is already a valid typed item. Store `null` fields as DynamoDB `NULL`; do not omit them.
+Seven DynamoDB tables, one item type each (players, reports, awards, deal unlocks, deal redemptions, accounts, sessions). Player rows written before accounts existed have no `accountId` attribute; `toPlayer()` in `api/src/players/store.ts` reads that as `null`, and every read of a player row goes through it. Every table has the partition key `id` (string), no sort key and no indexes. The attribute names are exactly the field names of the TypeScript types, so an item read with the document client is already a valid typed item. Store `null` fields as DynamoDB `NULL`; do not omit them.
 
 **`streetcreds-players`** holds `Player`.
 
@@ -333,6 +352,14 @@ Five DynamoDB tables, one item type each (players, reports, awards, deal unlocks
 | Create an award, once | awards | `PutItem`, condition `attribute_not_exists(#id)` |
 | Mark an award sent | awards | `UpdateItem`, `SET #txSignature = :sig, #chainStatus = :sent` |
 | Has this player earned this council item? | awards | `GetItem` on the deterministic id |
+| A player's own reports | reports | Paginated `Scan`, filter `#playerId = :playerId` |
+| Save a guest player to an account | players | `UpdateItem`, `SET #accountId = :id`, condition: the player exists and `accountId` is missing or `NULL` |
+| Find the player a Google account owns | accounts | `GetItem` on `google:{sub}` |
+| Create an account, once | accounts | `PutItem`, condition `attribute_not_exists(#id)` |
+| Undo a half-made link; free a dead one | accounts | `DeleteItem` |
+| Start a session | sessions | `PutItem` |
+| Check a session | sessions | `GetItem` on the token's SHA-256 |
+| Sign out | sessions | `DeleteItem` |
 
 Table definitions for `api/template.yaml`. The other two tables are the same with their own names.
 
@@ -357,6 +384,8 @@ PlayersTable:
 | DynamoDB table | `streetcreds-players` | `id` (string) | `Player` |
 | DynamoDB table | `streetcreds-reports` | `id` (string) | `Report` |
 | DynamoDB table | `streetcreds-awards` | `id` (string) | `Award` |
+| DynamoDB table | `streetcreds-accounts` | `id` = `google:{sub}` | `Account`: which player a Google account owns |
+| DynamoDB table | `streetcreds-sessions` | `id` = SHA-256 of the token | `Session`; rows delete themselves after `expiresAt` |
 | JSON file | `api/src/quests/council.json` | n/a | `CouncilItem[]`, bundled with the Lambda |
 | S3 bucket | `PHOTO_BUCKET` | `reports/{playerId}/{uuid}.jpg` | Report photos, private |
 
@@ -371,7 +400,9 @@ DynamoDB rules for this project:
 
 ## 5. API contract
 
-Base URL is `VITE_API_URL`. All bodies are JSON. The request and response types for every route are in `shared/api.ts`; use them on both sides. There is no login: the caller sends its `playerId`. Anyone can send someone else's id. That is accepted for the demo and must not be "fixed" with accounts.
+Base URL is `VITE_API_URL`. All bodies are JSON. The request and response types for every route are in `shared/api.ts`; use them on both sides. The caller sends its `playerId`.
+
+**Who may act for a player.** A guest player (`accountId` is null) is trusted by id alone: anyone who knows the id can use it. That is accepted for guests. A player saved to a Google account is protected: every route that takes a player id calls `requirePlayer(c, playerId)` from `api/src/players/auth.ts`, which answers `404 not_found` for an unknown player and `401 unauthorized` unless the request carries that player's session token as `Authorization: Bearer {token}`. New routes that take a player id must call it too. The API stores only Google's opaque account id, never an email, name or picture. The design and the reasons are in `docs/ACCOUNTS.md`.
 
 Errors always look like this, with the matching HTTP status:
 
@@ -382,7 +413,9 @@ Errors always look like this, with the matching HTTP status:
 | Code | Status | When |
 | --- | --- | --- |
 | `validation_failed` | 400 | Body or query fails its zod schema |
-| `not_found` | 404 | Player, report or council item does not exist |
+| `unauthorized` | 401 | The Google token is not valid, or the player is saved to an account and the request has no live session for it |
+| `not_found` | 404 | Player, report or council item does not exist; or `POST /auth/google` found no saved player and no guest to save |
+| `already_linked` | 409 | `POST /players` with a Google token whose account already owns a player |
 | `already_submitted` | 409 | Report is not a draft any more |
 | `already_awarded` | 409 | This player already earned this award |
 | `not_street_problem` | 422 | Gemini says the photo shows no street problem |
@@ -408,6 +441,9 @@ Errors always look like this, with the matching HTTP status:
 | 10 | `POST /quests/council/answer` | Sarah | P1 |
 | 11 | `GET /deals` | Pierre | P2 Local Deals — see `docs/PRD-LOCAL-DEALS.md` |
 | 12 | `POST /deals/:partnerId/redeem` | Pierre | P2 Local Deals |
+| 13 | `POST /auth/google` | Pierre | Accounts (asked for by name, 2026-11-15) |
+| 14 | `POST /auth/signout` | Pierre | Accounts |
+| 15 | `GET /players/:id/reports` | Pierre | Profile |
 
 Routes 3 and 7 are not in the PRD's first API table. They exist because the home screen needs to refresh points, and because the player must be able to correct the label before points are awarded. Routes 11–12 and the optional `unlock` on submit are the Local Deals stretch.
 
@@ -417,8 +453,24 @@ Routes 3 and 7 are not in the PRD's first API table. They exist because the home
 Request: `{ "nickname": string, "location": LocationFix }`, where `LocationFix` is `{ lat, lng, accuracyMeters, capturedAt }` and `capturedAt` is an ISO timestamp.
 Steps: trim the nickname and check 2 to 20 characters; refuse an offensive nickname with `400 validation_failed` and the message "Pick a different nickname." (`isBlockedNickname` in `api/src/players/nickname.ts`); validate the location's age (at most 60 seconds old and 10 seconds ahead, plus 2 minutes either way for a device clock that differs from the server's), accuracy (at most 500 meters to join; a report needs 100) and membership in the City's published polygon; assign the neighborhood from the game zones; create `id` with `crypto.randomUUID()`; if `SOLANA_MODE` is `per-player`, set `walletAddress` to a new keypair's public key and discard the secret key (awards only need the address); write the player with `points: 0`. Do not store joining coordinates.
 Response: `201 { "player": Player }`.
+With the optional `"credential": string` (Google's ID token, from "Continue with Google"): after the location check, verify the token (`verifyGoogleCredential`), write the account row `google:{sub}` with the condition that it does not exist (`409 already_linked` if it does), write the player with that account's `accountId`, and start a session. If the player write fails, delete the account row. Response: `201 { "player": Player, "sessionToken": string }`.
 
-**3. `GET /players/:id`** returns `200 { "player": Player }` or `404 not_found`.
+**3. `GET /players/:id`** returns `200 { "player": Player }`, `404 not_found`, or `401 unauthorized` for a saved player without their session.
+
+**13. `POST /auth/google`**
+Request: `{ "credential": string, "playerId"?: string }`. `playerId` is the guest player on the device, if there is one.
+Steps: verify the token; look up the account `google:{sub}`.
+1. The account exists: start a session for its player. `switched` is true when `playerId` was sent and is a different player. (If the account's player row is gone, delete the account and carry on as if there were none.)
+2. No account, and `playerId` is a guest: write the account (condition: it does not exist), then set the player's `accountId` (condition: still a guest). If the second write is refused, delete the account and answer `404`.
+3. Otherwise `404 not_found`. The join screen then asks for a nickname and calls route 2 with the same credential.
+
+Response: `200 { "player": Player, "sessionToken": string, "switched": boolean }`. A guest's points and reports are never merged into a saved player: when `switched` is true the web warns first and stores nothing until the player agrees; if they decline it calls route 14 with that token.
+
+**14. `POST /auth/signout`** deletes the session whose token is in the `Authorization` header, if there is one. Always `200 { "ok": true }`.
+
+**15. `GET /players/:id/reports`**
+Steps: `requirePlayer`; scan the reports table for that `playerId`; drop drafts and sort newest first (`ownReports`, pure, has a test); add a presigned `photoUrl` to each, 3600 seconds, as in route 8.
+Response: `200 { "reports": PublicReport[] }`.
 
 **4. `GET /leaderboard`**
 Response: `200 { "neighborhoods": LeaderboardRow[], "updatedAt": string }`.
@@ -636,12 +688,14 @@ Pure function from `Player[]` to `LeaderboardRow[]`. All four neighborhoods pres
 | `/council/:itemId` | Summary, question, result | Sarah | routes 9, 10 |
 | `/leaderboard` | Neighborhood ranking | Pierre | route 4, every 4 seconds |
 | `/map` | Pins for open reports | Pierre | route 8 |
+| `/profile` | The player on this device: nickname, neighborhood, points, their own reports on a map and in a list, the street cred card, and "Save your player" or "Sign out". Private: it never shows another player | Pierre | routes 3, 4, 13, 14, 15 |
 
 ### Shared pieces (Pierre builds first)
 
 - **`app/App.tsx`**: registers all nine paths from the start. Until Sarah's screens exist, `/report`, `/council` and `/council/:itemId` render a placeholder; she swaps in her screens by changing those route lines.
 - **`app/api.ts`**: one `request<T>(path, init)` helper that prefixes `VITE_API_URL`, parses JSON, and throws `ApiError { status, code, message }` for non-2xx responses. It exports one object, `api`, with one typed function per route for all ten routes (Pierre writes Sarah's six as well, so her screens can start on mocks), plus `api.uploadPhoto(uploadUrl, blob)` for the direct `PUT` to the bucket. Screens call `api.createReport(...)` and so on, and never call `fetch` themselves. When `VITE_USE_MOCKS` is `true`, the same functions answer from `app/mock/` after a short delay. The mock keeps a little state while the tab is open (points, submitted reports, answered council items) and resets on reload. Its example data is typed TypeScript in `app/mock/fixtures.ts`, so a contract change breaks the build instead of letting the examples drift; Sarah may change the report and council examples. To see an error state, change `MOCK_REPORT_RESULT` at the top of `app/mock/index.ts`.
-- **`app/player.ts`**: the player id is stored in `localStorage` under `streetcreds.playerId`. `usePlayer()` loads the player with TanStack Query and refetches every 4 seconds. On `404`, clear the id and go to `/join`.
+- **`app/session.ts`, `app/google.ts`**: the session token of a signed-in player (`localStorage`, `streetcreds.session`), sent by `request()` in `api.ts` with every API call and never to the photo bucket; and the loader for Google's sign-in button, which fetches Google's script only when a button is about to be shown. With `VITE_GOOGLE_CLIENT_ID` unset, `GOOGLE_SIGN_IN_ON` is false and every sign-in control is hidden. In mock mode a plain button stands in for Google; `MOCK_SAVED_PLAYER` in `app/mock/index.ts` chooses whether the mock Google account already owns a player.
+- **`app/player.ts`**: `completeSignIn(player, sessionToken?)` makes the device play as a player, `signOutHere()` forgets it, and `useStoredPlayerId()` redraws screens when the player on the device changes. A `401` is treated like the `404` below. The player id is stored in `localStorage` under `streetcreds.playerId`. `usePlayer()` loads the player with TanStack Query and refetches every 4 seconds. On `404`, clear the id and go to `/join`.
 - **`app/strings.ts`**: every user-facing string for the shell and the player screens, in one object keyed by name. Quest screens keep theirs in `features/quests/strings.ts`, in the same shape, so Sarah never has to edit Pierre's file. Screens read their text from these files. This is what makes the P2 Spanish toggle a small job.
 - **`app/queryClient.ts`**: the one TanStack Query client, the query keys, and the 4-second polling interval.
 - **`app/Layout.tsx`**: header with nickname and points, content area, bottom navigation (Home, Leaderboard, Map).
@@ -658,7 +712,7 @@ One screen driven by a state value: `idle`, `resizing`, `uploading`, `labeling`,
 5. **Confirm.** Show the photo, description, severity and a category picker preselected with Gemini's answer.
 6. **Locate.** On "Submit", `readCurrentLocation()` in `app/location.ts` listens with `navigator.geolocation.watchPosition` and `{ enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }` until the first reading that is fresh and within 100 meters, then stops. A phone's first reading is often a rough one, so a rough reading is not an error while time is left. It listens for at most 12 seconds, for this one action only, and keeps nothing. If location is denied, or no precise reading arrives in time, keep the draft and offer a location retry. There is no manual pin fallback. The server checks the same freshness/accuracy limits and the City's polygon before publishing.
 7. **Submit.** `POST /reports/:id/submit`.
-8. **Reward** (`RewardCard`): points earned, new total, and by `award.chainStatus`: `sent` shows the explorer link, `pending` shows "On-chain confirmation pending", `off` shows nothing. Under it, the "Send to Tempe 311" panel for the report just filed (see "Send to Tempe 311" below).
+8. **Reward** (`RewardCard`): points earned, new total, and by `award.chainStatus`: `sent` shows the explorer link, `pending` shows "On-chain confirmation pending", `off` shows nothing. Under it, the street cred card (`share/ShareCard.tsx`, see "Street cred card" below) with the photo still on the phone, then the "Send to Tempe 311" panel for the report just filed (see "Send to Tempe 311" below).
 
 Camera capture and geolocation need HTTPS or `localhost`. They do not work on `http://192.168.x.x`, so test on a phone through the deployed Amplify URL.
 
@@ -735,6 +789,14 @@ For a report at a spot the City's survey recorded too, one line is added after `
 City ADA survey: This corner has no curb ramp. S MILL AVE & W BROADWAY RD, SW corner. Record 260515171717, surveyed 2017-05-19, listed as awaiting repair.
 ```
 
+### Street cred card (in `features/quests/share/`, built by Pierre with Sarah's agreement)
+
+- `ShareCard` shows on the reward step (`<ShareCard player earned photoUrl emphasis="secondary" />`) and on the profile (`<ShareCard player />`). It works the same for a guest and a signed-in player.
+- `shareCred.ts` (pure, has a test) builds what the card says from the player and the leaderboard: nickname, points, neighborhood and its rank, and what was just earned. Nothing more exact than the neighborhood, and nothing the public leaderboard does not already show.
+- `drawShareCard.ts` draws a 1080 by 1350 PNG on a canvas with the app's token colors and font. `photoUrl` must be a picture already on the device (an object URL): a photo from another site would stop the canvas being saved.
+- The picture is drawn when the card appears, not when Share is pressed, because a phone only opens its share sheet straight from a tap. Share tries, in order: the phone's share sheet with the picture, the share sheet with text and link, then saving the picture and copying the text.
+- Its copy is the `share` group in `features/quests/strings.ts`.
+
 ### Look and feel
 
 - Phone-first: design at 375 px wide, content column capped at 480 px and centered on larger screens.
@@ -749,12 +811,12 @@ City ADA survey: This corner has no curb ramp. S MILL AVE & W BROADWAY RD, SW co
 
 | Resource | Key settings |
 | --- | --- |
-| `AWS::Serverless::HttpApi` | CORS: origins from the `WebOrigins` parameter, methods `GET, POST, OPTIONS`, header `content-type` |
+| `AWS::Serverless::HttpApi` | CORS: origins from the `WebOrigins` parameter, methods `GET, POST, OPTIONS`, headers `content-type` and `authorization` (the session token) |
 | `AWS::Serverless::Function` | Runtime `nodejs24.x`, `arm64`, memory 512 MB, timeout 29 s, one `HttpApi` event on `$default`. `CodeUri: dist/`, `Handler: index.handler`. The code is bundled by `npm run build` (esbuild: entry `src/index.ts`, format `cjs`, target `es2022`, output `dist/index.js`), not by SAM |
-| Three `AWS::DynamoDB::Table` | Names from section 4, key `id` (S), `BillingMode: PAY_PER_REQUEST` |
+| Seven `AWS::DynamoDB::Table` | Names from section 4, key `id` (S), `BillingMode: PAY_PER_REQUEST`. The sessions table has `TimeToLiveSpecification` on `expiresAt` |
 | `AWS::S3::Bucket` | All public access blocked. CORS: methods `PUT, GET`, origins from `WebOrigins`, headers `*` |
 | Function policies | `DynamoDBCrudPolicy` for each table, `S3CrudPolicy` for the bucket |
-| Parameters | `WebOrigins`, `GeminiApiKey` (NoEcho), `GeminiModel`, `SolanaMode`, `SolanaTreasurySecret` (NoEcho), `CivicMint`, `SolanaRpcUrl` (NoEcho) |
+| Parameters | `GoogleClientId` (public; `none` keeps sign-in off), `WebOrigins`, `GeminiApiKey` (NoEcho), `GeminiModel`, `SolanaMode`, `SolanaTreasurySecret` (NoEcho), `CivicMint`, `SolanaRpcUrl` (NoEcho) |
 | Outputs | `ApiUrl`, `PhotoBucketName` |
 
 Notes:
@@ -931,7 +993,9 @@ These are settled. Do not redesign them during the hackathon.
 
 | Decision | Reason |
 | --- | --- |
-| No login; the player id is the only identity | Judges will not create accounts |
+| No login is needed to play; a guest's player id is their only identity. Signing in with Google is optional (changed 2026-11-15, agreed by both) | Judges will not create accounts, and a player who wants their street cred on another device can have it. `docs/ACCOUNTS.md` |
+| Accounts store Google's opaque account id and nothing else; sessions are random tokens stored as hashes | No email, name or picture to protect, and no signing secret to deploy |
+| A guest's progress is not merged into a saved player | The tokens already minted to the guest's address cannot move (its key was discarded); the screen warns before switching instead |
 | One Lambda with a router, not one per route | One thing to deploy and debug |
 | The API is bundled by our own esbuild script, not by `sam build` | `sam build` failed on the first try: it builds from a copy of `api/` that cannot reach `shared/` |
 | DynamoDB with scans and no indexes | A few hundred items; simplest correct code |
@@ -950,7 +1014,7 @@ A feature is done when its checks pass on a real phone against the deployed site
 
 **F1. Join (P0)**
 - Opening the URL on a phone shows the join screen in under 3 seconds.
-- Nickname (2 to 20 characters) and location access are required. The server assigns a neighborhood only for a fresh position inside Tempe, accurate to 500 meters or better, so a laptop on Wi-Fi can join. No email or password.
+- Nickname (2 to 20 characters) and location access are required. The server assigns a neighborhood only for a fresh position inside Tempe, accurate to 500 meters or better, so a laptop on Wi-Fi can join. No email or password: "Continue with Google" is offered and never required.
 - An offensive nickname is refused with "Pick a different nickname." A real name such as Dickson is accepted.
 - The player id is stored on the phone, so a refresh keeps the player signed in.
 - With `SOLANA_MODE=per-player`, the new player has a `walletAddress`. The player never sees a seed phrase.
@@ -988,6 +1052,24 @@ A feature is done when its checks pass on a real phone against the deployed site
 - City records: a `blocked-sidewalk` or `other` report within 30 meters of a City record says so in its popup, and its copied city report has the `City ADA survey` line.
 - City records: with a "Helpful places" group switched on, drinking fountains, restrooms and food sites show as white dots, and zoomed in as diamond pins whose popup gives the place and what the City says about it.
 - City records: with `web/public/data/city-records.json` missing, the switches are disabled with a plain message and the reports still show.
+
+**F8. Accounts (asked for by name, 2026-11-15)**
+- A guest can play everything without signing in, exactly as before.
+- "Save your player" on the profile links the guest to a Google account; the profile then says "Signed in with Google".
+- After signing out, or on a second phone, "Continue with Google" on the join screen brings back the same player with the same points and reports, with no location needed.
+- A new person who chooses "Continue with Google" fills the nickname form and gets a player that is already saved.
+- Signing in on a phone that holds a different guest player warns that the guest's points will not move, and changes nothing unless the player agrees.
+- `GET /players/:id` for a saved player answers `401` without that player's session. The accounts table holds no email, name or picture.
+- With `VITE_GOOGLE_CLIENT_ID` unset, no sign-in control shows and the game works as guest-only.
+
+**F9. Profile**
+- `/profile` shows the nickname, neighborhood, points and joining date of the player on this device, how many reports they sent in, those reports on a map and in a list, and an empty state that leads to the report quest.
+- It never shows another player.
+
+**F10. Street cred card**
+- After a report, and on the profile, "Share" opens the phone's share sheet with a picture of the player's points, neighborhood and rank (and the report photo after a report).
+- Where there is no share sheet, the picture is saved and the text copied, and the screen says so.
+- The card and its text name nothing more exact than the neighborhood.
 
 **F7. Stretch (P2, only when asked)**
 - Budget quest with one "your $100 in taxes" question from the published city budget.

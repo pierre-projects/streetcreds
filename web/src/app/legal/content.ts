@@ -35,9 +35,10 @@ export const legalContent = {
       ] },
       device: { paragraphs: [
         'Your browser saves a player ID so you can return to the game. No email or password is required. We do not use advertising or analytics trackers.',
+        'Signing in with Google is optional. If you do, Google tells us who you are with an ID for your Google account, and we store that ID so you can get the same player back on another device. We do not store your email address, name or picture. Your browser also saves a sign-in token; signing out removes it from the device and from our records. Google’s sign-in button is loaded from Google only on screens that offer it, and Google’s own policies cover what Google collects there.',
       ] },
       public: { paragraphs: [
-        'Player profiles and submitted reports can be viewed by others. Leaderboards show nicknames and scores. Report photos, locations and descriptions appear on the public map. Use a nickname that does not identify you.',
+        'Submitted reports can be viewed by others. Your profile screen is shown only to you. Leaderboards show nicknames and scores. Report photos, locations and descriptions appear on the public map. Use a nickname that does not identify you.',
       ] },
       services: { paragraphs: [
         'AWS hosts the app and stores game data. Uploaded photos are sent to Google Gemini to identify street problems. OpenStreetMap supplies map tiles. Hosting and map providers receive your IP address; service logs may include request details and player IDs.',

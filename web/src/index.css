@@ -179,8 +179,8 @@ body {
   /* A screen fades in when the player moves to it, so one screen does not snap into the next. */
   .screen-enter { animation: fade-in 0.16s ease-out backwards; }
   .points-total { @apply font-display text-display text-coin; overflow-wrap: anywhere; }
-  .dark-detail { @apply border-t border-on-ink/30 pt-4 text-sm text-on-ink/70; }
-  .wallet-link { @apply inline-flex min-h-11 items-center text-on-ink underline focus-visible:outline-2 focus-visible:outline-offset-4; }
+  .dark-detail { @apply border-t border-ink/10 pt-4 text-sm text-muted; }
+  .wallet-link { @apply inline-flex min-h-11 items-center text-ink underline focus-visible:outline-2 focus-visible:outline-offset-4; }
   .section-title { @apply text-lg font-bold text-ink; }
   /* Heights inside a scrolling page use svh, not dvh: dvh changes while the phone's address bar
      slides away during a scroll, and the map would change height under the player's finger. */
@@ -261,7 +261,7 @@ body {
   .board-side-head { @apply flex flex-col gap-3 border-b border-ink/10 p-4 lg:px-6; }
   .board-list { @apply p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-6; }
   .board-city-dock {
-    @apply absolute bottom-3 left-3 z-[1000] hidden max-w-[34rem] flex-col text-on-ink lg:flex;
+    @apply absolute bottom-3 left-3 z-[1000] hidden max-w-[34rem] flex-col text-ink lg:flex;
     border-radius: var(--radius-card);
     background: rgb(10 10 10 / .72);
     backdrop-filter: blur(12px);
@@ -269,11 +269,11 @@ body {
     box-shadow: var(--shadow-float);
   }
   .board-city-fold {
-    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control text-on-ink hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control text-ink hover:bg-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
   }
   .board-city-fold[aria-expanded="false"] svg { @apply rotate-180; }
   .city-key {
-    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control hover:bg-on-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-control hover:bg-ink/15 focus-visible:outline-2 focus-visible:outline-offset-[-4px] outline-accent;
   }
   .board-city-panel { @apply flex flex-col gap-2 px-4 pb-4 pt-1; }
   .board-city-inline { @apply border-t border-ink/10 pt-3 lg:hidden; }
@@ -352,6 +352,10 @@ body {
   .quest-row.is-locked { @apply opacity-70 hover:border-ink/10 active:scale-100; }
   .quest-icon { @apply flex size-12 shrink-0 items-center justify-center rounded-control; }
   .quest-points { @apply flex shrink-0 items-center gap-1.5 font-display text-lg tabular-nums text-coin; }
+  .profile-hero { @apply rounded-card border border-accent bg-raised p-5; }
+  .profile-initial {
+    @apply flex size-16 shrink-0 items-center justify-center rounded-full bg-accent font-display text-3xl text-on-accent ring-1 ring-accent ring-offset-2 ring-offset-raised;
+  }
   .team-tile {
     @apply flex min-h-12 items-center justify-center rounded-control border border-ink/10 bg-raised px-3 text-center text-sm font-bold text-ink;
   }
@@ -570,21 +574,21 @@ html:has(.app-main-radar) { overscroll-behavior: none; }
 .pin-resource, .filter-diamond { transform: rotate(45deg); }
 .pin-resource > span, .filter-diamond > span { transform: rotate(-45deg); }
 
-.board-city-dock .filter-toggle { background: transparent; border-color: var(--color-on-ink); color: var(--color-on-ink); outline-color: var(--color-accent); }
+.board-city-dock .filter-toggle { background: transparent; border-color: var(--color-ink); color: var(--color-ink); outline-color: var(--color-accent); }
 .board-city-dock .filter-toggle[aria-pressed="false"],
 .board-city-dock .filter-toggle:disabled {
-  border-color: color-mix(in srgb, var(--color-on-ink) 45%, transparent);
-  color: color-mix(in srgb, var(--color-on-ink) 70%, transparent);
+  border-color: color-mix(in srgb, var(--color-ink) 45%, transparent);
+  color: color-mix(in srgb, var(--color-ink) 70%, transparent);
 }
 .board-city-dock .filter-toggle[aria-pressed="false"] .filter-square { opacity: .55; }
-.board-city-dock .text-muted { color: color-mix(in srgb, var(--color-on-ink) 75%, transparent); }
+.board-city-dock .text-muted { color: color-mix(in srgb, var(--color-ink) 75%, transparent); }
 .city-key .filter-square { width: 1.625rem; height: 1.625rem; font-size: 13px; }
 .city-key[aria-pressed="false"] .filter-square,
 .city-key:disabled .filter-square {
   border-style: dotted;
-  border-color: color-mix(in srgb, var(--color-on-ink) 60%, transparent);
+  border-color: color-mix(in srgb, var(--color-ink) 60%, transparent);
   background: transparent;
-  color: color-mix(in srgb, var(--color-on-ink) 70%, transparent);
+  color: color-mix(in srgb, var(--color-ink) 70%, transparent);
 }
 
 .filter-toggle[aria-pressed="false"] .filter-dot { background: var(--color-surface); border-color: var(--color-ink); }

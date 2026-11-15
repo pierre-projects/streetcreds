@@ -11,6 +11,7 @@ import { QuestHeader } from './QuestHeader'
 import { CameraIcon } from './QuestIcons'
 import { resizeImage } from './resizeImage'
 import { RewardCard } from './RewardCard'
+import { ShareCard } from './share/ShareCard'
 import { questStrings } from './strings'
 
 type Phase =
@@ -181,6 +182,17 @@ export function ReportScreen() {
     return (
       <div className="space-y-5">
         <RewardCard award={award} player={player} unlock={unlock} />
+        {/* The street cred card, with the photo that is still on this phone. */}
+        {report ? (
+          <Card>
+            <ShareCard
+              player={player}
+              earned={{ points: award.points, category: report.category }}
+              photoUrl={previewUrl}
+              emphasis="secondary"
+            />
+          </Card>
+        ) : null}
         {/* Passing the report on to the City's own form. The photo is the one still on this phone. */}
         {report ? (
           <Card>

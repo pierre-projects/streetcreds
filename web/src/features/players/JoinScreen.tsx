@@ -1,29 +1,54 @@
 // The server assigns a neighborhood from a one-time device location. No email or password.
 // POST /players makes the player, and the id it returns is kept on the phone.
+//
+// "Continue with Google" is optional. A returning person goes straight home as their saved
+// player. A new person fills the same form, and the player is saved to their account from the start.
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
 import { NEIGHBORHOODS, NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
-import { api } from '../../app/api'
+import { api, ApiError } from '../../app/api'
 import { BoardLink } from '../../app/BoardLink'
+import { GOOGLE_SIGN_IN_ON } from '../../app/google'
 import { legalLinkClass } from '../../app/legal/LegalLinks'
 import { readCurrentLocation } from '../../app/location'
-import { getStoredPlayerId, storePlayerId } from '../../app/player'
+import { completeSignIn, getStoredPlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
 import { Button, ErrorNotice, MayorAvatar, MayorSays, TextField, Wordmark } from '../../app/ui'
+import { GoogleSignInButton } from './GoogleSignInButton'
+
+const isCode = (error: unknown, code: ApiError['code']) => error instanceof ApiError && error.code === code
 
 export function JoinScreen() {
   const navigate = useNavigate()
   const [nickname, setNickname] = useState('')
   const [locating, setLocating] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
+  // Google's ID token for someone who signed in but has no saved player yet. The form finishes the job.
+  const [credential, setCredential] = useState<string | null>(null)
+
+  const signIn = useMutation({
+    mutationFn: (googleCredential: string) => api.signInWithGoogle({ credential: googleCredential }),
+    onSuccess: ({ player, sessionToken }) => {
+      completeSignIn(player, sessionToken)
+      void navigate('/home', { replace: true })
+    },
+    onError: (error, googleCredential) => {
+      // No saved player for this Google account: a new person. Keep the token for the form.
+      if (isCode(error, 'not_found')) setCredential(googleCredential)
+    },
+  })
 
   const join = useMutation({
     mutationFn: api.createPlayer,
-    onSuccess: ({ player }) => {
-      storePlayerId(player.id)
+    onSuccess: ({ player, sessionToken }) => {
+      completeSignIn(player, sessionToken)
       void navigate('/home', { replace: true })
+    },
+    onError: (error, request) => {
+      // The Google account got a saved player since the button was pressed. Sign in to it instead.
+      if (isCode(error, 'already_linked') && request.credential !== undefined) signIn.mutate(request.credential)
     },
   })
 
@@ -32,9 +57,11 @@ export function JoinScreen() {
     return <Navigate to="/home" replace />
   }
 
+  const busy = locating || join.isPending || signIn.isPending
+
   async function submit(event: FormEvent) {
     event.preventDefault()
-    if (locating || join.isPending) return
+    if (busy) return
     const trimmed = nickname.trim()
     if (trimmed.length < NICKNAME_MIN || trimmed.length > NICKNAME_MAX) {
       setProblem(strings.join.nicknameInvalid(NICKNAME_MIN, NICKNAME_MAX))
@@ -47,15 +74,28 @@ export function JoinScreen() {
       // Joining only uses the reading to pick a team, so it accepts a rougher one than a report does.
       const location = await readCurrentLocation('join')
       setLocating(false)
-      join.mutate({ nickname: trimmed, location })
+      join.mutate({ nickname: trimmed, location, ...(credential === null ? {} : { credential }) })
     } catch (error) {
       setProblem(error instanceof Error ? error.message : strings.join.locationError)
       setLocating(false)
     }
   }
 
-  // What the player got wrong on this screen, or else what the API said.
-  const message = problem || (join.isError ? join.error.message || strings.errors.generic : null)
+  function onGoogle(googleCredential: string) {
+    if (busy) return
+    setProblem(null)
+    join.reset()
+    signIn.mutate(googleCredential)
+  }
+
+  // What the player got wrong on this screen, or else what the API said. The two errors that
+  // only steer the flow (a new person, an account that is already saved) are not shown.
+  const joinFailed = join.isError && !isCode(join.error, 'already_linked')
+  const signInFailed = signIn.isError && !isCode(signIn.error, 'not_found')
+  const message =
+    problem ||
+    (joinFailed ? join.error.message || strings.errors.generic : null) ||
+    (signInFailed ? signIn.error.message || strings.auth.failed : null)
   const game = strings.game.join
 
   return (
@@ -73,6 +113,19 @@ export function JoinScreen() {
           <p className="text-center text-base text-ink">{game.mayor}</p>
         </MayorSays>
       </div>
+
+      {GOOGLE_SIGN_IN_ON && (
+        <section className="mt-6 space-y-2">
+          {credential === null ? (
+            <>
+              <GoogleSignInButton onCredential={onGoogle} busy={signIn.isPending} />
+              <p className="text-center text-sm leading-relaxed text-muted">{strings.auth.joinHint}</p>
+            </>
+          ) : (
+            <p role="status" className="text-sm leading-relaxed text-ink">{strings.auth.newPerson}</p>
+          )}
+        </section>
+      )}
 
       <form onSubmit={submit} noValidate className="mt-6 flex flex-1 flex-col gap-6">
         <TextField
@@ -97,7 +150,7 @@ export function JoinScreen() {
 
         <div className="mt-auto">
           {message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>}
-          <Button type="submit" disabled={locating || join.isPending}>
+          <Button type="submit" disabled={busy}>
             {locating ? strings.join.locating : join.isPending ? strings.join.submitting : game.start}
           </Button>
           <p className="mt-3 text-center text-xs leading-relaxed text-muted">{game.finePrint}</p>

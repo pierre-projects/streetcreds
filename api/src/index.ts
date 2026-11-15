@@ -5,6 +5,7 @@ import { handle } from 'hono/aws-lambda';
 import type { HealthResponse } from '../../shared/api';
 import { dealRoutes } from './deals/routes';
 import { handleError, handleNotFound } from './lib/errors';
+import { authRoutes } from './players/authRoutes';
 import { playerRoutes } from './players/routes';
 import { councilRoutes } from './quests/councilRoutes';
 import { reportRoutes } from './quests/reportRoutes';
@@ -38,6 +39,7 @@ app.get('/health', (c) => {
 
 // Route files. Add one line here to mount your own.
 app.route('/', playerRoutes);
+app.route('/', authRoutes);
 app.route('/', reportRoutes);
 app.route('/', councilRoutes);
 app.route('/', dealRoutes);

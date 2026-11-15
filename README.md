@@ -13,15 +13,20 @@ Built at [sunhacks 2026](https://sunhacks-2026.devpost.com/) at Arizona State Un
 
 ## Status
 
-In progress during the hackathon. So far a player can join with a nickname and a neighborhood, see their points, watch the neighborhood leaderboard update, and open the map of reports. The two quests are still to build.
+Playable end to end. A player joins with a nickname and a neighborhood (Google sign-in is optional), reports a street problem or answers a council question, and watches the points land in their wallet and on the neighborhood leaderboard.
 
 | Part | State |
 | --- | --- |
 | Product plan, technical spec, agent rules | Done |
 | Shared contract (`shared/`): constants, data types, API types | Done |
-| API (`api/`) | Joining, loading a player and the leaderboard work against the database. `awardPoints` exists as a database-only stand-in. Quest routes are not built |
-| Web app (`web/`) | App shell, join screen, home screen, the live leaderboard and the map with "Send to Tempe 311". On a big screen, a live board at `/board` shows the map, the standings and every open report. The two quest screens are placeholders |
-| Solana points | Each new player gets a devnet address, and every award is minted as a CIVIC token with a link to the transaction. If devnet is slow the points still count and the award is marked pending |
+| Report quest | Photo goes straight to S3, Gemini labels it, and the report lands on the map. Any report can be sent on to the City's 311 form |
+| Council quest | Plain-language summaries of real Tempe City Council items, drafted with Gemini, with one question each |
+| Players and boards | Joining inside the City of Tempe, the live leaderboard, the map with public City records, a big-screen board at `/board`, the profile screen and a share card |
+| Local Deals | Spend points at partner places near you |
+| Solana points | Each player gets a devnet address, and every award is minted as a CIVIC token with a link to the transaction. If devnet is slow the points still count and the award is marked pending |
+| Not built | English and Spanish, duplicate detection, streaks |
+
+Which sunhacks prizes we enter, and why, is in [TRACKS.md](docs/TRACKS.md).
 
 ## Documentation
 
@@ -33,6 +38,7 @@ In progress during the hackathon. So far a player can join with a nickname and a
 | [SARAH-SETUP.md](docs/SARAH-SETUP.md) | Setup guide for Sarah: how the pieces fit, signing in to AWS, running the app locally, common errors | You are Sarah and setting up your laptop |
 | [PIERRE-PHASES.md](docs/PIERRE-PHASES.md) | Pierre's checklist and agent prompts for every phase | You are Pierre and want to know what to do next |
 | [TECHNICAL.md](docs/TECHNICAL.md) | The implementation spec: stack and versions, data models, API contract, core functions, setup, development guide, build order | You're writing code |
+| [TRACKS.md](docs/TRACKS.md) | The sunhacks prizes we enter, what earns each one, the ones we skip and the gaps not to claim | You're writing the Devpost submission or the demo |
 | [CONTRIBUTING.md](docs/CONTRIBUTING.md) | GitHub rules: branches, commits, pull requests, conflicts, secrets, the deadline | Before your first commit, and whenever Git gets confusing |
 | [AGENTS.md](AGENTS.md) | Rules for AI coding agents: hard rules, who owns which folders, commands, definition of done | You point Cursor, Claude Code or another agent at this repo |
 
@@ -57,10 +63,10 @@ The phone uploads photos straight to S3 and sends everything else through the AP
 streetcreds/
   README.md     start here
   AGENTS.md     rules for coding agents (agents look for it at the root)
-  docs/         PRD, TECHNICAL, CONTRIBUTING, PHASES, SARAH-PHASES, PIERRE-PHASES
+  docs/         PRD, TECHNICAL, TRACKS, CONTRIBUTING and the phase checklists
   shared/       the contract both sides import: constants, data types, API types
-  api/          the backend (planned)
-  web/          the phone web app (planned)
+  api/          the backend: one Lambda running Hono
+  web/          the phone web app
 ```
 
 `shared/` is fixed. Changes to it need both team members to agree first.
@@ -135,8 +141,10 @@ Outfit by Rodrigo Fuenzalida / Smartsheet Inc (The Outfit Project Authors), unde
 - The location improvements (waiting for a precise reading, the looser accuracy limit for joining, the allowance for device clocks, and the bundled copy of the City boundary with `api/scripts/city-boundary.ts`) were written with Claude Code (Anthropic).
 - The Home map fixes and the motion rules (`web/src/app/motion.ts`, the motion and "Reduce motion" sections of `web/src/index.css`) were written with Claude Code (Anthropic). The reduced-motion rules follow the `accessible-animation` skill from `iart-ai/web-animation-skills` (MIT).
 - "Send to Tempe 311" (`web/src/features/players/tempe311.ts`, `CityHandoff.tsx`, `CityHandoffDialog.tsx`, and the reward-screen and map-popup wiring) was written with Claude Code (Anthropic). The links into the City of Tempe's service request form were worked out by reading that form's own page; nothing was submitted to it.
+- Optional Google sign-in, the profile screen and the street cred share card (`api/src/players/auth.ts`, `authRoutes.ts`, `google.ts`, `sessions.ts`, `accounts.ts`, `playerReports.ts`, `web/src/app/google.ts`, `session.ts`, `web/src/features/players/ProfileScreen.tsx`, `GoogleSignInButton.tsx`, `web/src/features/quests/share/`, and their tests) were written with Claude Code (Anthropic). Sign-in follows Google's "Sign in with Google for Web" guide (https://developers.google.com/identity/gsi/web/guides/overview) and its ID token checks (https://developers.google.com/identity/gsi/web/guides/verify-google-id-token).
 - The council quest (`api/scripts/generate-council.ts`, `api/src/quests/council.json`, `councilRoutes.ts`, and the council screens) was implemented with Cursor Agent / Composer. Agenda text is from the City of Tempe Agenda Online portal (Regular City Council Meeting, Nov 5, 2026).
 - The live route check that runs after every deploy (`api/scripts/check-live.ts`, `api/scripts/lib/liveRoutes.ts`) was written with Claude Code (Anthropic).
+- The prize tracks write-up (`docs/TRACKS.md`) and the updated README status were drafted with Claude Code (Anthropic), from the sunhacks 2026 Devpost prize list.
 
 ## License
 

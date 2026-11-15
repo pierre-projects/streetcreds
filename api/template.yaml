@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: StreetCreds API. One Lambda behind an HTTP API, five DynamoDB tables and one private photo bucket.
+Description: StreetCreds API. One Lambda behind an HTTP API, seven DynamoDB tables and one private photo bucket.
 
 # Deploy with `npm run deploy` in api/ (humans only). Stack name: streetcreds. Region: us-east-2 (the AWS project is locked to it).
 # The answers to `sam deploy --guided` are saved in samconfig.toml, which is git-ignored.
@@ -47,7 +47,13 @@ Parameters:
     Default: none
     Description: A dedicated Solana DEVNET address. It usually contains an access key, so it is a secret. Type none to use the free public address.
 
+  GoogleClientId:
+    Type: String
+    Default: none
+    Description: The Google OAuth client id that the web app signs in with. Public, not a secret. Leave as none to keep sign-in switched off.
+
 Conditions:
+  NoGoogleClientId: !Equals [!Ref GoogleClientId, none]
   NoGeminiApiKey: !Equals [!Ref GeminiApiKey, none]
   NoSolanaTreasurySecret: !Equals [!Ref SolanaTreasurySecret, none]
   NoCivicMint: !Equals [!Ref CivicMint, none]
@@ -66,6 +72,8 @@ Resources:
           - OPTIONS
         AllowHeaders:
           - content-type
+          # Carries the session token of a signed-in player.
+          - authorization
         MaxAge: 600
 
   ApiFunction:
@@ -87,6 +95,9 @@ Resources:
           TABLE_AWARDS: !Ref AwardsTable
           TABLE_DEAL_UNLOCKS: !Ref DealUnlocksTable
           TABLE_DEAL_REDEMPTIONS: !Ref DealRedemptionsTable
+          TABLE_ACCOUNTS: !Ref AccountsTable
+          TABLE_SESSIONS: !Ref SessionsTable
+          GOOGLE_CLIENT_ID: !If [NoGoogleClientId, '', !Ref GoogleClientId]
           PHOTO_BUCKET: !Ref PhotoBucket
           WEB_ORIGINS: !Join [',', !Ref WebOrigins]
           GEMINI_API_KEY: !If [NoGeminiApiKey, '', !Ref GeminiApiKey]
@@ -107,6 +118,10 @@ Resources:
             TableName: !Ref DealUnlocksTable
         - DynamoDBCrudPolicy:
             TableName: !Ref DealRedemptionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AccountsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SessionsTable
         - S3CrudPolicy:
             BucketName: !Ref PhotoBucket
       Events:
@@ -175,6 +190,36 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+
+  # Which player a Google account owns. Key: google:{sub}. No email, name or picture is stored.
+  AccountsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: streetcreds-accounts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  # One row per device a player is signed in on. Key: the SHA-256 of the session token.
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: streetcreds-sessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      # Ended sessions delete themselves. expiresAt is in epoch seconds.
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
 
   PhotoBucket:
     Type: AWS::S3::Bucket

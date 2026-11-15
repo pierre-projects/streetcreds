@@ -9,7 +9,9 @@ type ErrorStatus = (typeof ERROR_CODES)[ErrorCode];
 // Written for the player. Pass your own message when you can say something more specific.
 const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   validation_failed: 'Something in that request is not right. Check it and try again.',
+  unauthorized: 'Sign in again to keep playing.',
   not_found: 'We could not find that.',
+  already_linked: 'That Google account already has a saved player. Sign in instead.',
   already_submitted: 'This report was already submitted.',
   already_awarded: 'You already earned these points.',
   insufficient_points: 'You do not have enough CIVIC for this deal yet.',

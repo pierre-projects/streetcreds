@@ -36,6 +36,37 @@ export interface Player {
   recentReportTimes: string[];
   /** ISO 8601 UTC. */
   createdAt: string;
+  /**
+   * Set once the player is saved to a sign-in account, null for a guest. An opaque uuid: never
+   * Google's own id, an email or a name. A linked player's routes need that player's session.
+   */
+  accountId: string | null;
+}
+
+/**
+ * Table streetcreds-accounts. Key: id. Server only, never sent to the client.
+ * The link from a sign-in account to the one player it owns.
+ */
+export interface Account {
+  /** `google:{sub}`, where sub is Google's opaque id for the account. */
+  id: string;
+  /** uuid. The value copied into Player.accountId. */
+  accountId: string;
+  playerId: string;
+  createdAt: string;
+}
+
+/**
+ * Table streetcreds-sessions. Key: id. Server only, never sent to the client.
+ * One per device a player is signed in on.
+ */
+export interface Session {
+  /** SHA-256 (hex) of the session token. The token itself is only ever on the player's device. */
+  id: string;
+  playerId: string;
+  createdAt: string;
+  /** Epoch seconds. Also the table's time-to-live attribute, so old sessions delete themselves. */
+  expiresAt: number;
 }
 
 /** Table streetcreds-reports. Key: id. */

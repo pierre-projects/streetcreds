@@ -2,5 +2,5 @@
 import type { HTMLAttributes } from 'react'
 import { cx } from './cx'
 export function Eyebrow({ className, tone = 'plain', ...props }: HTMLAttributes<HTMLParagraphElement> & { tone?: 'plain' | 'dark' }) {
-  return <p {...props} className={cx('font-mono text-label uppercase', tone === 'dark' ? 'text-on-ink/70' : 'text-muted', className)} />
+  return <p {...props} className={cx('font-mono text-label uppercase', tone === 'dark' ? 'text-muted' : 'text-muted', className)} />
 }

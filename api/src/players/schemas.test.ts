@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CreatePlayerSchema } from './schemas';
+import { CreatePlayerSchema, GoogleSignInSchema } from './schemas';
 import { locationMessages } from '../../../shared/location';
 
 const location = { lat: 33.418, lng: -111.934, accuracyMeters: 20, capturedAt: new Date().toISOString() };
@@ -65,5 +65,42 @@ describe('CreatePlayerSchema', () => {
     const result = CreatePlayerSchema.parse({ nickname: 'Sam', location, neighborhood: 'south-tempe' });
     expect(result).not.toHaveProperty('neighborhood');
     expect(result.location).toEqual(location);
+  });
+});
+
+describe('CreatePlayerSchema with Google', () => {
+  it('joins as a guest when there is no credential', () => {
+    expect(CreatePlayerSchema.parse({ nickname: 'Sam', location })).not.toHaveProperty('credential');
+  });
+
+  it('passes a credential through for "Continue with Google"', () => {
+    expect(CreatePlayerSchema.parse({ nickname: 'Sam', location, credential: 'a.b.c' }).credential).toBe('a.b.c');
+  });
+
+  it('rejects an empty credential', () => {
+    expect(CreatePlayerSchema.safeParse({ nickname: 'Sam', location, credential: '' }).success).toBe(false);
+  });
+});
+
+describe('GoogleSignInSchema', () => {
+  it('accepts a credential on its own, from a device with no player', () => {
+    expect(GoogleSignInSchema.parse({ credential: 'a.b.c' })).toEqual({ credential: 'a.b.c' });
+  });
+
+  it('accepts the guest player on the device', () => {
+    expect(GoogleSignInSchema.parse({ credential: 'a.b.c', playerId: 'guest-1' }).playerId).toBe('guest-1');
+  });
+
+  it('rejects a missing or empty credential with a message a player can read', () => {
+    for (const body of [{}, { credential: '' }, { credential: 42 }, null]) {
+      const result = GoogleSignInSchema.safeParse(body);
+      expect(result.success).toBe(false);
+    }
+    const result = GoogleSignInSchema.safeParse({ credential: '' });
+    if (!result.success) expect(result.error.issues[0]?.message).toBe('Google sign-in did not work. Try again.');
+  });
+
+  it('rejects an empty player id', () => {
+    expect(GoogleSignInSchema.safeParse({ credential: 'a.b.c', playerId: '' }).success).toBe(false);
   });
 });

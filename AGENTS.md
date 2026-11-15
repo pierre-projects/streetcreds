@@ -22,7 +22,7 @@ Read `docs/TECHNICAL.md` in full before writing code. Do not guess a route, fiel
 4. **Keep the pinned major versions** in `docs/TECHNICAL.md` section 1. In particular `@solana/web3.js` stays on 1.x: `@solana/spl-token` 0.4 does not work with 3.x.
 5. **Priorities.** Finish every P0 item before any P1, and every P1 before any P2. Do not build P2 features unless asked by name.
 6. **No new dependencies** beyond the list in `docs/TECHNICAL.md` without asking.
-7. **No accounts or personal data.** Players have a nickname and a neighborhood. Do not add email, login, analytics or tracking.
+7. **Accounts are optional and minimal.** Players have a nickname and a neighborhood, and can play without signing in. Optional Google sign-in (`docs/ACCOUNTS.md`) stores only Google's opaque account id. Do not store an email, name or picture, do not make sign-in a requirement to play, and do not add another sign-in method, analytics or tracking without asking.
 8. **Ask before anything that leaves the laptop.** Do not run `sam deploy`, `git push`, a Solana airdrop, a script that sends a Solana transaction (`solana-setup.ts`, `mint-test.ts`) or anything that creates cloud resources or costs money on your own. Print the command and wait.
 9. **Credit sources.** The hackathon rules require crediting tutorials and AI tools. When you follow a tutorial or generate a substantial file, add one line to the Credits section of `README.md`.
 
@@ -48,6 +48,8 @@ The hand-offs between the halves:
 - `awardPoints()` and the rate-limit helper `checkReportLimit()`: Pierre provides them, Sarah's routes call them.
 - The typed client functions in `web/src/app/api.ts` and the mock fixtures, for all ten routes: Pierre provides them, Sarah's screens use them.
 - `GET /reports`: Sarah provides it, Pierre's map reads it.
+- `requirePlayer(c, playerId)` in `api/src/players/auth.ts`: Pierre provides it, and every route that takes a player id calls it instead of loading the player itself. It is what protects a signed-in player.
+- `ShareCard` in `web/src/features/quests/share/`: the street cred card, used by Sarah's reward step and Pierre's profile.
 
 ## Commands
 
