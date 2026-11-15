@@ -61,7 +61,8 @@ Run from the package folder named.
 | `api/` | `npm run dev` | Local API on http://localhost:3001, using the real AWS tables and bucket |
 | `api/` | `npm run check` | Type-check and unit tests |
 | `api/` | `npm run seed` | Load demo players and reports (asks before writing) |
-| `api/` | `npx tsx scripts/mint-test.ts [count]` | Send test mints to devnet and print the explorer links. Humans only, see rule 8 |
+| `api/` | `npm run solana-setup` | Create the devnet treasury and the CIVIC mint, and write both values into `api/.env`. Humans only, see rule 8 |
+| `api/` | `npm run mint-test` | Send one test mint to devnet and print its explorer link. Add `-- 10` for ten in a row. Humans only, see rule 8 |
 | `api/` | `npm run build` | Bundle the API into `api/dist/index.js` with esbuild. Safe to run any time |
 | `api/` | `npm run deploy` | `npm run build`, then `sam deploy`. Humans only, see rule 8. Never `sam build` |
 
