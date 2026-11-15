@@ -1,22 +1,22 @@
-// The first screen: a nickname and a neighborhood, nothing else. No email, no password.
+// The server assigns a neighborhood from a one-time device location. No email or password.
 // POST /players makes the player, and the id it returns is kept on the phone.
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
-import { NEIGHBORHOODS, NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
-import type { NeighborhoodId } from '../../../../shared/types'
+import { NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
 import { api } from '../../app/api'
 import { BoardLink } from '../../app/BoardLink'
 import { legalLinkClass } from '../../app/legal/LegalLinks'
+import { readCurrentLocation } from '../../app/location'
 import { getStoredPlayerId, storePlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
-import { Button, ErrorNotice, LogoMark, OptionCard, ScreenHeader, TextField } from '../../app/ui'
+import { Button, ErrorNotice, LogoMark, ScreenHeader, TextField } from '../../app/ui'
 
 export function JoinScreen() {
   const navigate = useNavigate()
   const [nickname, setNickname] = useState('')
-  const [neighborhood, setNeighborhood] = useState<NeighborhoodId | null>(null)
+  const [locating, setLocating] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
 
   const join = useMutation({
@@ -32,19 +32,26 @@ export function JoinScreen() {
     return <Navigate to="/home" replace />
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault()
+    if (locating || join.isPending) return
     const trimmed = nickname.trim()
     if (trimmed.length < NICKNAME_MIN || trimmed.length > NICKNAME_MAX) {
       setProblem(strings.join.nicknameInvalid(NICKNAME_MIN, NICKNAME_MAX))
       return
     }
-    if (neighborhood === null) {
-      setProblem(strings.join.neighborhoodInvalid)
-      return
-    }
     setProblem(null)
-    join.mutate({ nickname: trimmed, neighborhood })
+    join.reset()
+    setLocating(true)
+    try {
+      // Joining only uses the reading to pick a team, so it accepts a rougher one than a report does.
+      const location = await readCurrentLocation('join')
+      setLocating(false)
+      join.mutate({ nickname: trimmed, location })
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : strings.join.locationError)
+      setLocating(false)
+    }
   }
 
   // What the player got wrong on this screen, or else what the API said.
@@ -68,19 +75,16 @@ export function JoinScreen() {
           maxLength={NICKNAME_MAX} autoComplete="nickname" autoCapitalize="words" enterKeyHint="done"
         />
 
-        <fieldset>
-          <legend className="text-base font-medium text-ink">{strings.join.neighborhoodLabel}</legend>
-          <div className="mt-2 grid gap-2">
-            {NEIGHBORHOODS.map((option) => (
-              <OptionCard key={option.id} name="neighborhood" value={option.id} checked={neighborhood === option.id} onChange={setNeighborhood} label={option.name} />
-            ))}
-          </div>
-        </fieldset>
+        <section aria-labelledby="join-location" className="space-y-2">
+          <h2 id="join-location" className="text-base font-medium text-ink">{strings.join.neighborhoodLabel}</h2>
+          <p className="text-sm leading-relaxed text-muted">{strings.join.locationHint}</p>
+          <Link to="/board" className={legalLinkClass}>{strings.join.watchBoard}</Link>
+        </section>
 
         <div className="mt-auto">
           {message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>}
-          <Button type="submit" disabled={join.isPending}>
-            {join.isPending ? strings.join.submitting : strings.join.submit}
+          <Button type="submit" disabled={locating || join.isPending}>
+            {locating ? strings.join.locating : join.isPending ? strings.join.submitting : strings.join.submit}
           </Button>
           <p className="mt-3 text-center text-sm leading-relaxed text-muted">
             {strings.legal.joinPrefix}{' '}

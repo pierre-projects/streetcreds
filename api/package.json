@@ -10,7 +10,8 @@
     "solana-setup": "tsx --env-file-if-exists=.env scripts/solana-setup.ts",
     "mint-test": "tsx --env-file-if-exists=.env scripts/mint-test.ts",
     "deploy-secrets": "tsx --env-file-if-exists=.env scripts/deploy-secrets.ts",
-    "city-records": "tsx scripts/city-records.ts"
+    "city-records": "tsx scripts/city-records.ts",
+    "city-boundary": "tsx scripts/city-boundary.ts"
   },
   "type": "commonjs",
   "dependencies": {

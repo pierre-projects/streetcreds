@@ -8,6 +8,9 @@
 // To see an error state on the report screen, change MOCK_REPORT_RESULT below.
 import { NICKNAME_MAX, NICKNAME_MIN, POINTS } from '../../../../shared/constants'
 import type { ErrorCode } from '../../../../shared/api'
+import type { LocationPurpose } from '../../../../shared/location'
+import { createPlayAreaLookup, PlayLocationError } from '../../../../shared/playArea'
+import { TEMPE_BOUNDARY } from '../../../../shared/tempeBoundary'
 import type { Award, DealUnlockView, Player, PublicReport, QuestType, Report } from '../../../../shared/types'
 import type { Api } from '../api'
 import { ApiError } from '../apiError'
@@ -22,6 +25,18 @@ const MOCK_CHAIN_STATUS: Award['chainStatus'] = 'pending'
 
 const DELAY_MS = 400
 const wait = (ms = DELAY_MS) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+// The same check the API makes, with the bundled copy of the boundary behind it, so mock mode
+// also works with no network. There is no clock allowance: the reading and this check share a clock.
+const lookupLocation = createPlayAreaLookup(undefined, { fallback: TEMPE_BOUNDARY })
+
+async function requireMockLocation(location: Parameters<typeof lookupLocation>[0], purpose: LocationPurpose) {
+  try {
+    return await lookupLocation(location, purpose)
+  } catch (error) {
+    if (error instanceof PlayLocationError) fail(error.code, error.message)
+    throw error
+  }
+}
 
 const STATUS: Record<ErrorCode, number> = {
   validation_failed: 400,
@@ -106,7 +121,8 @@ export const mockApi: Api = {
     if (nickname.length < NICKNAME_MIN || nickname.length > NICKNAME_MAX) {
       fail('validation_failed', `Nickname must be ${NICKNAME_MIN} to ${NICKNAME_MAX} characters.`)
     }
-    player = { ...mockPlayer, nickname, neighborhood: body.neighborhood, points: 0, createdAt: new Date().toISOString() }
+    const neighborhood = await requireMockLocation(body.location, 'join')
+    player = { ...mockPlayer, nickname, neighborhood, points: 0, createdAt: new Date().toISOString() }
     return { player }
   },
 
@@ -169,20 +185,22 @@ export const mockApi: Api = {
 
   async submitReport(reportId, body) {
     await wait(700)
+    await requireMockLocation(body.location, 'report')
+    const { lat, lng } = body.location
     const draft = drafts.get(reportId)
     if (!draft) fail('not_found')
     if (draft.status !== 'draft') fail('already_submitted')
     const report: Report = {
       ...draft,
-      lat: body.lat,
-      lng: body.lng,
+      lat,
+      lng,
       category: body.category ?? draft.category,
       status: 'open',
       submittedAt: new Date().toISOString(),
     }
     drafts.set(reportId, report)
     submitted.unshift({ ...report, photoUrl: MOCK_PHOTO_URL })
-    const unlock = unlockNear(body.lat, body.lng)
+    const unlock = unlockNear(lat, lng)
     return { report, award: award('report-new', report.id), player, merged: false, ...(unlock ? { unlock } : {}) }
   },
 
