@@ -148,11 +148,14 @@ export function JoinScreen() {
           <Link to="/board" className={legalLinkClass}>{strings.join.watchBoard}</Link>
         </section>
 
-        <div className="mt-auto">
+        {/* Pierre: stays at the bottom while the rest scrolls, so Join is in view on a short phone. */}
+        <div className="sticky bottom-0 mt-auto bg-page py-3">
           {message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>}
           <Button type="submit" disabled={busy}>
             {locating ? strings.join.locating : join.isPending ? strings.join.submitting : game.start}
           </Button>
+        </div>
+        <div>
           <p className="mt-3 text-center text-xs leading-relaxed text-muted">{game.finePrint}</p>
           <p className="mt-1 text-center text-xs leading-relaxed text-muted">
             {strings.legal.joinPrefix}{' '}

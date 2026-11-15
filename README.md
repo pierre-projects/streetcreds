@@ -123,6 +123,7 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - Map tiles are the Esri World Light Gray Canvas (Esri, HERE, Garmin, OpenStreetMap contributors), shown with Leaflet and react-leaflet.
 - The accessibility records and helpful places on the map are public City of Tempe data: the ADA Transition Plan survey, the "bus stops without a shelter" layer, and the drinking fountain, park restroom and community food site layers, from the City's open data services (`gis.tempe.gov` and the TempeData ArcGIS Online organization).
 - The City records script (`api/scripts/city-records.ts`, `api/scripts/lib/`) and the City records layer on the map (`web/src/features/players/cityRecords.ts`, `cityText.ts`, `CityRecordsLayer.tsx`, `CityLayerToggles.tsx`) were generated with Claude Code (Anthropic). The page checks follow an earlier project of Pierre's, Patchnote.
+- The neighborhood edges on the map (`web/src/features/players/neighborhoodZones.ts`, `NeighborhoodLayer.tsx`) were generated with Claude Code (Anthropic).
 
 - Local Deals (curated partners, proximity unlock, redeem) and the minimum report quest path were generated with Cursor Agent / Composer.
 - The report quest API (`api/src/quests/`: upload URL, Gemini `labelPhoto`, create/submit/list reports, `label-photos.ts`) was completed with Cursor Agent / Composer.

@@ -506,6 +506,30 @@ html:has(.app-main-radar) { overscroll-behavior: none; }
 .leaflet-control-attribution a { position: relative; }
 .leaflet-control-attribution a::after { content: ""; position: absolute; left: -8px; right: -8px; bottom: -4px; height: 44px; }
 
+/* The four neighborhoods: thin lines for their edges, and the player's own in the accent color.
+   `stroke` here wins over the color Leaflet writes on the path itself. */
+.zone-line { stroke: var(--color-muted); stroke-opacity: 0.75; }
+.zone-line-yours { stroke: var(--color-accent); stroke-opacity: 1; }
+/* A neighborhood's name. Its marker has no size, and the name is centered on the marker's point. */
+.zone-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  text-align: center;
+  color: var(--color-ink);
+  font: 700 11px/1.3 var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  /* A dark edge around the letters, so they read over streets and their names. */
+  text-shadow: 0 0 2px var(--color-page), 0 0 4px var(--color-page), 0 0 8px var(--color-page);
+}
+/* Under the top edge of a rectangle instead of on it. */
+.zone-label-hung { transform: translate(-50%, 6px); }
+/* The orange line is what marks the player's own. Its name stays in ink, so it reads on any map. */
+.zone-label small { display: block; font-size: 10px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+
 /* Map pins: severity fill, white ring, soft elevation; category is label text only. */
 .leaflet-marker-icon.pin-target { display: flex; align-items: center; justify-content: center; }
 .pin-stack {

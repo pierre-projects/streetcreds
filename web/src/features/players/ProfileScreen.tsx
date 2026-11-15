@@ -93,14 +93,14 @@ export function ProfileScreen() {
         <ShareCard player={me} />
       </Card>
 
-      <OwnReports playerId={me.id} />
+      <OwnReports playerId={me.id} neighborhood={me.neighborhood} />
 
       <AccountCard me={me} />
     </div>
   )
 }
 
-function OwnReports({ playerId }: { playerId: string }) {
+function OwnReports({ playerId, neighborhood }: { playerId: string; neighborhood: NeighborhoodId }) {
   const reports = useQuery({
     queryKey: playerReportsKey(playerId),
     queryFn: () => api.listPlayerReports(playerId),
@@ -138,7 +138,7 @@ function OwnReports({ playerId }: { playerId: string }) {
               aria-label={strings.profile.reportsMapLabel}
               className="relative isolate z-0 h-64 overflow-hidden rounded-card border border-ink/10"
             >
-              <ReportsMap pins={pins} />
+              <ReportsMap pins={pins} yourNeighborhood={neighborhood} />
             </div>
           )}
           <ul className="grid gap-3">
