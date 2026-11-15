@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react'
 import { CATEGORIES } from '../../../../shared/constants'
-import type { Award, Category, DealUnlockView, Player, Report } from '../../../../shared/types'
+import type { Award, Category, DealUnlockView, LocationFix, Player, Report } from '../../../../shared/types'
 import { api, ApiError } from '../../app/api'
+import { readCurrentLocation } from '../../app/location'
 import { usePlayer } from '../../app/player'
 import { Button, Card, ErrorNotice, OptionCard, ScreenHeader } from '../../app/ui'
 import { CityHandoff } from '../players/CityHandoff'
-import { LocationPicker } from './LocationPicker'
 import { resizeImage } from './resizeImage'
 import { RewardCard } from './RewardCard'
 import { questStrings } from './strings'
@@ -17,7 +17,7 @@ type Phase =
   | 'labeling'
   | 'confirm'
   | 'locating'
-  | 'picking'
+  | 'location-error'
   | 'submitting'
   | 'reward'
   | 'error'
@@ -76,22 +76,20 @@ export function ReportScreen() {
     }
   }
 
-  function requestLocation() {
+  async function requestLocation() {
+    if (phase === 'locating' || phase === 'submitting') return
+    setError(null)
     setPhase('locating')
-    if (!navigator.geolocation) {
-      setPhase('picking')
-      return
+    try {
+      const location = await readCurrentLocation()
+      await submitAt(location)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : questStrings.report.locationRequired)
+      setPhase('location-error')
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        void submitAt(pos.coords.latitude, pos.coords.longitude)
-      },
-      () => setPhase('picking'),
-      { enableHighAccuracy: true, timeout: 10_000 },
-    )
   }
 
-  async function submitAt(lat: number, lng: number) {
+  async function submitAt(location: LocationFix) {
     const me = playerQuery.data
     if (!me || !report) return
     setPhase('submitting')
@@ -99,8 +97,7 @@ export function ReportScreen() {
     try {
       const result = await api.submitReport(report.id, {
         playerId: me.id,
-        lat,
-        lng,
+        location,
         category: category !== report.category ? category : undefined,
       })
       // The report as it was published, with its place and final category, for "Send to Tempe 311".
@@ -112,7 +109,7 @@ export function ReportScreen() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : questStrings.report.retry
       setError(message)
-      setPhase('error')
+      setPhase('location-error')
     }
   }
 
@@ -160,7 +157,7 @@ export function ReportScreen() {
       ) : null}
 
       {phase === 'resizing' || phase === 'uploading' || phase === 'labeling' || phase === 'locating' || phase === 'submitting' ? (
-        <p className="text-muted">
+        <p className="text-muted" role="status">
           {phase === 'resizing'
             ? questStrings.report.resizing
             : phase === 'uploading'
@@ -194,11 +191,18 @@ export function ReportScreen() {
               />
             ))}
           </fieldset>
-          <Button onClick={requestLocation}>{questStrings.report.submit}</Button>
+          <p className="text-sm leading-relaxed text-muted">{questStrings.report.locationRequired}</p>
+          <Button onClick={() => void requestLocation()}>{questStrings.report.submit}</Button>
         </div>
       ) : null}
 
-      {phase === 'picking' ? <LocationPicker onConfirm={(lat, lng) => void submitAt(lat, lng)} /> : null}
+      {phase === 'location-error' ? (
+        <div className="space-y-3">
+          <ErrorNotice message={error} fallback={questStrings.report.locationRequired} />
+          <Button onClick={() => void requestLocation()}>{questStrings.report.retryLocation}</Button>
+          <Button variant="secondary" onClick={reset}>{questStrings.report.tryAnother}</Button>
+        </div>
+      ) : null}
 
       {phase === 'reward' && award && player ? <RewardCard award={award} player={player} unlock={unlock} /> : null}
       {/* Passing the report on to the City's own form. The photo is the one still on this phone. */}

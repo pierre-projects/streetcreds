@@ -11,7 +11,7 @@ import type {
   DealRedemption,
   DealUnlockView,
   LeaderboardRow,
-  NeighborhoodId,
+  LocationFix,
   Player,
   PublicReport,
   Report,
@@ -25,7 +25,8 @@ export interface HealthResponse {
 // POST /players (Pierre) -> 201
 export interface CreatePlayerRequest {
   nickname: string;
-  neighborhood: NeighborhoodId;
+  /** The server assigns the neighborhood from this device reading. */
+  location: LocationFix;
 }
 
 // POST /players, GET /players/:id (Pierre)
@@ -60,8 +61,8 @@ export interface CreateReportResponse {
 // POST /reports/:id/submit (Sarah). Publishes the report and awards points.
 export interface SubmitReportRequest {
   playerId: string;
-  lat: number;
-  lng: number;
+  /** The report is placed at this device reading; arbitrary pins are not accepted. */
+  location: LocationFix;
   /** Present when the player corrected Gemini's category. */
   category?: Category;
 }

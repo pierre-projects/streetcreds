@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CreatePlayerSchema } from './schemas';
+import { locationMessages } from '../../../shared/location';
 
-const parse = (nickname: unknown, neighborhood: unknown = 'asu-campus') =>
-  CreatePlayerSchema.safeParse({ nickname, neighborhood });
+const location = { lat: 33.418, lng: -111.934, accuracyMeters: 20, capturedAt: new Date().toISOString() };
+const parse = (nickname: unknown, fix: unknown = location) =>
+  CreatePlayerSchema.safeParse({ nickname, location: fix });
 
 describe('CreatePlayerSchema', () => {
   it('rejects a nickname of 1 character', () => {
@@ -36,12 +38,13 @@ describe('CreatePlayerSchema', () => {
     expect(parse('Dickson').success).toBe(true);
   });
 
-  it('rejects an unknown neighborhood', () => {
+  it('rejects a missing location even when a neighborhood is supplied', () => {
+    expect(CreatePlayerSchema.safeParse({ nickname: 'Sam', neighborhood: 'asu-campus' }).success).toBe(false);
     expect(parse('Sam', 'mesa').success).toBe(false);
   });
 
-  it('rejects a missing nickname or neighborhood', () => {
-    expect(CreatePlayerSchema.safeParse({ neighborhood: 'asu-campus' }).success).toBe(false);
+  it('rejects a missing nickname or location', () => {
+    expect(CreatePlayerSchema.safeParse({ location }).success).toBe(false);
     expect(CreatePlayerSchema.safeParse({ nickname: 'Sam' }).success).toBe(false);
     expect(CreatePlayerSchema.safeParse(null).success).toBe(false);
   });
@@ -54,7 +57,13 @@ describe('CreatePlayerSchema', () => {
     }
     const badPlace = parse('Sam', 'mesa');
     if (!badPlace.success) {
-      expect(badPlace.error.issues[0]?.message).toBe('Pick one of the four neighborhoods.');
+      expect(badPlace.error.issues[0]?.message).toBe(locationMessages.required);
     }
+  });
+
+  it('never passes a supplied neighborhood to the route', () => {
+    const result = CreatePlayerSchema.parse({ nickname: 'Sam', location, neighborhood: 'south-tempe' });
+    expect(result).not.toHaveProperty('neighborhood');
+    expect(result.location).toEqual(location);
   });
 });

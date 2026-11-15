@@ -15,6 +15,7 @@ import { checkDealUnlock } from '../deals/checkDealUnlock';
 import { ApiError } from '../lib/errors';
 import { getPlayer } from '../players/store';
 import { checkReportLimit } from '../players/rateLimit';
+import { requirePlayLocation } from '../players/location';
 import { awardPoints } from '../points/awardPoints';
 import { labelPhoto } from './labelPhoto';
 import { getReport, publishReport, putReport, scanOpenReports, setRecentReportTimes } from './reportStore';
@@ -82,6 +83,10 @@ reportRoutes.post('/reports', async (c) => {
 reportRoutes.post('/reports/:id/submit', async (c) => {
   const reportId = c.req.param('id');
   const input = SubmitReportSchema.parse(await c.req.json());
+  // Validate before any publication, rate-limit write, point award or deal unlock.
+  // This applies to old player IDs too; joining once never authorizes remote reports.
+  await requirePlayLocation(input.location);
+  const { lat, lng } = input.location;
   const draft = await getReport(reportId);
   if (!draft || draft.playerId !== input.playerId) {
     throw new ApiError('not_found', 'We could not find that report.');
@@ -95,8 +100,8 @@ reportRoutes.post('/reports/:id/submit', async (c) => {
   const { times } = checkReportLimit(player.recentReportTimes, now);
   const category = input.category ?? draft.category;
   const published = await publishReport(reportId, {
-    lat: input.lat,
-    lng: input.lng,
+    lat,
+    lng,
     category,
     submittedAt: now.toISOString(),
   });
@@ -112,7 +117,7 @@ reportRoutes.post('/reports/:id/submit', async (c) => {
 
   let unlock = null;
   try {
-    unlock = await checkDealUnlock(input.playerId, input.lat, input.lng, published.id);
+    unlock = await checkDealUnlock(input.playerId, lat, lng, published.id);
   } catch (error) {
     // Unlock is a bonus; a deals-table miss must not undo the report award.
     console.error(JSON.stringify({ level: 'error', where: 'checkDealUnlock', message: String(error) }));

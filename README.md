@@ -126,6 +126,8 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 
 - The Privacy, Terms, About & contact pages and their navigation links were drafted and implemented with Codex (OpenAI).
 - The About, Privacy and Terms copy was revised with Codex (OpenAI) for clarity and current app behavior.
+- Location-based joining and report submission, their shared validation, and the accompanying tests and notes were implemented with Codex (OpenAI). City membership uses the City of Tempe's public City Boundary layer: https://services.arcgis.com/lQySeXwbBg53XWDi/ArcGIS/rest/services/City_Boundary/FeatureServer/0.
+- The location improvements (waiting for a precise reading, the looser accuracy limit for joining, the allowance for device clocks, and the bundled copy of the City boundary with `api/scripts/city-boundary.ts`) were written with Claude Code (Anthropic).
 - The Home map fixes and the motion rules (`web/src/app/motion.ts`, the motion and "Reduce motion" sections of `web/src/index.css`) were written with Claude Code (Anthropic). The reduced-motion rules follow the `accessible-animation` skill from `iart-ai/web-animation-skills` (MIT).
 - "Send to Tempe 311" (`web/src/features/players/tempe311.ts`, `CityHandoff.tsx`, `CityHandoffDialog.tsx`, and the reward-screen and map-popup wiring) was written with Claude Code (Anthropic). The links into the City of Tempe's service request form were worked out by reading that form's own page; nothing was submitted to it.
 - The council quest (`api/scripts/generate-council.ts`, `api/src/quests/council.json`, `councilRoutes.ts`, and the council screens) was implemented with Cursor Agent / Composer. Agenda text is from the City of Tempe Agenda Online portal (Regular City Council Meeting, Nov 5, 2026).

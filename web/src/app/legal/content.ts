@@ -24,7 +24,7 @@ export const legalReferences: Record<Reference, string> = {
 
 // Keyed like strings.ts: translate values, keeping page and section keys unchanged.
 // Keep collection and feature descriptions aligned with the implemented screens
-// and routes. Council quests are not available yet; photo reports are implemented.
+// and routes.
 export const legalContent = {
   privacy: {
     intro: `This policy explains how ${legalDetails.operator} collects and uses information when you play.`,
@@ -45,7 +45,7 @@ export const legalContent = {
         '“Send to Tempe 311” copies a report’s location or details to your clipboard and opens the City of Tempe’s service request form in a new tab. That form is run for the city by Accela. StreetCreds sends it nothing, and what you enter there is covered by the city’s policies, not this one.',
       ] },
       photos: { paragraphs: [
-        'When you submit a report, you can allow device location access or select a spot on the map. We do not track your location in the background. Keep faces, license plates and private spaces out of photos.',
+        'Location access is required to join and submit reports in Tempe. We use your joining location to assign a neighborhood without saving those coordinates. Reports use your current location and show it publicly. We do not track you in the background. Keep faces, license plates and private spaces out of photos.',
       ] },
       retention: { paragraphs: [
         'Game data and photos remain stored until we delete them. There is no automatic deletion schedule.',
