@@ -14,6 +14,8 @@ export const queryClient = new QueryClient({
 export const playerKey = (playerId: string) => ['player', playerId] as const
 export const leaderboardKey = ['leaderboard'] as const
 export const reportsKey = ['reports'] as const
+/** One player's own reports, for the profile screen. */
+export const playerReportsKey = (playerId: string) => ['player-reports', playerId] as const
 /** The City's accessibility records: a file in web/public/data, not an API route. */
 export const cityRecordsKey = ['city-records'] as const
 

@@ -27,11 +27,40 @@ export interface CreatePlayerRequest {
   nickname: string;
   /** The server assigns the neighborhood from this device reading. */
   location: LocationFix;
+  /** Google's ID token, when the person chose "Continue with Google". The new player is saved to that account. */
+  credential?: string;
 }
 
 // POST /players, GET /players/:id (Pierre)
 export interface PlayerResponse {
   player: Player;
+  /** Only from POST /players with a credential: keeps this device signed in. */
+  sessionToken?: string;
+}
+
+// POST /auth/google (Pierre). Signs in to the saved player, or saves the guest player named.
+export interface GoogleSignInRequest {
+  /** Google's ID token from the sign-in button. */
+  credential: string;
+  /** The guest player on this device, if there is one. */
+  playerId?: string;
+}
+export interface SignInResponse {
+  player: Player;
+  /** Send it as `Authorization: Bearer {sessionToken}` on every later request. */
+  sessionToken: string;
+  /** True when the account's saved player is not the guest player this device sent. */
+  switched: boolean;
+}
+
+// POST /auth/signout (Pierre). Ends the session whose token is in the Authorization header.
+export interface SignOutResponse {
+  ok: true;
+}
+
+// GET /players/:id/reports (Pierre). That player's submitted reports, newest first.
+export interface PlayerReportsResponse {
+  reports: PublicReport[];
 }
 
 // GET /leaderboard (Pierre)
@@ -116,7 +145,9 @@ export interface RedeemDealResponse {
 // Errors. Every non-2xx response has this body.
 export const ERROR_CODES = {
   validation_failed: 400,
+  unauthorized: 401,
   not_found: 404,
+  already_linked: 409,
   already_submitted: 409,
   already_awarded: 409,
   insufficient_points: 409,

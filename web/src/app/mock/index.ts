@@ -12,7 +12,16 @@ import { createPlayAreaLookup, PlayLocationError } from '../../../../shared/play
 import type { Award, DealUnlockView, Player, PublicReport, QuestType, Report } from '../../../../shared/types'
 import type { Api } from '../api'
 import { ApiError } from '../apiError'
-import { MOCK_PHOTO_URL, mockCouncilItems, mockLabel, mockLeaderboard, mockPlayer, mockReports } from './fixtures'
+import {
+  MOCK_PHOTO_URL,
+  mockCouncilItems,
+  mockLabel,
+  mockLeaderboard,
+  mockOwnReports,
+  mockPlayer,
+  mockReports,
+  mockSavedPlayer,
+} from './fixtures'
 import { distanceMeters, mockPartners } from './partners'
 
 /** What POST /reports does with every photo: 'ok', or one of the errors the real route can return. */
@@ -20,6 +29,14 @@ const MOCK_REPORT_RESULT: 'ok' | 'not_street_problem' | 'label_failed' | 'rate_l
 
 /** How the reward looks: 'pending' shows "On-chain confirmation pending", 'off' shows nothing. */
 const MOCK_CHAIN_STATUS: Award['chainStatus'] = 'pending'
+
+/**
+ * What the mock Google account is. 'none': it has no saved player, so "Continue with Google"
+ * on the join screen leads to the nickname form and "Save your player" links the guest.
+ * 'exists': it already owns a saved player (Riya), so signing in brings her back, and signing
+ * in over a guest shows the "your guest points will not move" warning.
+ */
+const MOCK_SAVED_PLAYER = 'none' as 'none' | 'exists'
 
 const DELAY_MS = 400
 const wait = (ms = DELAY_MS) => new Promise<void>((resolve) => setTimeout(resolve, ms))
@@ -36,7 +53,9 @@ async function requireMockLocation(location: Parameters<typeof lookupLocation>[0
 
 const STATUS: Record<ErrorCode, number> = {
   validation_failed: 400,
+  unauthorized: 401,
   not_found: 404,
+  already_linked: 409,
   already_submitted: 409,
   already_awarded: 409,
   insufficient_points: 409,
@@ -48,7 +67,9 @@ const STATUS: Record<ErrorCode, number> = {
 
 const MESSAGE: Record<ErrorCode, string> = {
   validation_failed: 'Something in that request is not right. Check it and try again.',
+  unauthorized: 'Sign in again to keep playing.',
   not_found: 'We could not find that.',
+  already_linked: 'That Google account already has a saved player. Sign in instead.',
   already_submitted: 'This report was already submitted.',
   already_awarded: 'You already earned these points.',
   insufficient_points: 'You do not have enough CIVIC for this deal yet.',
@@ -64,6 +85,12 @@ function fail(code: ErrorCode, message: string = MESSAGE[code]): never {
 
 // State for this browser tab.
 let player: Player = { ...mockPlayer }
+/** The player the mock Google account owns, once there is one. */
+let saved: Player | null = MOCK_SAVED_PLAYER === 'exists' ? { ...mockSavedPlayer } : null
+/** Earlier reports of whoever is playing. A player who has just joined has none. */
+let ownFixtures: PublicReport[] = mockOwnReports
+/** The guest who was playing before a sign-in switched players, in case the switch is declined. */
+let guestBefore: { player: Player; ownFixtures: PublicReport[] } | null = null
 const drafts = new Map<string, Report>()
 const submitted: PublicReport[] = []
 const answered = new Set<string>()
@@ -118,14 +145,22 @@ export const mockApi: Api = {
       fail('validation_failed', `Nickname must be ${NICKNAME_MIN} to ${NICKNAME_MAX} characters.`)
     }
     const neighborhood = await requireMockLocation(body.location)
+    if (body.credential !== undefined && saved) fail('already_linked')
     player = { ...mockPlayer, nickname, neighborhood, points: 0, createdAt: new Date().toISOString() }
-    return { player }
+    ownFixtures = []
+    if (body.credential === undefined) return { player }
+    // "Continue with Google" for a new person: the player is saved from the start.
+    player = { ...player, accountId: 'mock-account-1' }
+    saved = player
+    return { player, sessionToken: 'mock-session' }
   },
 
   async getPlayer(playerId) {
     await wait(150)
     // Any id works except 'missing', which lets you see what happens when a player is not found.
     if (playerId === 'missing') fail('not_found')
+    // While a switch to the saved player waits for a yes, the guest's id still answers as the guest.
+    if (guestBefore && playerId === guestBefore.player.id) return { player: guestBefore.player }
     return { player }
   },
 
@@ -280,5 +315,43 @@ export const mockApi: Api = {
       },
       player,
     }
+  },
+
+  async signInWithGoogle(body) {
+    await wait()
+    // A returning person: the Google account already owns a player.
+    if (saved) {
+      const switched = body.playerId !== undefined && body.playerId !== saved.id
+      if (switched) {
+        guestBefore = { player, ownFixtures }
+        ownFixtures = mockOwnReports.map((report) => ({ ...report, playerId: mockSavedPlayer.id }))
+      }
+      player = saved
+      return { player, sessionToken: 'mock-session', switched }
+    }
+    // "Save your player": link the guest on this device.
+    if (body.playerId !== undefined && player.accountId === null) {
+      player = { ...player, accountId: 'mock-account-1' }
+      saved = player
+      return { player, sessionToken: 'mock-session', switched: false }
+    }
+    // A new person: the join screen asks for a nickname next.
+    fail('not_found', 'There is no saved player for this Google account yet.')
+  },
+
+  async signOut(sessionToken) {
+    await wait(150)
+    // A token passed in means "Stay as a guest" after the switch warning: put the guest back.
+    if (sessionToken !== undefined && guestBefore) {
+      player = guestBefore.player
+      ownFixtures = guestBefore.ownFixtures
+    }
+    guestBefore = null
+    return { ok: true }
+  },
+
+  async listPlayerReports(playerId) {
+    await wait(200)
+    return { reports: [...submitted, ...ownFixtures].filter((report) => report.playerId === playerId) }
   },
 }

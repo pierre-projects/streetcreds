@@ -6,7 +6,7 @@ import type { ListDealsResponse, RedeemDealResponse } from '../../../shared/api'
 import type { DealPartnerView, DealRedemption } from '../../../shared/types';
 import { env } from '../lib/env';
 import { ApiError } from '../lib/errors';
-import { getPlayer } from '../players/store';
+import { requirePlayer } from '../players/auth';
 import { spendPoints } from '../points/spendPoints';
 import { PARTNERS, getPartner } from './partners';
 import { getUnlock, markUnlockRedeemed, putRedemption } from './store';
@@ -29,8 +29,7 @@ function demoCode(): string {
 dealRoutes.get('/deals', async (c) => {
   const playerId = c.req.query('playerId');
   if (!playerId) throw new ApiError('validation_failed', 'playerId is required.');
-  const player = await getPlayer(playerId);
-  if (!player) throw new ApiError('not_found', 'We could not find that player.');
+  await requirePlayer(c, playerId);
 
   const partners: DealPartnerView[] = [];
   for (const partner of PARTNERS) {
@@ -60,8 +59,7 @@ dealRoutes.post('/deals/:partnerId/redeem', async (c) => {
   if (!partner) throw new ApiError('not_found', 'We could not find that deal.');
 
   const input = RedeemSchema.parse(await c.req.json());
-  const player = await getPlayer(input.playerId);
-  if (!player) throw new ApiError('not_found', 'We could not find that player.');
+  const player = await requirePlayer(c, input.playerId);
 
   const unlock = await getUnlock(input.playerId, partnerId);
   const usedUnlock = unlock?.status === 'active';
@@ -80,7 +78,7 @@ dealRoutes.post('/deals/:partnerId/redeem', async (c) => {
     txSignature: null,
     chainStatus: env.SOLANA_MODE === 'off' ? 'off' : 'pending',
     createdAt: new Date().toISOString(),
-    accountId: null,
+    accountId: player.accountId,
   };
   await putRedemption(redemption);
 

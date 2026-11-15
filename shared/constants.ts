@@ -28,6 +28,9 @@ export const NICKNAME_MAX = 20;
 
 export const REPORT_LIMIT_PER_HOUR = 5;
 
+// How long a sign-in lasts on one device before the player has to sign in again.
+export const SESSION_DAYS = 90;
+
 // Two reports of the same category closer than this are the same problem (P2).
 export const DUPLICATE_RADIUS_M = 30;
 

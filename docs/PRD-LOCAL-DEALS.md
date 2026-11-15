@@ -77,6 +77,8 @@ StreetCreds today has **no user accounts** (`docs/PRD.md` cut: nickname + neighb
 | Deals after link | `GET /deals` and redeem use the linked `playerId`; existing unlock rows keep working |
 | Multi-device | `localStorage` is no longer the source of truth; session/account is |
 
+**Update 2026-11-15:** accounts have landed as optional Google sign-in, following the rules above. See `docs/ACCOUNTS.md`. New unlock and redemption rows now carry the player's `accountId`; older rows keep an empty one and still work, because `playerId` is the key.
+
 Accounts implementation details (provider, email vs phone, session shape) belong in a separate accounts PRD / TECHNICAL update — not in Local Deals — but **any accounts design must preserve `playerId` as the key Local Deals already uses.**
 
 ## Signature mechanic

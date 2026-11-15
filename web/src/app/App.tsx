@@ -10,6 +10,7 @@ import { HomeScreen } from '../features/players/HomeScreen'
 import { LeaderboardScreen } from '../features/players/LeaderboardScreen'
 import { MapScreen } from '../features/players/MapScreen'
 import { JoinScreen } from '../features/players/JoinScreen'
+import { ProfileScreen } from '../features/players/ProfileScreen'
 import { CouncilItemScreen } from '../features/quests/CouncilItemScreen'
 import { CouncilListScreen } from '../features/quests/CouncilListScreen'
 import { ReportScreen } from '../features/quests/ReportScreen'
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
       { path: '/deals/:partnerId', element: <DealDetailScreen /> },
       { path: '/leaderboard', element: <LeaderboardScreen /> },
       { path: '/map', element: <MapScreen /> },
+      { path: '/profile', element: <ProfileScreen /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

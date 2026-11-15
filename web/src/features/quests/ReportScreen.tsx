@@ -8,6 +8,7 @@ import { Button, Card, ErrorNotice, OptionCard, ScreenHeader } from '../../app/u
 import { CityHandoff } from '../players/CityHandoff'
 import { resizeImage } from './resizeImage'
 import { RewardCard } from './RewardCard'
+import { ShareCard } from './share/ShareCard'
 import { questStrings } from './strings'
 
 type Phase =
@@ -205,6 +206,17 @@ export function ReportScreen() {
       ) : null}
 
       {phase === 'reward' && award && player ? <RewardCard award={award} player={player} unlock={unlock} /> : null}
+      {/* The street cred card, with the photo that is still on this phone. */}
+      {phase === 'reward' && award && player && report ? (
+        <Card>
+          <ShareCard
+            player={player}
+            earned={{ points: award.points, category: report.category }}
+            photoUrl={previewUrl}
+            emphasis="secondary"
+          />
+        </Card>
+      ) : null}
       {/* Passing the report on to the City's own form. The photo is the one still on this phone. */}
       {phase === 'reward' && report ? (
         <Card>

@@ -13,7 +13,7 @@ import { POINTS } from '../../../shared/constants';
 import type { PublicReport, Report } from '../../../shared/types';
 import { checkDealUnlock } from '../deals/checkDealUnlock';
 import { ApiError } from '../lib/errors';
-import { getPlayer } from '../players/store';
+import { requirePlayer } from '../players/auth';
 import { checkReportLimit } from '../players/rateLimit';
 import { requirePlayLocation } from '../players/location';
 import { awardPoints } from '../points/awardPoints';
@@ -27,8 +27,7 @@ export const reportRoutes = new Hono();
 reportRoutes.get('/upload-url', async (c) => {
   const playerId = c.req.query('playerId');
   if (!playerId) throw new ApiError('validation_failed', 'playerId is required.');
-  const player = await getPlayer(playerId);
-  if (!player) throw new ApiError('not_found', 'We could not find that player.');
+  await requirePlayer(c, playerId);
 
   const photoKey = `reports/${playerId}/${randomUUID()}.jpg`;
   const uploadUrl = await getSignedUrl(
@@ -46,8 +45,7 @@ reportRoutes.get('/upload-url', async (c) => {
 
 reportRoutes.post('/reports', async (c) => {
   const input = CreateReportSchema.parse(await c.req.json());
-  const player = await getPlayer(input.playerId);
-  if (!player) throw new ApiError('not_found', 'We could not find that player.');
+  const player = await requirePlayer(c, input.playerId);
 
   const prefix = `reports/${input.playerId}/`;
   if (!input.photoKey.startsWith(prefix)) {
@@ -93,8 +91,7 @@ reportRoutes.post('/reports/:id/submit', async (c) => {
   }
   if (draft.status !== 'draft') throw new ApiError('already_submitted');
 
-  const player = await getPlayer(input.playerId);
-  if (!player) throw new ApiError('not_found', 'We could not find that player.');
+  const player = await requirePlayer(c, input.playerId);
 
   const now = new Date();
   const { times } = checkReportLimit(player.recentReportTimes, now);

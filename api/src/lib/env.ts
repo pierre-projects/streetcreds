@@ -10,9 +10,13 @@ const EnvSchema = z
     TABLE_AWARDS: z.string().default('streetcreds-awards'),
     TABLE_DEAL_UNLOCKS: z.string().default('streetcreds-deal-unlocks'),
     TABLE_DEAL_REDEMPTIONS: z.string().default('streetcreds-deal-redemptions'),
+    TABLE_ACCOUNTS: z.string().default('streetcreds-accounts'),
+    TABLE_SESSIONS: z.string().default('streetcreds-sessions'),
     PHOTO_BUCKET: z.string().default(''),
     WEB_ORIGINS: z.string().default('http://localhost:5173'),
     GEMINI_API_KEY: z.string().default(''),
+    // The Google OAuth client id the web app signs in with. Public, not a secret. Empty turns sign-in off.
+    GOOGLE_CLIENT_ID: z.string().default(''),
     GEMINI_MODEL: z.string().default('gemini-3.8-flash'),
     SOLANA_MODE: z.enum(['off', 'per-player', 'shared']).default('off'),
     SOLANA_RPC_URL: z.url().default('https://api.devnet.solana.com'),
@@ -48,10 +52,11 @@ function loadEnv(): Env {
 export const env: Env = loadEnv();
 
 /**
- * For values the server can start without but a feature needs: the photo bucket and the Gemini key.
+ * For values the server can start without but a feature needs: the photo bucket, the Gemini key
+ * and the Google client id.
  * Throws a plain Error, which the error handler turns into `internal` and logs.
  */
-export function requireEnv(name: 'PHOTO_BUCKET' | 'GEMINI_API_KEY'): string {
+export function requireEnv(name: 'PHOTO_BUCKET' | 'GEMINI_API_KEY' | 'GOOGLE_CLIENT_ID'): string {
   const value = env[name];
   if (value === '') {
     throw new Error(`Environment variable ${name} is not set. See api/.env.example.`);

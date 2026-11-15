@@ -1,4 +1,5 @@
 import type { DealUnlock, DealUnlockView } from '../../../shared/types';
+import { getPlayer } from '../players/store';
 import { distanceMeters } from './distance';
 import { PARTNERS } from './partners';
 import { getUnlock, putUnlockReplaceRedeemed, unlockId } from './store';
@@ -40,6 +41,8 @@ export async function checkDealUnlock(
     return toView(nearest);
   }
 
+  // A new unlock records the account the player is saved to, if any. Read only on this path.
+  const player = await getPlayer(playerId);
   const unlock: DealUnlock = {
     id: unlockId(playerId, nearest.id),
     playerId,
@@ -47,7 +50,7 @@ export async function checkDealUnlock(
     reportId,
     createdAt: new Date().toISOString(),
     status: 'active',
-    accountId: null,
+    accountId: player?.accountId ?? null,
   };
   const saved = await putUnlockReplaceRedeemed(unlock);
   if (!saved) return null;

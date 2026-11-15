@@ -23,7 +23,55 @@ export const mockPlayer: Player = {
   walletAddress: 'ETt92Vzd3AwTKztSKyF7VzKgkKzyg9zoUqXJqdRqMtnR',
   recentReportTimes: [],
   createdAt: '2026-11-14T17:40:03.000Z',
+  // A guest. "Save your player" on the profile screen links it to the mock Google account.
+  accountId: null,
 }
+
+/** The player the mock Google account already owns, when MOCK_SAVED_PLAYER in index.ts is 'exists'. */
+export const mockSavedPlayer: Player = {
+  id: 'mock-player-saved',
+  nickname: 'Riya',
+  neighborhood: 'downtown-tempe',
+  points: 480,
+  walletAddress: 'ETt92Vzd3AwTKztSKyF7VzKgkKzyg9zoUqXJqdRqMtnR',
+  recentReportTimes: [],
+  createdAt: '2026-11-13T09:12:00.000Z',
+  accountId: 'mock-account-1',
+}
+
+/** Reports the mock player sent in earlier, for the profile screen. */
+export const mockOwnReports: PublicReport[] = [
+  {
+    id: 'mock-own-report-1',
+    playerId: 'mock-player-1',
+    photoKey: 'reports/mock-player-1/own-1.jpg',
+    photoUrl: MOCK_PHOTO_URL,
+    lat: MAP_CENTER.lat - 0.0022,
+    lng: MAP_CENTER.lng + 0.0031,
+    category: 'blocked-sidewalk',
+    severity: 'medium',
+    description: 'A scooter and a fallen sign block most of the sidewalk.',
+    count: 1,
+    status: 'open',
+    createdAt: '2026-11-14T19:20:10.000Z',
+    submittedAt: '2026-11-14T19:21:02.000Z',
+  },
+  {
+    id: 'mock-own-report-2',
+    playerId: 'mock-player-1',
+    photoKey: 'reports/mock-player-1/own-2.jpg',
+    photoUrl: MOCK_PHOTO_URL,
+    lat: MAP_CENTER.lat + 0.0034,
+    lng: MAP_CENTER.lng - 0.0045,
+    category: 'streetlight',
+    severity: 'high',
+    description: 'Streetlight is dark over the crosswalk.',
+    count: 2,
+    status: 'open',
+    createdAt: '2026-11-14T18:40:00.000Z',
+    submittedAt: '2026-11-14T18:41:30.000Z',
+  },
+]
 
 /** The other players' totals. The mock player's own points are added on top of these. */
 export const mockLeaderboard: LeaderboardRow[] = [

@@ -5,7 +5,7 @@ import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { NEIGHBORHOODS } from '../../../shared/constants'
 import type { NeighborhoodId } from '../../../shared/types'
 import { BoardLink } from './BoardLink'
-import { HomeIcon, LeaderboardIcon, MapIcon } from './icons'
+import { HomeIcon, LeaderboardIcon, MapIcon, ProfileIcon } from './icons'
 import { getStoredPlayerId, usePlayer } from './player'
 import { strings } from './strings'
 import { LogoMark } from './ui'
@@ -14,6 +14,7 @@ const NAV_ITEMS: { to: string; label: string; icon: ReactNode }[] = [
   { to: '/home', label: strings.nav.home, icon: <HomeIcon /> },
   { to: '/leaderboard', label: strings.nav.leaderboard, icon: <LeaderboardIcon /> },
   { to: '/map', label: strings.nav.map, icon: <MapIcon /> },
+  { to: '/profile', label: strings.nav.profile, icon: <ProfileIcon /> },
 ]
 
 function neighborhoodName(id: NeighborhoodId): string {

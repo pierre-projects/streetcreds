@@ -14,13 +14,17 @@ import type {
   CreatePlayerRequest,
   CreateReportRequest,
   CreateReportResponse,
+  GoogleSignInRequest,
   HealthResponse,
   LeaderboardResponse,
   ListDealsResponse,
   ListReportsResponse,
+  PlayerReportsResponse,
   PlayerResponse,
   RedeemDealRequest,
   RedeemDealResponse,
+  SignInResponse,
+  SignOutResponse,
   SubmitReportRequest,
   SubmitReportResponse,
   UploadUrlResponse,
@@ -29,6 +33,7 @@ import type { Player } from '../../../shared/types'
 import { ApiError } from './apiError'
 import { mockApi } from './mock'
 import { playerKey, queryClient } from './queryClient'
+import { getSessionToken } from './session'
 import { strings } from './strings'
 
 export { ApiError } from './apiError'
@@ -60,6 +65,12 @@ export interface Api {
   listDeals(playerId: string): Promise<ListDealsResponse>
   /** POST /deals/:partnerId/redeem */
   redeemDeal(partnerId: string, body: RedeemDealRequest): Promise<RedeemDealResponse>
+  /** POST /auth/google. The caller stores the result with completeSignIn() in player.ts. */
+  signInWithGoogle(body: GoogleSignInRequest): Promise<SignInResponse>
+  /** POST /auth/signout. Ends this device's session, or the one whose token is given. */
+  signOut(sessionToken?: string): Promise<SignOutResponse>
+  /** GET /players/:id/reports */
+  listPlayerReports(playerId: string): Promise<PlayerReportsResponse>
 }
 
 const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
@@ -70,9 +81,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(0, 'internal', strings.errors.notConfigured)
   }
 
+  // A signed-in player's session goes with every API request. Guests have none.
+  // uploadPhoto does not come through here, so the token is never sent to the photo bucket.
+  const headers = new Headers(init?.headers)
+  const token = getSessionToken()
+  if (token !== null && !headers.has('authorization')) {
+    headers.set('authorization', `Bearer ${token}`)
+  }
+
   let response: Response
   try {
-    response = await fetch(`${API_URL}${path}`, init)
+    response = await fetch(`${API_URL}${path}`, { ...init, headers })
   } catch {
     throw new ApiError(0, 'internal', strings.errors.offline)
   }
@@ -91,10 +110,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T
 }
 
-function post<T>(path: string, data: unknown): Promise<T> {
+function post<T>(path: string, data: unknown, sessionToken?: string): Promise<T> {
   return request<T>(path, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      ...(sessionToken === undefined ? {} : { authorization: `Bearer ${sessionToken}` }),
+    },
     body: JSON.stringify(data),
   })
 }
@@ -124,6 +146,9 @@ const realApi: Api = {
   answerCouncilItem: (body) => post('/quests/council/answer', body),
   listDeals: (playerId) => request(`/deals?playerId=${encodeURIComponent(playerId)}`),
   redeemDeal: (partnerId, body) => post(`/deals/${encodeURIComponent(partnerId)}/redeem`, body),
+  signInWithGoogle: (body) => post('/auth/google', body),
+  signOut: (sessionToken) => post('/auth/signout', {}, sessionToken),
+  listPlayerReports: (playerId) => request(`/players/${encodeURIComponent(playerId)}/reports`),
 }
 
 const source: Api = USE_MOCKS ? mockApi : realApi
@@ -141,4 +166,5 @@ export const api: Api = {
   submitReport: async (reportId, body) => remember(await source.submitReport(reportId, body)),
   answerCouncilItem: async (body) => remember(await source.answerCouncilItem(body)),
   redeemDeal: async (partnerId, body) => remember(await source.redeemDeal(partnerId, body)),
+  signInWithGoogle: async (body) => remember(await source.signInWithGoogle(body)),
 }

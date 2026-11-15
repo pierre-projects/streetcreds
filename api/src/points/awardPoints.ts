@@ -10,7 +10,7 @@ import type { Award, Player, QuestType } from '../../../shared/types';
 import { db, TABLES } from '../lib/db';
 import { env } from '../lib/env';
 import { ApiError } from '../lib/errors';
-import { isConditionalCheckFailed } from '../players/store';
+import { isConditionalCheckFailed, toPlayer } from '../players/store';
 import { redactRpcUrl } from './redact';
 import { withLimit } from './withLimit';
 
@@ -77,7 +77,7 @@ export async function awardPoints(
         ReturnValues: 'ALL_NEW',
       }),
     );
-    player = result.Attributes as Player;
+    player = toPlayer(result.Attributes ?? {});
   } catch (error) {
     if (isConditionalCheckFailed(error)) throw new ApiError('not_found', 'We could not find that player.');
     throw error;
