@@ -76,6 +76,8 @@ export const strings = {
     nicknameHint: (min: number, max: number) => `${min} to ${max} characters. No email or password.`,
     nicknameInvalid: (min: number, max: number) => `Nickname must be ${min} to ${max} characters.`,
     neighborhoodLabel: 'Your neighborhood',
+    // Read out before the four neighborhood names on the join screen.
+    teamsLabel: 'The four neighborhoods',
     locationHint: 'Your current location assigns your neighborhood. You need to be in Tempe to play. We do not save your joining location.',
     locating: 'Finding your location.',
     locationError: 'We could not find your location. Please try again.',

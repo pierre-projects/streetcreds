@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
-import { NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
+import { NEIGHBORHOODS, NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
 import { api, ApiError } from '../../app/api'
 import { BoardLink } from '../../app/BoardLink'
 import { GOOGLE_SIGN_IN_ON } from '../../app/google'
@@ -15,7 +15,7 @@ import { legalLinkClass } from '../../app/legal/LegalLinks'
 import { readCurrentLocation } from '../../app/location'
 import { completeSignIn, getStoredPlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
-import { Button, ErrorNotice, LogoMark, ScreenHeader, TextField } from '../../app/ui'
+import { Button, ErrorNotice, LogoMark, TextField } from '../../app/ui'
 import { GoogleSignInButton } from './GoogleSignInButton'
 
 const isCode = (error: unknown, code: ApiError['code']) => error instanceof ApiError && error.code === code
@@ -98,13 +98,14 @@ export function JoinScreen() {
     (signInFailed ? signIn.error.message || strings.auth.failed : null)
 
   return (
-    <main className="app-column flex flex-col px-4 py-8">
+    <main className="app-column flex flex-col px-4 pb-6 pt-6">
       <BoardLink />
-      <div className="mb-5 flex items-center gap-3">
-        <LogoMark className="size-9" />
-        <span className="text-xl font-bold tracking-tight text-ink">{strings.appName}</span>
-      </div>
-      <ScreenHeader title={strings.appName} subtitle={strings.tagline} />
+      {/* The name once, as the screen's title, under the mark. */}
+      <header className="flex flex-col items-center gap-3 text-center">
+        <LogoMark className="size-14" />
+        <h1 className="text-4xl font-bold tracking-tight text-ink">{strings.appName}</h1>
+        <p className="text-balance text-base text-muted">{strings.tagline}</p>
+      </header>
 
       {GOOGLE_SIGN_IN_ON && (
         <section className="mt-6 space-y-2">
@@ -119,7 +120,7 @@ export function JoinScreen() {
         </section>
       )}
 
-      <form onSubmit={submit} noValidate className="mt-8 flex flex-1 flex-col gap-6">
+      <form onSubmit={submit} noValidate className="mt-6 flex flex-1 flex-col gap-6">
         <TextField
           label={strings.join.nicknameLabel}
           hint={strings.join.nicknameHint(NICKNAME_MIN, NICKNAME_MAX)}
@@ -128,18 +129,31 @@ export function JoinScreen() {
           maxLength={NICKNAME_MAX} autoComplete="nickname" autoCapitalize="words" enterKeyHint="done"
         />
 
-        <section aria-labelledby="join-location" className="space-y-2">
+        <section aria-labelledby="join-location" className="space-y-3">
           <h2 id="join-location" className="text-base font-medium text-ink">{strings.join.neighborhoodLabel}</h2>
+          {/* The four teams. Your location picks yours when you join, so these are not buttons. */}
+          <ul className="grid grid-cols-2 gap-2" aria-label={strings.join.teamsLabel}>
+            {NEIGHBORHOODS.map((n) => (
+              <li key={n.id} className="flex min-h-10 items-center justify-center rounded-control bg-ink/5 px-3 text-center text-sm font-medium text-ink">
+                {n.name}
+              </li>
+            ))}
+          </ul>
           <p className="text-sm leading-relaxed text-muted">{strings.join.locationHint}</p>
           <Link to="/board" className={legalLinkClass}>{strings.join.watchBoard}</Link>
         </section>
 
-        <div className="mt-auto">
+        {/* Stays at the bottom of the screen while the rest scrolls under it, so the button to join
+            (and what went wrong, if anything) is in view on a short phone too. */}
+        <div className="sticky bottom-0 mt-auto bg-page py-3">
           {message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>}
           <Button type="submit" disabled={busy}>
             {locating ? strings.join.locating : join.isPending ? strings.join.submitting : strings.join.submit}
           </Button>
-          <p className="mt-3 text-center text-sm leading-relaxed text-muted">
+        </div>
+
+        <div className="-mt-6">
+          <p className="text-center text-sm leading-relaxed text-muted">
             {strings.legal.joinPrefix}{' '}
             <Link to="/terms" className={legalLinkClass}>{strings.legal.pages.terms.label}</Link>{' '}
             {strings.legal.joinAnd}{' '}
