@@ -1,6 +1,6 @@
 // Public component layer for Pierre's screens and Sarah's quests.
 export { Badge } from './Badge'
-export { Button, ButtonLink } from './Button'
+export { Button, ButtonAnchor, ButtonLink } from './Button'
 export { Card } from './Card'
 export { cx } from './cx'
 export { ErrorNotice } from './ErrorNotice'

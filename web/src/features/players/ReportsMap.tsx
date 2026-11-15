@@ -3,7 +3,7 @@
 //
 // A pin's color is its severity, and it grows with how many times the problem has been reported
 // (from two reports up, the number is written on it). Tapping a pin shows the photo and details,
-// and a button that copies a report ready to paste into the city's own form.
+// and a button that opens what the player needs to send the report on to the City's own form.
 //
 // Pins that would sit on top of each other are drawn as one black pin with the number of reports
 // in it. Tapping that zooms in until they come apart.
@@ -15,9 +15,9 @@ import type { PublicReport, Severity } from '../../../../shared/types'
 import { useReducedMotion } from '../../app/motion'
 import { strings } from '../../app/strings'
 import { Button } from '../../app/ui'
-import { type CityRecord, TEMPE_311_FORM_URL } from './cityRecords'
+import { CityHandoffDialog } from './CityHandoffDialog'
+import type { CityRecord } from './cityRecords'
 import { CityRecordsLayer } from './CityRecordsLayer'
-import { buildCityReport } from './cityReport'
 import { cityFinding } from './cityText'
 import { renewPhotoUrl, steadyPhotoUrl } from './photoUrls'
 import {
@@ -154,20 +154,16 @@ function FitToPins({ pins }: { pins: PinnedReport[] }) {
   return null
 }
 
-type CopyState = { reportId: string; ok: boolean } | null
-
 interface ReportPopupProps {
   report: PublicReport
   /** The City's own record of this spot, when it has one. */
   cityRecord?: CityRecord
-  copy: CopyState
-  onCopy: () => void
+  /** Opens "Send to Tempe 311" for this report. */
+  onSend: () => void
 }
 
-function ReportPopup({ report, cityRecord, copy, onCopy }: ReportPopupProps) {
+function ReportPopup({ report, cityRecord, onSend }: ReportPopupProps) {
   const category = strings.categories[report.category]
-  const copied = copy?.reportId === report.id ? copy : null
-  const note = copied === null ? strings.map.copyHint : copied.ok ? strings.map.copied : strings.map.copyFailed
   return (
     <div className="flex flex-col font-sans text-sm text-ink">
       <img
@@ -187,22 +183,15 @@ function ReportPopup({ report, cityRecord, copy, onCopy }: ReportPopupProps) {
             {strings.map.severity(strings.severities[report.severity])}
           </p>
         </div>
-        {/* Cut off after four lines so the popup always fits inside the map. The copied report has it all.
-            With a City record there are two lines fewer, which the City's line takes. */}
+        {/* Cut off after four lines so the popup always fits inside the map. The details the player
+            copies for the City have it all. With a City record there are two lines fewer, which the
+            City's line takes. */}
         <p className={cityRecord ? 'line-clamp-2' : 'line-clamp-4'}>{report.description}</p>
         {cityRecord && <p className="line-clamp-2 text-xs">{strings.city.matchNote(cityFinding(cityRecord))}</p>}
         <p className="text-xs text-muted">{strings.map.reportedTimes(reportCount(report))}</p>
-        <Button onClick={onCopy}>{strings.map.copy}</Button>
-        {/* Always one link tall, so the popup does not change size when the text does. The link is
-            the City's own form, where the copied report gets pasted. */}
-        <div className="flex min-h-11 items-center justify-between gap-3">
-          <p role="status" className={`text-xs ${copied?.ok === false ? 'text-severity-high' : 'text-muted'}`}>
-            {note}
-          </p>
-          <a className="popup-link shrink-0" href={TEMPE_311_FORM_URL} target="_blank" rel="noopener noreferrer" aria-label={strings.city.tell311Label}>
-            {strings.city.openForm}
-          </a>
-        </div>
+        {/* The panel it opens is drawn over the map, not in here: a popup has no room for it. */}
+        <Button onClick={onSend}>{strings.city.handoff.send}</Button>
+        <p className="text-xs text-muted">{strings.city.handoff.sendHint}</p>
       </div>
     </div>
   )
@@ -211,15 +200,14 @@ function ReportPopup({ report, cityRecord, copy, onCopy }: ReportPopupProps) {
 interface ReportPinProps {
   report: PinnedReport
   cityRecord?: CityRecord
-  copy: CopyState
-  onCopy: (report: PublicReport) => void
+  onSend: (report: PublicReport) => void
   onOpenChange?: (reportId: string, open: boolean) => void
   /** True when something outside the map picked this report. The pin then opens its own popup. */
   selected: boolean
   popupInsets?: () => PopupInsets
 }
 
-function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected, popupInsets }: ReportPinProps) {
+function ReportPin({ report, cityRecord, onSend, onOpenChange, selected, popupInsets }: ReportPinProps) {
   const count = reportCount(report)
   // Kept the same between refreshes: a new array would make Leaflet move the pin and its popup again.
   const position = useMemo<[number, number]>(() => [report.lat, report.lng], [report.lat, report.lng])
@@ -281,7 +269,7 @@ function ReportPin({ report, cityRecord, copy, onCopy, onOpenChange, selected, p
         autoPanPaddingTopLeft={[POPUP_SIDE, 16]}
         autoPanPaddingBottomRight={[POPUP_SIDE, 8]}
       >
-        <ReportPopup report={report} cityRecord={cityRecord} copy={copy} onCopy={() => onCopy(report)} />
+        <ReportPopup report={report} cityRecord={cityRecord} onSend={() => onSend(report)} />
       </Popup>
     </Marker>
   )
@@ -316,13 +304,14 @@ interface PinLayerProps {
   /** The City's record of the same spot, by report id. */
   matches: ReadonlyMap<string, CityRecord>
   selectedId: string | null
+  /** Opens "Send to Tempe 311" for a report. Keep it the same function between renders. */
+  onSend: (report: PublicReport) => void
   onOpenChange?: (reportId: string, open: boolean) => void
   popupInsets?: () => PopupInsets
 }
 
 /** Every pin and group, for the zoom the map is at. Must be inside the MapContainer. */
-function PinLayer({ pins, matches, selectedId, onOpenChange, popupInsets }: PinLayerProps) {
-  const [copy, setCopy] = useState<CopyState>(null)
+function PinLayer({ pins, matches, selectedId, onSend, onOpenChange, popupInsets }: PinLayerProps) {
   const [zoom, setZoom] = useState<number | null>(null)
   const map = useMapEvents({ zoomend: () => setZoom(map.getZoom()) })
   const currentZoom = zoom ?? map.getZoom()
@@ -344,16 +333,6 @@ function PinLayer({ pins, matches, selectedId, onOpenChange, popupInsets }: PinL
         ? pins.map((report) => ({ id: report.id, lat: report.lat, lng: report.lng, reports: [report] }))
         : groupPinsApart(pins, currentZoom, openId),
     [pins, currentZoom, openId],
-  )
-
-  const copyReport = useCallback(
-    (report: PublicReport) => {
-      navigator.clipboard.writeText(buildCityReport(report, matches.get(report.id))).then(
-        () => setCopy({ reportId: report.id, ok: true }),
-        () => setCopy({ reportId: report.id, ok: false }),
-      )
-    },
-    [matches],
   )
 
   // Bringing the report that something outside the map picked to a pin of its own. Once it has
@@ -404,8 +383,7 @@ function PinLayer({ pins, matches, selectedId, onOpenChange, popupInsets }: PinL
             key={only.id}
             report={only}
             cityRecord={matches.get(only.id)}
-            copy={copy}
-            onCopy={copyReport}
+            onSend={onSend}
             onOpenChange={trackOpen}
             selected={only.id === selectedId}
             popupInsets={popupInsets}
@@ -465,32 +443,40 @@ export function ReportsMap({
   // whole view. Leaflet reads these settings only when a map is made, so the key makes a new map
   // if the setting changes while the page is open.
   const calm = useReducedMotion()
+  // The report being sent on to the City, while "Send to Tempe 311" is open over the map. It is
+  // the report as it was when the button was pressed, so a refresh of the pins does not disturb it.
+  const [sending, setSending] = useState<PublicReport | null>(null)
+  const stopSending = useCallback(() => setSending(null), [])
   return (
-    <MapContainer
-      key={calm ? 'calm' : 'moving'}
-      center={[MAP_CENTER.lat, MAP_CENTER.lng]}
-      zoom={ZOOM}
-      minZoom={MIN_ZOOM}
-      maxZoom={MAX_ZOOM}
-      zoomSnap={ZOOM_SNAP}
-      zoomAnimation={!calm}
-      markerZoomAnimation={!calm}
-      fadeAnimation={!calm}
-      // The edge of the reach is solid, and the zoom stops at its limits without springing back.
-      maxBounds={REACH}
-      maxBoundsViscosity={1}
-      bounceAtZoomLimits={false}
-      className="h-full w-full"
-    >
-      <TileLayer
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      <MapReady onMapReady={onMapReady} />
-      <FitToPins pins={pins} />
-      <CityRecordsLayer records={cityRecords} reportedIds={reportedIds} />
-      <PinLayer pins={pins} matches={matches} selectedId={selectedId} onOpenChange={onOpenChange} popupInsets={popupInsets} />
-      {children}
-    </MapContainer>
+    <>
+      <MapContainer
+        key={calm ? 'calm' : 'moving'}
+        center={[MAP_CENTER.lat, MAP_CENTER.lng]}
+        zoom={ZOOM}
+        minZoom={MIN_ZOOM}
+        maxZoom={MAX_ZOOM}
+        zoomSnap={ZOOM_SNAP}
+        zoomAnimation={!calm}
+        markerZoomAnimation={!calm}
+        fadeAnimation={!calm}
+        // The edge of the reach is solid, and the zoom stops at its limits without springing back.
+        maxBounds={REACH}
+        maxBoundsViscosity={1}
+        bounceAtZoomLimits={false}
+        className="h-full w-full"
+      >
+        <TileLayer
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        <MapReady onMapReady={onMapReady} />
+        <FitToPins pins={pins} />
+        <CityRecordsLayer records={cityRecords} reportedIds={reportedIds} />
+        <PinLayer pins={pins} matches={matches} selectedId={selectedId} onSend={setSending} onOpenChange={onOpenChange} popupInsets={popupInsets} />
+        {children}
+      </MapContainer>
+      {/* Beside the map, not in it: a tap in the dialog is then never a tap on the map. Closed, it takes no room. */}
+      <CityHandoffDialog report={sending} cityRecord={sending ? matches.get(sending.id) : undefined} onClose={stopSending} />
+    </>
   )
 }

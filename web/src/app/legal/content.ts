@@ -42,6 +42,7 @@ export const legalContent = {
       services: { paragraphs: [
         'AWS hosts the app and stores game data. Uploaded photos are sent to Google Gemini to identify street problems. OpenStreetMap supplies map tiles. Hosting and map providers receive your IP address; service logs may include request details and player IDs.',
         'Point transactions on Solana devnet are public and may contain a wallet address or player ID. We cannot delete those records from the network.',
+        '“Send to Tempe 311” copies a report’s location or details to your clipboard and opens the City of Tempe’s service request form in a new tab. That form is run for the city by Accela. StreetCreds sends it nothing, and what you enter there is covered by the city’s policies, not this one.',
       ] },
       photos: { paragraphs: [
         'When you submit a report, you can allow device location access or select a spot on the map. We do not track your location in the background. Keep faces, license plates and private spaces out of photos.',
@@ -67,7 +68,7 @@ export const legalContent = {
         'StreetCreds is an experimental civic game built for sunhacks 2026. Features may change, become unavailable or be discontinued.',
       ] },
       city: { paragraphs: [
-        'StreetCreds is independent of the City of Tempe. Submitting a report does not notify the city or request a repair. Use official city channels for service requests. For emergencies, call 911.',
+        'StreetCreds is independent of the City of Tempe. Submitting a report does not notify the city or request a repair. To request a repair, use the city’s own service request form. StreetCreds can open that form with your report’s details ready to paste, and you submit it there yourself. For emergencies, call 911.',
       ] },
       points: { paragraphs: [
         'CIVIC points are game rewards recorded on Solana devnet, a test network. They have no cash value and cannot be exchanged for money. Demo deals do not guarantee a real offer or discount. Points and transaction records may be reset.',
@@ -94,7 +95,7 @@ export const legalContent = {
     intro: 'StreetCreds is a neighborhood game for Tempe. Report street problems, earn points and follow your neighborhood on the leaderboard. Play in your browser with a nickname and neighborhood.',
     sections: {
       project: { paragraphs: [
-        'Built by Sarah and Pierre at sunhacks 2026. StreetCreds is an independent project and is not affiliated with the City of Tempe. Reports are not sent to the city.',
+        'Built by Sarah and Pierre at sunhacks 2026. StreetCreds is an independent project and is not affiliated with the City of Tempe. Reports are not sent to the city. You can pass one on yourself with “Send to Tempe 311”, which opens the city’s own form.',
       ] },
       services: { paragraphs: [
         'Map tiles: © OpenStreetMap contributors. City records: City of Tempe open data. Photo descriptions: Google Gemini. Game points: Solana devnet.',

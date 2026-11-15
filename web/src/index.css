@@ -294,6 +294,16 @@ body {
     @apply min-h-11 min-w-0 flex-1 rounded-control border border-ink/15 bg-surface px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
   }
   .popup-link { @apply inline-flex min-h-11 items-center text-xs text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
+  /* "Send to Tempe 311" over the map (features/players/CityHandoffDialog.tsx). A browser centers
+     a dialog with its margins. Tailwind's reset takes every margin away, so they are put back.
+     On a short screen the panel scrolls inside the dialog. */
+  .handoff-dialog {
+    @apply m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[26rem] overflow-y-auto border border-ink/10 bg-surface p-0 text-ink;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-float);
+  }
+  .handoff-dialog[open] { animation: fade-in 0.16s ease-out backwards; }
+  .handoff-dialog::backdrop { background: rgb(10 10 10 / .45); }
   .filter-reset { @apply inline-flex min-h-11 shrink-0 items-center px-2 text-sm text-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink; }
   .board-row {
     @apply flex min-h-11 w-full items-stretch gap-3 overflow-hidden rounded-card border border-ink/10 bg-surface text-left shadow-none hover:border-ink/30 focus-visible:outline-2 focus-visible:outline-offset-2 outline-ink;
