@@ -1,64 +1,63 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Mayor Patch">
-  <!-- Mayor Patch, the StreetCreds mascot: a friendly chibi mayor waving hello. -->
+  <!-- Mayor Patch, the StreetCreds mascot: a chibi mayor waving hello. Big head, tiny body. -->
   <circle cx="100" cy="100" r="100" fill="#FF7A1A"/>
-  <g stroke="#1A1210" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
-    <!-- shadow -->
-    <ellipse cx="100" cy="188" rx="40" ry="6" fill="#C4570C" stroke="none"/>
-    <!-- legs and shoes -->
-    <rect x="80" y="158" width="16" height="22" rx="4" fill="#1F1A18"/>
-    <rect x="104" y="158" width="16" height="22" rx="4" fill="#1F1A18"/>
-    <ellipse cx="86" cy="182" rx="14" ry="7" fill="#151110"/>
-    <ellipse cx="114" cy="182" rx="14" ry="7" fill="#151110"/>
-    <!-- left arm, down -->
-    <path d="M66 118 Q56 140 62 158" fill="none" stroke="#1A1210" stroke-width="16"/>
-    <path d="M66 118 Q56 140 62 158" fill="none" stroke="#2A2420" stroke-width="10"/>
-    <circle cx="62" cy="161" r="8" fill="#C68A5E"/>
-    <!-- body: suit -->
-    <path d="M64 120 Q64 108 80 106 L120 106 Q136 108 136 120 L138 164 Q100 172 62 164 Z" fill="#2A2420"/>
-    <!-- shirt and lapels -->
-    <path d="M88 106 L100 132 L112 106 Z" fill="#F4ECE4"/>
-    <path d="M86 106 L100 136 L92 150 L78 112 Z" fill="#1F1A18"/>
-    <path d="M114 106 L100 136 L108 150 L122 112 Z" fill="#1F1A18"/>
-    <!-- tie -->
-    <path d="M96 110 L104 110 L102 116 L106 140 L100 148 L94 140 L98 116 Z" fill="#D62828"/>
+  <g stroke="#1A1210" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <!-- ground shadow -->
+    <ellipse cx="100" cy="186" rx="34" ry="5" fill="#C4570C" stroke="none"/>
+    <!-- stubby legs and round shoes -->
+    <rect x="86" y="164" width="11" height="14" rx="4" fill="#1F1A18"/>
+    <rect x="103" y="164" width="11" height="14" rx="4" fill="#1F1A18"/>
+    <ellipse cx="90" cy="180" rx="11" ry="6" fill="#151110"/>
+    <ellipse cx="110" cy="180" rx="11" ry="6" fill="#151110"/>
+    <!-- left arm: a little nub at his side -->
+    <path d="M76 140 Q66 150 70 160" fill="none" stroke="#1A1210" stroke-width="14"/>
+    <path d="M76 140 Q66 150 70 160" fill="none" stroke="#2A2420" stroke-width="8"/>
+    <circle cx="70" cy="162" r="6.5" fill="#C68A5E"/>
+    <!-- tiny round body: suit -->
+    <path d="M72 140 Q72 126 88 124 L112 124 Q128 126 128 140 L128 162 Q100 172 72 162 Z" fill="#2A2420"/>
+    <!-- shirt, lapels, tie -->
+    <path d="M91 124 L100 140 L109 124 Z" fill="#F4ECE4"/>
+    <path d="M89 124 L100 143 L94 152 L83 128 Z" fill="#1F1A18"/>
+    <path d="M111 124 L100 143 L106 152 L117 128 Z" fill="#1F1A18"/>
+    <path d="M97 127 L103 127 L102 131 L104 146 L100 151 L96 146 L98 131 Z" fill="#D62828" stroke-width="2.5"/>
     <!-- gold badge -->
-    <circle cx="121" cy="128" r="6" fill="#FFB02E"/>
-    <path d="M117 133 L115 143 L119 140 L121 144 L123 140 L127 143 L125 133" fill="#D62828" stroke-width="2"/>
-    <!-- right arm, waving -->
-    <path d="M134 116 Q150 104 152 84" fill="none" stroke="#1A1210" stroke-width="16"/>
-    <path d="M134 116 Q150 104 152 84" fill="none" stroke="#2A2420" stroke-width="10"/>
-    <!-- waving hand -->
-    <g fill="#C68A5E">
-      <rect x="143" y="62" width="20" height="22" rx="8"/>
-      <rect x="144" y="54" width="5" height="14" rx="2.5"/>
-      <rect x="150" y="51" width="5" height="16" rx="2.5"/>
-      <rect x="156" y="53" width="5" height="15" rx="2.5"/>
-      <rect x="160" y="68" width="10" height="5" rx="2.5" transform="rotate(-30 165 70)"/>
-    </g>
-    <!-- head -->
-    <circle cx="66" cy="66" r="9" fill="#C68A5E"/>
-    <circle cx="134" cy="66" r="9" fill="#C68A5E"/>
-    <ellipse cx="100" cy="64" rx="34" ry="36" fill="#C68A5E"/>
-    <!-- hair: dark sides and a slicked top -->
-    <path d="M67 62 Q66 30 100 28 Q134 30 133 62 Q128 46 118 44 Q100 40 82 44 Q72 46 67 62 Z" fill="#2B201B"/>
-    <path d="M84 36 Q100 30 116 36" fill="none" stroke="#5A4639" stroke-width="2"/>
-    <!-- cheeks -->
-    <ellipse cx="78" cy="78" rx="6" ry="4" fill="#E0876A" stroke="none" opacity=".7"/>
-    <ellipse cx="122" cy="78" rx="6" ry="4" fill="#E0876A" stroke="none" opacity=".7"/>
-    <!-- glasses -->
-    <circle cx="86" cy="64" r="11" fill="#F4ECE4"/>
-    <circle cx="114" cy="64" r="11" fill="#F4ECE4"/>
-    <path d="M97 64 L103 64" fill="none"/>
-    <!-- eyes -->
-    <circle cx="87" cy="65" r="4.5" fill="#1A1210" stroke="none"/>
-    <circle cx="113" cy="65" r="4.5" fill="#1A1210" stroke="none"/>
-    <circle cx="88.5" cy="63.5" r="1.4" fill="#fff" stroke="none"/>
-    <circle cx="114.5" cy="63.5" r="1.4" fill="#fff" stroke="none"/>
+    <circle cx="116" cy="140" r="5" fill="#FFB02E" stroke-width="2.5"/>
+    <path d="M113 144 L112 151 L115 149 L116 152 L117 149 L120 151 L119 144" fill="#D62828" stroke-width="2"/>
+    <!-- big head -->
+    <circle cx="48" cy="80" r="11" fill="#C68A5E"/>
+    <circle cx="152" cy="80" r="11" fill="#C68A5E"/>
+    <ellipse cx="100" cy="76" rx="52" ry="48" fill="#C68A5E"/>
+    <!-- hair: neat dark cap with a side part -->
+    <path d="M49 74 Q46 26 100 24 Q154 26 151 74 Q146 50 128 46 Q112 42 96 44 Q74 44 62 54 Q52 62 49 74 Z" fill="#2B201B"/>
+    <path d="M78 38 Q96 30 120 34" fill="none" stroke="#5A4639" stroke-width="2.5"/>
+    <!-- blush -->
+    <ellipse cx="68" cy="96" rx="9" ry="5.5" fill="#E8836A" stroke="none" opacity=".75"/>
+    <ellipse cx="132" cy="96" rx="9" ry="5.5" fill="#E8836A" stroke="none" opacity=".75"/>
+    <!-- big round glasses -->
+    <circle cx="80" cy="78" r="17" fill="#FFF8F2"/>
+    <circle cx="120" cy="78" r="17" fill="#FFF8F2"/>
+    <path d="M97 77 Q100 74 103 77" fill="none"/>
+    <!-- big sparkly eyes -->
+    <ellipse cx="81" cy="80" rx="8" ry="9.5" fill="#1A1210" stroke="none"/>
+    <ellipse cx="119" cy="80" rx="8" ry="9.5" fill="#1A1210" stroke="none"/>
+    <circle cx="84" cy="76" r="3" fill="#fff" stroke="none"/>
+    <circle cx="122" cy="76" r="3" fill="#fff" stroke="none"/>
+    <circle cx="78.5" cy="84" r="1.4" fill="#fff" stroke="none"/>
+    <circle cx="116.5" cy="84" r="1.4" fill="#fff" stroke="none"/>
     <!-- eyebrows -->
-    <path d="M78 50 Q86 46 93 50" fill="none" stroke-width="3.5"/>
-    <path d="M107 50 Q114 46 122 50" fill="none" stroke-width="3.5"/>
-    <!-- mustache and smile -->
-    <path d="M100 82 Q92 76 82 82 Q86 90 100 86 Q114 90 118 82 Q108 76 100 82 Z" fill="#2B201B"/>
-    <path d="M93 92 Q100 97 107 92" fill="none" stroke-width="2.5"/>
+    <path d="M70 55 Q79 50 89 55" fill="none" stroke-width="4"/>
+    <path d="M111 55 Q121 50 130 55" fill="none" stroke-width="4"/>
+    <!-- small mustache and happy mouth -->
+    <path d="M100 101 Q93 96 85 101 Q89 107 100 104 Q111 107 115 101 Q107 96 100 101 Z" fill="#2B201B" stroke-width="2.5"/>
+    <path d="M95 110 Q100 114 105 110" fill="none" stroke-width="2.5"/>
+    <!-- right arm, raised and waving (drawn over the head so the hand is in front) -->
+    <path d="M124 136 Q152 134 162 116" fill="none" stroke="#1A1210" stroke-width="14"/>
+    <path d="M124 136 Q152 134 162 116" fill="none" stroke="#2A2420" stroke-width="8"/>
+    <!-- mitten hand with a thumb -->
+    <ellipse cx="165" cy="105" rx="10" ry="11" fill="#C68A5E"/>
+    <ellipse cx="156" cy="110" rx="4" ry="5.5" fill="#C68A5E" transform="rotate(-35 156 110)"/>
+    <path d="M161 98 L161 104 M166 97 L166 103 M171 99 L170 104" fill="none" stroke-width="2"/>
+    <!-- motion lines for the wave -->
+    <path d="M179 96 Q183 103 180 111 M184 90 Q190 100 186 113" fill="none" stroke="#1A1210" stroke-width="2.5" opacity=".55"/>
   </g>
 </svg>
