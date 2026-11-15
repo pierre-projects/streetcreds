@@ -143,7 +143,7 @@ A dead key in the history is harmless. A live one is not.
 
 ## Coding agents and Git
 
-Agents (Cursor, Claude Code and others) follow [AGENTS.md](AGENTS.md) and these rules as well:
+Agents (Cursor, Claude Code and others) follow [AGENTS.md](../AGENTS.md) and these rules as well:
 
 - An agent may create branches and make commits on **your** branch when you ask.
 - An agent must **not** push, merge, deploy, force-push, delete branches or change Git settings without you saying yes to that exact command.

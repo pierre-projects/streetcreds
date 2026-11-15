@@ -1,6 +1,6 @@
 # StreetCreds: technical guide
 
-This file is the implementation spec for StreetCreds: stack, data models, API contract, core functions, setup and build order. Rules for coding agents are in `AGENTS.md`. The product reasoning, demo script and risks are in the PRD (`PRD.md`, when it has been exported into the repo). Where this file and the PRD differ on an implementation detail, this file wins.
+This file is the implementation spec for StreetCreds: stack, data models, API contract, core functions, setup and build order. Rules for coding agents are in `AGENTS.md` at the repo root. The product reasoning, demo script and risks are in the PRD (`docs/PRD.md`). Where this file and the PRD differ on an implementation detail, this file wins.
 
 **The product in four lines.** A phone web app, no install and no login. A player joins with a nickname and a neighborhood. They earn points by completing quests: photograph a street problem (Gemini labels it), or read a short summary of a real city council item and answer one question. Points are minted as a token on Solana devnet, and neighborhoods compete on a live leaderboard.
 
@@ -47,7 +47,8 @@ No npm workspaces. `web/` and `api/` are separate packages. `shared/` holds depe
 
 ```
 streetcreds/
-  AGENTS.md  TECHNICAL.md  PRD.md  README.md
+  README.md  AGENTS.md
+  docs/                   PRD, TECHNICAL, CONTRIBUTING and the phase checklists
   amplify.yml
   .gitignore
   shared/                 the contract; already written

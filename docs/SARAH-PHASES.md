@@ -19,7 +19,7 @@ Do not start a phase until the checkpoint before it passes on a real phone.
 ## Session opener (paste first in every new chat)
 
 ```text
-I'm Sarah, working on StreetCreds. Read AGENTS.md, TECHNICAL.md, CONTRIBUTING.md and SARAH-PHASES.md in full before doing anything.
+I'm Sarah, working on StreetCreds. Read AGENTS.md, docs/TECHNICAL.md, docs/CONTRIBUTING.md and docs/SARAH-PHASES.md in full before doing anything.
 
 I own the quests: web/src/features/quests/ and api/src/quests/. Work only in those folders. Do not change shared/, Pierre's folders, or the deploy template. If a task needs a change there, describe the change and stop.
 
@@ -47,13 +47,13 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 Prompt:
 
 ```text
-Do Sarah's Phase 1 from SARAH-PHASES.md, following TECHNICAL.md sections 5 and 6.
+Do Sarah's Phase 1 from docs/SARAH-PHASES.md, following docs/TECHNICAL.md sections 5 and 6.
 
 1. Build GET /upload-url (route 5).
-2. Build labelPhoto in api/src/quests/labelPhoto.ts using the Gemini Interactions API as shown in TECHNICAL.md. Also write a script that runs it on every image in a local folder and prints the result as a table, so I can tune the prompt on my 10 test photos.
+2. Build labelPhoto in api/src/quests/labelPhoto.ts using the Gemini Interactions API as shown in docs/TECHNICAL.md. Also write a script that runs it on every image in a local folder and prints the result as a table, so I can tune the prompt on my 10 test photos.
 3. Build the report screen against mock data only (VITE_USE_MOCKS=true), with every state in the report flow: idle, resizing, uploading, labeling, confirm, locating, submitting, reward, error.
 
-Type-check against the installed packages as you go and fix what fails. Write the unit tests TECHNICAL.md asks for. Stop when Phase 1 is done and tell me exactly how to test it by hand.
+Type-check against the installed packages as you go and fix what fails. Write the unit tests docs/TECHNICAL.md asks for. Stop when Phase 1 is done and tell me exactly how to test it by hand.
 ```
 
 **Checkpoint (both):** a player can join from a phone and appears in the database.
@@ -74,11 +74,11 @@ Type-check against the installed packages as you go and fix what fails. Write th
 Prompt:
 
 ```text
-Do Sarah's Phase 2 from SARAH-PHASES.md.
+Do Sarah's Phase 2 from docs/SARAH-PHASES.md.
 
 Build the real report flow end to end: camera capture, resize to 1280 px, upload to S3, POST /reports (label and save a draft), POST /reports/:id/submit (publish and call awardPoints), the confirm screen with the location fallback, the reward card, and GET /reports.
 
-Call awardPoints exactly as TECHNICAL.md section 6 defines it. If Pierre's real version is not merged yet, use his stub and do not write your own.
+Call awardPoints exactly as docs/TECHNICAL.md section 6 defines it. If Pierre's real version is not merged yet, use his stub and do not write your own.
 
 Cover the failure cases: not a street problem, Gemini error or timeout, location denied, double tap on submit. Stop when done and give me a step-by-step phone test for acceptance check F2.
 ```
@@ -99,7 +99,7 @@ Cover the failure cases: not a street problem, Gemini error or timeout, location
 Prompt:
 
 ```text
-Do Sarah's Phase 3 from SARAH-PHASES.md.
+Do Sarah's Phase 3 from docs/SARAH-PHASES.md.
 
 1. Write api/scripts/generate-council.ts. It reads agenda text I paste into a local file and drafts a three-sentence plain-language summary plus one multiple-choice question for each item. It must print the drafts for me to check and must NOT write council.json itself.
 2. Build GET /quests/council and POST /quests/council/answer (routes 9 and 10), with one award per player per item.
@@ -121,7 +121,7 @@ Never invent agenda content. Use only the text I give you. Stop when done and te
 Prompt:
 
 ```text
-Do my Phase 4 from SARAH-PHASES.md. For every screen and route I own: add a loading state and a plain-language error state, check the layout at 375 px and 430 px wide with no horizontal scroll, and make every tap target at least 44 px tall. Do not add features. List each change you made, one line each.
+Do my Phase 4 from docs/SARAH-PHASES.md. For every screen and route I own: add a loading state and a plain-language error state, check the layout at 375 px and 430 px wide with no horizontal scroll, and make every tap target at least 44 px tall. Do not add features. List each change you made, one line each.
 ```
 
 **Checkpoint (both):** feature freeze. Bug fixes only from here.
@@ -145,13 +145,13 @@ This is broken. What I did: <steps>. What I expected: <result>. What happened: <
 
 <paste the full error>
 
-Find the cause before changing anything. Explain it in two sentences, then fix only that. Check the troubleshooting table in TECHNICAL.md section 9 first.
+Find the cause before changing anything. Explain it in two sentences, then fix only that. Check the troubleshooting table in docs/TECHNICAL.md section 9 first.
 ```
 
 Wrap-up, at the end of every phase:
 
 ```text
-Wrap up this phase. Run npm run check in every package you touched and fix failures. Then tell me: (1) what you built, file by file, (2) which SARAH-PHASES.md boxes are done and which are not, (3) which acceptance checks in TECHNICAL.md section 13 I should now test on my phone and how, (4) anything you assumed or skipped, (5) one line to add to the README Credits section if you followed a tutorial. Do not commit or push.
+Wrap up this phase. Run npm run check in every package you touched and fix failures. Then tell me: (1) what you built, file by file, (2) which docs/SARAH-PHASES.md boxes are done and which are not, (3) which acceptance checks in docs/TECHNICAL.md section 13 I should now test on my phone and how, (4) anything you assumed or skipped, (5) one line to add to the README Credits section if you followed a tutorial. Do not commit or push.
 ```
 
 ## If you finish early

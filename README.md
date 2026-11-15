@@ -26,15 +26,15 @@ In progress during the hackathon. So far the repo holds the plan and the shared 
 
 | File | What's in it | Read it when |
 | --- | --- | --- |
-| [PRD.md](PRD.md) | The product: scope and priorities, user flow, feature checklists, team roles, build plan, demo script, risks | You want to know what we're building and why |
-| [PHASES.md](PHASES.md) | The phases at a glance and the checkpoints you both test together | You want the shared timeline |
-| [SARAH-PHASES.md](SARAH-PHASES.md) | Sarah's checklist and agent prompts for every phase | You are Sarah and want to know what to do next |
-| [PIERRE-PHASES.md](PIERRE-PHASES.md) | Pierre's checklist and agent prompts for every phase | You are Pierre and want to know what to do next |
-| [TECHNICAL.md](TECHNICAL.md) | The implementation spec: stack and versions, data models, API contract, core functions, setup, development guide, build order | You're writing code |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | GitHub rules: branches, commits, pull requests, conflicts, secrets, the deadline | Before your first commit, and whenever Git gets confusing |
+| [PRD.md](docs/PRD.md) | The product: scope and priorities, user flow, feature checklists, team roles, build plan, demo script, risks | You want to know what we're building and why |
+| [PHASES.md](docs/PHASES.md) | The phases at a glance and the checkpoints you both test together | You want the shared timeline |
+| [SARAH-PHASES.md](docs/SARAH-PHASES.md) | Sarah's checklist and agent prompts for every phase | You are Sarah and want to know what to do next |
+| [PIERRE-PHASES.md](docs/PIERRE-PHASES.md) | Pierre's checklist and agent prompts for every phase | You are Pierre and want to know what to do next |
+| [TECHNICAL.md](docs/TECHNICAL.md) | The implementation spec: stack and versions, data models, API contract, core functions, setup, development guide, build order | You're writing code |
+| [CONTRIBUTING.md](docs/CONTRIBUTING.md) | GitHub rules: branches, commits, pull requests, conflicts, secrets, the deadline | Before your first commit, and whenever Git gets confusing |
 | [AGENTS.md](AGENTS.md) | Rules for AI coding agents: hard rules, who owns which folders, commands, definition of done | You point Cursor, Claude Code or another agent at this repo |
 
-Where the PRD and TECHNICAL.md differ on an implementation detail, TECHNICAL.md wins.
+All project docs live in [`docs/`](docs/). Only this README and `AGENTS.md` stay at the root. Where the PRD and TECHNICAL.md differ on an implementation detail, TECHNICAL.md wins.
 
 ## How it's built
 
@@ -47,14 +47,15 @@ Where the PRD and TECHNICAL.md differ on an implementation detail, TECHNICAL.md 
 | Points | An SPL token on Solana devnet |
 | Map | Leaflet with OpenStreetMap |
 
-The phone uploads photos straight to S3 and sends everything else through the API. Only the Lambda talks to Gemini and Solana, so no key ever reaches the phone. Details are in [TECHNICAL.md](TECHNICAL.md).
+The phone uploads photos straight to S3 and sends everything else through the API. Only the Lambda talks to Gemini and Solana, so no key ever reaches the phone. Details are in [TECHNICAL.md](docs/TECHNICAL.md).
 
 ## Repo layout
 
 ```
 streetcreds/
-  README.md  PRD.md  TECHNICAL.md  AGENTS.md  CONTRIBUTING.md
-  PHASES.md  SARAH-PHASES.md  PIERRE-PHASES.md
+  README.md     start here
+  AGENTS.md     rules for coding agents (agents look for it at the root)
+  docs/         PRD, TECHNICAL, CONTRIBUTING, PHASES, SARAH-PHASES, PIERRE-PHASES
   shared/       the contract both sides import: constants, data types, API types
   api/          the backend (planned)
   web/          the phone web app (planned)
@@ -64,7 +65,7 @@ streetcreds/
 
 ## Getting started
 
-The app is not built yet. To set up a machine and start building, follow [TECHNICAL.md section 9, "Development guide"](TECHNICAL.md#9-development-guide). In short, you need Node.js 24, Git, the AWS CLI and a Gemini API key.
+The app is not built yet. To set up a machine and start building, follow [TECHNICAL.md section 9, "Development guide"](docs/TECHNICAL.md#9-development-guide). In short, you need Node.js 24, Git, the AWS CLI and a Gemini API key.
 
 Never commit keys. Secrets go in `api/.env` and `api/samconfig.toml`, which `.gitignore` already excludes.
 
@@ -79,10 +80,10 @@ Never commit keys. Secrets go in `api/.env` and `api/samconfig.toml`, which `.gi
 
 Each person has one file with their checklist for every phase and a copy-paste prompt to give Cursor, Claude Code or another agent:
 
-- **Sarah:** [SARAH-PHASES.md](SARAH-PHASES.md)
-- **Pierre:** [PIERRE-PHASES.md](PIERRE-PHASES.md)
+- **Sarah:** [SARAH-PHASES.md](docs/SARAH-PHASES.md)
+- **Pierre:** [PIERRE-PHASES.md](docs/PIERRE-PHASES.md)
 
-Start a new agent chat for each phase, paste the session opener from your file, then the phase prompt. Tick the boxes yourself as you finish. The shared checkpoints are in [PHASES.md](PHASES.md).
+Start a new agent chat for each phase, paste the session opener from your file, then the phase prompt. Tick the boxes yourself as you finish. The shared checkpoints are in [PHASES.md](docs/PHASES.md).
 
 ## Credits
 

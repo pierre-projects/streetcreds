@@ -6,22 +6,22 @@ StreetCreds is a phone-first web game built at sunhacks 2026 by two people, Sara
 
 | File | What it is | When it wins |
 | --- | --- | --- |
-| `TECHNICAL.md` | Stack, data models, API contract, core functions, setup, build order, acceptance checks | Any implementation question |
-| `CONTRIBUTING.md` | GitHub rules: branches, commits, pull requests, what never to commit, what agents may do with Git | Any Git or GitHub question |
-| `SARAH-PHASES.md`, `PIERRE-PHASES.md` | Each person's checklist for every phase. Work on the items of the person you are working for, and never tick a box yourself | What to build next |
-| `PRD.md` | Export of the product doc: scope, user flow, demo script, risks. May be missing; `TECHNICAL.md` is enough to build from | Any "should this exist" question |
+| `docs/TECHNICAL.md` | Stack, data models, API contract, core functions, setup, build order, acceptance checks | Any implementation question |
+| `docs/CONTRIBUTING.md` | GitHub rules: branches, commits, pull requests, what never to commit, what agents may do with Git | Any Git or GitHub question |
+| `docs/SARAH-PHASES.md`, `docs/PIERRE-PHASES.md` | Each person's checklist for every phase. Work on the items of the person you are working for, and never tick a box yourself | What to build next |
+| `docs/PRD.md` | Export of the product doc: scope, user flow, demo script, risks. May be missing; `docs/TECHNICAL.md` is enough to build from | Any "should this exist" question |
 | `AGENTS.md` (this file) | Rules for working in this repo | Any conflict about how to work |
 
-Read `TECHNICAL.md` in full before writing code. Do not guess a route, field name or table name: they are all defined there.
+Read `docs/TECHNICAL.md` in full before writing code. Do not guess a route, field name or table name: they are all defined there.
 
 ## Hard rules
 
 1. **Devnet only.** Never point at Solana mainnet, never handle real funds, never ask a player for a seed phrase.
 2. **No secrets in the repo or the frontend.** The Gemini key, the Solana treasury secret and AWS credentials live in Lambda environment variables and in git-ignored local files (`api/.env`, `api/samconfig.toml`). Nothing secret goes under `web/` or in a `VITE_` variable.
-3. **The contract is fixed.** `shared/constants.ts`, `shared/types.ts`, `shared/api.ts`, the API routes and the database models in `TECHNICAL.md` are already written and agreed between two people. If a task needs one changed, stop, describe the change and wait for a yes.
-4. **Keep the pinned major versions** in `TECHNICAL.md` section 1. In particular `@solana/web3.js` stays on 1.x: `@solana/spl-token` 0.4 does not work with 3.x.
+3. **The contract is fixed.** `shared/constants.ts`, `shared/types.ts`, `shared/api.ts`, the API routes and the database models in `docs/TECHNICAL.md` are already written and agreed between two people. If a task needs one changed, stop, describe the change and wait for a yes.
+4. **Keep the pinned major versions** in `docs/TECHNICAL.md` section 1. In particular `@solana/web3.js` stays on 1.x: `@solana/spl-token` 0.4 does not work with 3.x.
 5. **Priorities.** Finish every P0 item before any P1, and every P1 before any P2. Do not build P2 features unless asked by name.
-6. **No new dependencies** beyond the list in `TECHNICAL.md` without asking.
+6. **No new dependencies** beyond the list in `docs/TECHNICAL.md` without asking.
 7. **No accounts or personal data.** Players have a nickname and a neighborhood. Do not add email, login, analytics or tracking.
 8. **Ask before anything that leaves the laptop.** Do not run `sam deploy`, `git push`, a Solana airdrop or anything that creates cloud resources or costs money on your own. Print the command and wait.
 9. **Credit sources.** The hackathon rules require crediting tutorials and AI tools. When you follow a tutorial or generate a substantial file, add one line to the Credits section of `README.md`.
@@ -57,9 +57,9 @@ Run from the package folder named.
 A change is done when all of these hold:
 
 - `npm run check` passes in every package you touched.
-- The feature's acceptance checks in `TECHNICAL.md` section 13 pass.
+- The feature's acceptance checks in `docs/TECHNICAL.md` section 13 pass.
 - New screens work at 375 px wide with no horizontal scroll, and every tap target is at least 44 px.
-- Every API error uses the standard error shape from `TECHNICAL.md` section 5, and the screen shows a plain-language message for it.
+- Every API error uses the standard error shape from `docs/TECHNICAL.md` section 5, and the screen shows a plain-language message for it.
 - No file outside your owner's paths changed, unless the change was agreed.
 
 ## When something is unclear

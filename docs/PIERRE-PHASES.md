@@ -19,7 +19,7 @@ Do not start a phase until the checkpoint before it passes on a real phone. The 
 ## Session opener (paste first in every new chat)
 
 ```text
-I'm Pierre, working on StreetCreds. Read AGENTS.md, TECHNICAL.md, CONTRIBUTING.md and PIERRE-PHASES.md in full before doing anything.
+I'm Pierre, working on StreetCreds. Read AGENTS.md, docs/TECHNICAL.md, docs/CONTRIBUTING.md and docs/PIERRE-PHASES.md in full before doing anything.
 
 I own players, points and boards: web/src/features/players/, web/src/app/, api/src/players/, api/src/points/, api/template.yaml and amplify.yml. Work only in those. Do not change shared/ or Sarah's folders (web/src/features/quests/, api/src/quests/). If a task needs a change there, describe the change and stop.
 
@@ -40,7 +40,7 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 Prompt:
 
 ```text
-Do Pierre's Phase 0 from PIERRE-PHASES.md, following TECHNICAL.md sections 2, 3, 8 and 9.
+Do Pierre's Phase 0 from docs/PIERRE-PHASES.md, following docs/TECHNICAL.md sections 2, 3, 8 and 9.
 
 Scaffold web/ and api/ with the exact install commands in section 9 step 1 (@solana/web3.js must be version 1). Add the npm scripts listed in AGENTS.md, the tsconfig and vite settings that let both packages import shared/, .env.example files, and amplify.yml. Write api/template.yaml with a GET /health route and a GET /leaderboard route that returns the four neighborhoods with zero points.
 
@@ -63,7 +63,7 @@ Do not run sam deploy or anything else that creates cloud resources: print each 
 Prompt:
 
 ```text
-Do Pierre's Phase 1 from PIERRE-PHASES.md, following TECHNICAL.md sections 5, 6, 8 and 9. Go in this order and stop after each numbered step so I can check it.
+Do Pierre's Phase 1 from docs/PIERRE-PHASES.md, following docs/TECHNICAL.md sections 5, 6, 8 and 9. Go in this order and stop after each numbered step so I can check it.
 
 1. Write api/scripts/solana-setup.ts as described in section 9, step 6. Do not run an airdrop or create anything on devnet yourself: print the command and wait for me.
 2. Build the app shell: routing, layout, app/api.ts with mock mode, app/player.ts, app/strings.ts.
@@ -91,10 +91,10 @@ Install @solana/web3.js@1, never version 3. Type-check as you go.
 Prompt:
 
 ```text
-Do Pierre's Phase 2 from PIERRE-PHASES.md.
+Do Pierre's Phase 2 from docs/PIERRE-PHASES.md.
 
 1. Give each new player a wallet address on join when SOLANA_MODE is per-player.
-2. Replace the awardPoints stub with the real one from TECHNICAL.md section 6: conditional write of the award, atomic add of points, mint on devnet with a 10-second limit, then save the signature. It must never throw because of Solana: points still count and the award stays pending.
+2. Replace the awardPoints stub with the real one from docs/TECHNICAL.md section 6: conditional write of the award, atomic add of points, mint on devnet with a 10-second limit, then save the signature. It must never throw because of Solana: points still count and the award stays pending.
 3. Also support SOLANA_MODE=shared as the fallback.
 4. Build the leaderboard screen: four neighborhoods, top 3 players each, refresh every 4 seconds, my neighborhood highlighted.
 
@@ -116,9 +116,9 @@ Do not change the awardPoints signature or return shape. Stop when done and give
 Prompt:
 
 ```text
-Do Pierre's Phase 3 from PIERRE-PHASES.md.
+Do Pierre's Phase 3 from docs/PIERRE-PHASES.md.
 
-1. Build the map screen from TECHNICAL.md section 7: react-leaflet, OpenStreetMap tiles with attribution, one circle marker per open report sized by count and colored by severity, a popup with the photo and details.
+1. Build the map screen from docs/TECHNICAL.md section 7: react-leaflet, OpenStreetMap tiles with attribution, one circle marker per open report sized by count and colored by severity, a popup with the photo and details.
 2. Build buildCityReport as a tested pure function and wire the "Copy city report" button.
 3. Add the rate limit of 5 reports per player per hour. The check belongs in Sarah's POST /reports route, so write the pure helper and its tests in api/src/lib/ and describe the two lines she needs to add. Do not edit her files.
 4. Write a script that sends 10 awards in a row and reports how many reached devnet.
@@ -140,7 +140,7 @@ Build the map against mock data if GET /reports is not live yet. Stop when done 
 Prompt:
 
 ```text
-Do my Phase 4 from PIERRE-PHASES.md. For every screen and route I own: add a loading state and a plain-language error state, check the layout at 375 px and 430 px wide with no horizontal scroll, and make every tap target at least 44 px tall. Do not add features. List each change you made, one line each.
+Do my Phase 4 from docs/PIERRE-PHASES.md. For every screen and route I own: add a loading state and a plain-language error state, check the layout at 375 px and 430 px wide with no horizontal scroll, and make every tap target at least 44 px tall. Do not add features. List each change you made, one line each.
 ```
 
 **Checkpoint (both):** feature freeze. Bug fixes only from here.
@@ -165,13 +165,13 @@ This is broken. What I did: <steps>. What I expected: <result>. What happened: <
 
 <paste the full error>
 
-Find the cause before changing anything. Explain it in two sentences, then fix only that. Check the troubleshooting table in TECHNICAL.md section 9 first.
+Find the cause before changing anything. Explain it in two sentences, then fix only that. Check the troubleshooting table in docs/TECHNICAL.md section 9 first.
 ```
 
 Wrap-up, at the end of every phase:
 
 ```text
-Wrap up this phase. Run npm run check in every package you touched and fix failures. Then tell me: (1) what you built, file by file, (2) which PIERRE-PHASES.md boxes are done and which are not, (3) which acceptance checks in TECHNICAL.md section 13 I should now test on my phone and how, (4) anything you assumed or skipped, (5) one line to add to the README Credits section if you followed a tutorial. Do not commit or push.
+Wrap up this phase. Run npm run check in every package you touched and fix failures. Then tell me: (1) what you built, file by file, (2) which docs/PIERRE-PHASES.md boxes are done and which are not, (3) which acceptance checks in docs/TECHNICAL.md section 13 I should now test on my phone and how, (4) anything you assumed or skipped, (5) one line to add to the README Credits section if you followed a tutorial. Do not commit or push.
 ```
 
 ## If you finish early

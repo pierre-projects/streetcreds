@@ -14,7 +14,7 @@ StreetCreds turns city participation into a game: residents earn points for smal
 
 Team: two people. Web only, no native app. The site is planned to live at streetcreds.app.
 
-**For coding agents:** the implementation spec is `TECHNICAL.md` and the working rules are `AGENTS.md`, both at the root of the repo, next to the shared folder that holds the API and data contract as code. Where they differ from this PRD on an implementation detail, `TECHNICAL.md` wins.
+**For coding agents:** the implementation spec is `docs/TECHNICAL.md` and the working rules are `AGENTS.md` at the root of the repo, next to the shared folder that holds the API and data contract as code. Where they differ from this PRD on an implementation detail, `TECHNICAL.md` wins.
 
 ## Goals and prize targets
 
