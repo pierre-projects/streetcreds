@@ -1,6 +1,24 @@
 import type { Category, Severity } from '../../../../shared/types'
 
 export const questStrings = {
+  council: {
+    listTitle: 'Council quest',
+    listSubtitle: 'Read a short summary of a real Tempe City Council item and answer one question.',
+    itemSubtitle: 'Answer from the summary. You can try again if you miss.',
+    loading: 'Loading council items…',
+    loadError: 'Could not load the council quest.',
+    missing: 'We could not find that council item.',
+    back: 'All council items',
+    open: 'Open',
+    answered: 'Done',
+    alreadyEarned: 'You already earned points for this item.',
+    source: 'Official agenda',
+    submit: 'Check answer',
+    submitting: 'Checking…',
+    wrong: 'Not quite. Pick another answer and try again.',
+    submitError: 'Could not check that answer. Try again.',
+    retry: 'Try again',
+  },
   report: {
     title: 'Report a street problem',
     captureHint: 'Take a clear photo of the problem, not of people.',
