@@ -35,7 +35,7 @@ When a checkpoint passes, tag it (`git tag checkpoint-2`, then `git push origin 
 
 ## Done together
 
-- [ ] Phase 0: read `shared/` together once. It is the fixed contract.
+- [x] Phase 0: read `shared/` together once. It is the fixed contract.
 - [ ] Every checkpoint above, on one phone, side by side.
 - [ ] Phase 4: walk the campus and submit 15 to 20 real reports.
 - [ ] Phase 4: ask someone from another team to try it without help, and watch where they get stuck.

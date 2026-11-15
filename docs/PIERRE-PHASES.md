@@ -30,7 +30,7 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 
 ## Phase 0. Setup (with Sarah, first 30 to 45 minutes)
 
-- [ ] Read `shared/` with Sarah once. It is the fixed contract.
+- [x] Read `shared/` with Sarah once. It is the fixed contract.
 - [x] Install Node.js 24, the AWS CLI and the AWS SAM CLI. Sign in with `aws login --region us-east-2`, then save the region with `aws configure set region us-east-2`.
 - [x] Scaffold `web/` and `api/` with the exact install commands in [TECHNICAL.md](TECHNICAL.md) section 9, step 1. This includes `api/src/index.ts` and `api/src/lib/`.
 - [x] Deploy template written in full: the API, the three DynamoDB tables and the S3 bucket.
@@ -38,7 +38,7 @@ Reply with: (1) a five-line summary of what StreetCreds is and what I own, (2) t
 - [x] Connect Amplify hosting to the repo, app root `web`, and set `VITE_API_URL`.
 - [x] Add the Amplify URL to the allowed origins and redeploy.
 - [x] Start the `streetcreds.app` custom domain in Amplify. DNS can take hours.
-- [ ] Send Sarah the API URL and bucket name for her `.env`.
+- [x] Send Sarah the API URL and bucket name for her `.env`.
 
 Prompt:
 
