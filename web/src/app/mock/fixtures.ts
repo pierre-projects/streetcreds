@@ -1,6 +1,5 @@
 // Example data for mock mode (VITE_USE_MOCKS=true). Typed against the contract in shared/, so a
 // change to the contract breaks the build here instead of letting the examples drift.
-// None of this is real: the council items in particular are made up for layout only.
 // Sarah: the report and council fixtures are yours to change.
 import { MAP_CENTER } from '../../../../shared/constants'
 import type { CouncilItem, LeaderboardRow, Player, PublicReport } from '../../../../shared/types'
@@ -128,36 +127,46 @@ export const mockLabel = {
   description: 'Deep pothole in the right lane near the crosswalk.',
 } as const
 
-/** Made-up items for layout only. Real items come from a checked agenda, in api/src/quests/council.json. */
+/** Same checked Tempe agenda items as api/src/quests/council.json (Nov 5, 2026 regular meeting). */
 export const mockCouncilItems: CouncilItem[] = [
   {
-    id: 'mock-item-1',
-    title: 'Sample item: shade structures at bus stops',
+    id: '2026-11-05-7b8-solar-group-buy',
+    title: '7B8: Residential solar and energy storage group purchase',
     summary:
-      'This is example text, not a real agenda item. The council would vote on adding shade at ten bus stops. The money would come from the transit fund.',
-    question: 'What would this item pay for?',
-    options: ['New bus routes', 'Shade at bus stops', 'A parking garage'],
+      'Council is asked to award a one-year contract, with four one-year renewal options, to Solar United Neighbors to run a Residential Solar and Energy Storage Group Purchasing Program. The program is meant to help Tempe homeowners get solar panels and optional battery storage at lower cost through group buying. The City estimates the contract value will exceed $100,000 over the term, but the City will not pay for equipment, installation, warranties, or financing and will not be a party to homeowner contracts.',
+    question: 'Who pays for the solar equipment and installation under this program?',
+    options: [
+      'The City of Tempe pays the full cost',
+      'Homeowners, under their own agreements with installers',
+      'Arizona State University',
+      'A federal grant that requires a City match',
+    ],
     answerIndex: 1,
-    sourceUrl: 'https://example.com/sample-agenda',
+    sourceUrl: 'https://tempe.hylandcloud.com/AgendaOnline/Meetings/ViewMeeting?id=1976&doctype=1',
   },
   {
-    id: 'mock-item-2',
-    title: 'Sample item: later hours at a city pool',
+    id: '2026-11-05-7c9-flash-bus',
+    title: '7C9: Flash bus funding agreement with ASU',
     summary:
-      'This is example text, not a real agenda item. The proposal keeps one city pool open two hours later in summer. Staff would report back on the cost after one season.',
-    question: 'When would the later hours apply?',
-    options: ['All year', 'Only in summer', 'Only on weekends', 'Only on holidays'],
-    answerIndex: 1,
-    sourceUrl: 'https://example.com/sample-agenda',
+      'Council is asked to adopt a resolution authorizing the Mayor to sign Amendment One to an intergovernmental agreement with the Arizona Board of Regents, for Arizona State University, to fund Flash (Free Local Area Shuttle) bus service. For fiscal year 2026-27, ASU will pay a total of $491,406 for Flash operations. Of that total, $480,875 comes from ASU and $10,531 from Federal Preventive Maintenance Funds.',
+    question: 'How much will ASU pay in total for Flash bus service in FY 2026-27?',
+    options: ['$10,531', '$150,000', '$491,406', '$3,508,491'],
+    answerIndex: 2,
+    sourceUrl: 'https://tempe.hylandcloud.com/AgendaOnline/Meetings/ViewMeeting?id=1976&doctype=1',
   },
   {
-    id: 'mock-item-3',
-    title: 'Sample item: repaving a neighborhood street',
+    id: '2026-11-05-8a3-rio-salado-bridge',
+    title: '8A3: Rio Salado Upstream Pedestrian Bridge design',
     summary:
-      'This is example text, not a real agenda item. The contract would repave one mile of a residential street. Work would start next spring and take about six weeks.',
-    question: 'About how long would the work take?',
-    options: ['Six days', 'Six weeks', 'Six months'],
-    answerIndex: 1,
-    sourceUrl: 'https://example.com/sample-agenda',
+      'Council is asked to award a professional services contract to T.Y. Lin International, Inc. for Project No. 6011191, the Rio Salado Upstream Pedestrian Bridge. The contract amount is $3,508,491.32. Funds for the contract and related costs are appropriated for fiscal year 2026/27 in Capital Improvement Project No. 6011191.',
+    question: 'What is this professional services contract for?',
+    options: [
+      'Playground equipment for city parks',
+      'Powdered activated carbon for water treatment',
+      'The Rio Salado Upstream Pedestrian Bridge project',
+      'Two-way radios for public safety',
+    ],
+    answerIndex: 2,
+    sourceUrl: 'https://tempe.hylandcloud.com/AgendaOnline/Meetings/ViewMeeting?id=1976&doctype=1',
   },
 ]
