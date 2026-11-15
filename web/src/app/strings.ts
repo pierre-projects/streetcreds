@@ -15,6 +15,13 @@ import type {
 
 const yesNo = (value: boolean) => (value ? 'yes' : 'no')
 
+/** 1st, 2nd, 3rd, 4th, ... */
+function ordinal(n: number): string {
+  const tens = n % 100
+  if (tens >= 11 && tens <= 13) return `${n}th`
+  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`
+}
+
 export const strings = {
   appName: APP_NAME,
   tagline: 'Earn points for making your neighborhood better.',
@@ -67,6 +74,7 @@ export const strings = {
   header: {
     pointsLabel: 'CIVIC',
     points: (points: number) => `${points}`,
+    coinLabel: (points: number) => `${points} CIVIC`,
     loading: 'Loading…',
   },
 
@@ -349,6 +357,39 @@ export const strings = {
     hoursAgo: (hours: number) => `${hours} h ago`,
     newTag: 'New',
     inCitySurvey: 'Also in the City’s survey',
+  },
+
+  // The game design: Mayor Patch's lines and the new Home and Join screens.
+  game: {
+    home: {
+      welcome: (nickname: string) => `Welcome back, ${nickname}.`,
+      leading: (name: string) => `${name} is in first place. Keep it there.`,
+      catchUp: (name: string, reports: number, place: number) =>
+        `${reports === 1 ? 'One more report puts' : `${reports} more reports put`} ${name} in ${ordinal(place)} place.`,
+      rankLeading: (total: number, ahead: number) => `1st of ${total} · ${ahead} points ahead`,
+      rankBehind: (rank: number, total: number, behind: number) =>
+        `${ordinal(rank)} of ${total} · ${behind} ${behind === 1 ? 'point' : 'points'} behind`,
+      questsEyebrow: 'Quests',
+      reportTitle: 'Report',
+      reportBody: 'Snap a street problem',
+      councilTitle: 'Council',
+      councilBody: 'Read one item, answer one question',
+      dealsTitle: 'Local Deals',
+      dealsBody: 'Spend CIVIC at neighborhood spots',
+      budgetTitle: 'Budget',
+      budgetBody: 'See where $100 of taxes goes',
+      soon: 'Soon',
+      plus: (points: number) => `+${points}`,
+      mapTitle: 'Live map',
+      mapBody: (count: number) => (count === 1 ? '1 open report. Tap to explore.' : `${count} open reports. Tap to explore.`),
+    },
+    join: {
+      mayor: "I'm Mayor Patch. Help me fix this town and I'll make it worth your while.",
+      nickname: 'Nickname',
+      teams: 'The four neighborhoods',
+      start: 'Start playing',
+      finePrint: 'No email, no password. Points are for fun and have no cash value.',
+    },
   },
 
   comingSoon: {

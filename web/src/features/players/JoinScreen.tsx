@@ -4,14 +4,14 @@ import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
-import { NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
+import { NEIGHBORHOODS, NICKNAME_MAX, NICKNAME_MIN } from '../../../../shared/constants'
 import { api } from '../../app/api'
 import { BoardLink } from '../../app/BoardLink'
 import { legalLinkClass } from '../../app/legal/LegalLinks'
 import { readCurrentLocation } from '../../app/location'
 import { getStoredPlayerId, storePlayerId } from '../../app/player'
 import { strings } from '../../app/strings'
-import { Button, ErrorNotice, LogoMark, ScreenHeader, TextField } from '../../app/ui'
+import { Button, ErrorNotice, MayorAvatar, MayorSays, TextField, Wordmark } from '../../app/ui'
 
 export function JoinScreen() {
   const navigate = useNavigate()
@@ -56,27 +56,41 @@ export function JoinScreen() {
 
   // What the player got wrong on this screen, or else what the API said.
   const message = problem || (join.isError ? join.error.message || strings.errors.generic : null)
+  const game = strings.game.join
 
   return (
-    <main className="app-column flex flex-col px-4 py-8">
+    <main className="app-column flex flex-col px-5 pb-6 pt-8">
       <BoardLink />
-      <div className="mb-5 flex items-center gap-3">
-        <LogoMark className="size-9" />
-        <span className="text-xl font-bold tracking-tight text-ink">{strings.appName}</span>
+      <div className="flex flex-col items-center gap-4 text-center">
+        <MayorAvatar size="large" />
+        <h1>
+          <Wordmark className="text-5xl" />
+        </h1>
       </div>
-      <ScreenHeader title={strings.appName} subtitle={strings.tagline} />
 
-      <form onSubmit={submit} noValidate className="mt-8 flex flex-1 flex-col gap-6">
+      <div className="mt-5">
+        <MayorSays avatar={false}>
+          <p className="text-center text-base text-ink">{game.mayor}</p>
+        </MayorSays>
+      </div>
+
+      <form onSubmit={submit} noValidate className="mt-6 flex flex-1 flex-col gap-6">
         <TextField
-          label={strings.join.nicknameLabel}
+          label={game.nickname}
           hint={strings.join.nicknameHint(NICKNAME_MIN, NICKNAME_MAX)}
           name="nickname" type="text" value={nickname}
           onChange={(event) => setNickname(event.target.value)}
           maxLength={NICKNAME_MAX} autoComplete="nickname" autoCapitalize="words" enterKeyHint="done"
         />
 
-        <section aria-labelledby="join-location" className="space-y-2">
-          <h2 id="join-location" className="text-base font-medium text-ink">{strings.join.neighborhoodLabel}</h2>
+        <section aria-labelledby="join-location" className="space-y-3">
+          <h2 id="join-location" className="text-sm font-semibold text-muted">{strings.join.neighborhoodLabel}</h2>
+          {/* The four teams. Your location picks yours when you join, so these are not buttons. */}
+          <ul className="grid grid-cols-2 gap-2" aria-label={game.teams}>
+            {NEIGHBORHOODS.map((n) => (
+              <li key={n.id} className="team-tile">{n.name}</li>
+            ))}
+          </ul>
           <p className="text-sm leading-relaxed text-muted">{strings.join.locationHint}</p>
           <Link to="/board" className={legalLinkClass}>{strings.join.watchBoard}</Link>
         </section>
@@ -84,9 +98,10 @@ export function JoinScreen() {
         <div className="mt-auto">
           {message !== null && <div className="mb-3"><ErrorNotice message={message} fallback={strings.errors.generic} /></div>}
           <Button type="submit" disabled={locating || join.isPending}>
-            {locating ? strings.join.locating : join.isPending ? strings.join.submitting : strings.join.submit}
+            {locating ? strings.join.locating : join.isPending ? strings.join.submitting : game.start}
           </Button>
-          <p className="mt-3 text-center text-sm leading-relaxed text-muted">
+          <p className="mt-3 text-center text-xs leading-relaxed text-muted">{game.finePrint}</p>
+          <p className="mt-1 text-center text-xs leading-relaxed text-muted">
             {strings.legal.joinPrefix}{' '}
             <Link to="/terms" className={legalLinkClass}>{strings.legal.pages.terms.label}</Link>{' '}
             {strings.legal.joinAnd}{' '}

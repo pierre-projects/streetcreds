@@ -122,7 +122,11 @@ The sunhacks rules ask every project to credit the tutorials and AI tools it use
 - The report quest API (`api/src/quests/`: upload URL, Gemini `labelPhoto`, create/submit/list reports, `label-photos.ts`) was completed with Cursor Agent / Composer.
 - The temporary design system (`web/src/app/ui/`, `/design`) was generated with Codex (OpenAI), following the StreetCreds landing page.
 - The soft glass radar HUD redesign (tokens, Outfit self-host, floating frost chrome, map-first home) was implemented with Cursor (Composer).
-- Outfit by Rodrigo Fuenzalida / Smartsheet Inc (The Outfit Project Authors), under the SIL Open Font License (see `web/public/fonts/OFL.txt`).
+- The dark game design (palette, Mayor Patch, Home, Join and quest screens, chips and quest buttons) was designed by Sarah with Claude (Anthropic) and implemented with Claude (Anthropic).
+
+Russo One by Jovanny Lemonad and Inter by Rasmus Andersson, both under the SIL Open Font License, self-hosted in web/public/fonts/.
+
+Outfit by Rodrigo Fuenzalida / Smartsheet Inc (The Outfit Project Authors), under the SIL Open Font License (see `web/public/fonts/OFL.txt`).
 - The StreetCreds logo mark, wordmark, favicon and app icon in `web/public/brand/` and the favicon / apple-touch icons were taken from the StreetCreds_Logo_Pack asset set (white S on orange / wordmark masters), resized for the web app.
 
 - The Privacy, Terms, About & contact pages and their navigation links were drafted and implemented with Codex (OpenAI).

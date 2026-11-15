@@ -152,6 +152,7 @@ export function CouncilItemScreen() {
 
       <Button
         type="button"
+        variant="quest"
         disabled={selected === null || answer.isPending}
         onClick={() => {
           if (selected === null) return

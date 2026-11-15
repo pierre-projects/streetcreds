@@ -25,7 +25,7 @@ export function QuestHeader({
         >
           {questStrings.steps.cancel}
         </Link>
-        <h1 className="text-center text-lg font-bold tracking-tight text-ink">{title}</h1>
+        <h1 className="text-center font-display text-lg tracking-tight text-ink">{title}</h1>
         <p className="justify-self-end text-xs font-medium text-muted tabular-nums">
           {hasSteps ? questStrings.steps.of(step, total) : null}
         </p>

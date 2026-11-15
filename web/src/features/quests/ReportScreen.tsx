@@ -35,9 +35,9 @@ function stepFor(phase: Phase): number {
 }
 
 const SEVERITY_BADGE: Record<Severity, string> = {
-  low: 'bg-severity-low text-on-ink',
-  medium: 'bg-severity-medium text-on-ink',
-  high: 'bg-severity-high text-on-ink',
+  low: 'bg-severity-low text-on-accent',
+  medium: 'bg-severity-medium text-on-accent',
+  high: 'bg-severity-high text-on-quest',
 }
 
 /** The photo, or the dashed frame that waits for one. */
@@ -248,7 +248,7 @@ export function ReportScreen() {
 
           <fieldset className="space-y-3">
             <legend className="mb-3 text-sm font-semibold text-muted">{questStrings.report.categoryLabel}</legend>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((id) => (
                 <OptionCard
                   key={id}
@@ -257,6 +257,7 @@ export function ReportScreen() {
                   checked={category === id}
                   onChange={setCategory}
                   label={questStrings.categories[id]}
+                  look="chip"
                 />
               ))}
             </div>
@@ -264,7 +265,7 @@ export function ReportScreen() {
 
           <div className="space-y-3 pt-2">
             <p className="text-center text-xs leading-relaxed text-muted">{questStrings.report.locationHint}</p>
-            <Button onClick={() => void requestLocation()}>
+            <Button variant="quest" onClick={() => void requestLocation()}>
               {questStrings.report.submitFor(POINTS['report-new'])}
             </Button>
           </div>

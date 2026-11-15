@@ -87,3 +87,70 @@ export function CouncilIcon() {
     </Icon>
   )
 }
+
+/** The CIVIC coin: a circle with a star, in Coin amber. */
+export function CoinIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0 text-coin">
+      <circle cx="12" cy="12" r="10" fill="currentColor" />
+      <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-on-coin)" strokeOpacity=".35" strokeWidth="1.5" />
+      <path d="m12 6.8 1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5Z" fill="var(--color-on-coin)" />
+    </svg>
+  )
+}
+
+export function CameraIcon() {
+  return (
+    <Icon>
+      <path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+      <circle cx="12" cy="13.5" r="3.5" />
+    </Icon>
+  )
+}
+
+/** A council agenda page. */
+export function DocumentIcon() {
+  return (
+    <Icon>
+      <path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+      <path d="M9 11h6" />
+      <path d="M9 15h6" />
+    </Icon>
+  )
+}
+
+/** The budget quest: where taxes go. */
+export function PieIcon() {
+  return (
+    <Icon>
+      <path d="M12 3a9 9 0 1 0 9 9h-9Z" />
+      <path d="M15 3.5A9 9 0 0 1 20.5 9H15Z" />
+    </Icon>
+  )
+}
+
+export function TagIcon() {
+  return (
+    <Icon>
+      <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9Z" />
+      <circle cx="7.5" cy="7.5" r="1.5" />
+    </Icon>
+  )
+}
+
+export function LockIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  )
+}
+
+export function ChevronRightIcon() {
+  return (
+    <Icon>
+      <path d="m9 6 6 6-6 6" />
+    </Icon>
+  )
+}

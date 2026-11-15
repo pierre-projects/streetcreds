@@ -1,15 +1,24 @@
 // Shared action styles. Callers use className for spacing and width only.
+// primary: Blaze orange, for joining and the app's own actions.
+// quest: Signal red, for the one button that finishes a quest and pays points.
+// secondary: Raised, for everything else.
 import type { ComponentProps } from 'react'
 import { Link, type LinkProps } from 'react-router'
 import { cx } from './cx'
 
-type Variant = 'primary' | 'secondary'
+type Variant = 'primary' | 'quest' | 'secondary'
 const variants: Record<Variant, string> = {
-  primary: 'border-solid border-transparent bg-accent text-on-accent shadow-float motion-safe:transition-transform motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 motion-safe:active:scale-[0.99]',
-  secondary: 'border-ink/15 bg-surface text-ink hover:bg-page',
+  primary:
+    'border-transparent bg-accent text-on-accent motion-safe:transition-transform motion-safe:active:scale-[0.99]',
+  quest:
+    'border-transparent bg-quest text-on-quest motion-safe:transition-transform motion-safe:active:scale-[0.99]',
+  secondary: 'border-ink/10 bg-raised text-ink hover:bg-surface',
 }
 function buttonClass(variant: Variant) {
-  return cx('flex min-h-11 w-full items-center justify-center rounded-pill border px-4 py-2 text-center text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink disabled:pointer-events-none disabled:opacity-60', variants[variant])
+  return cx(
+    'flex min-h-12 w-full items-center justify-center rounded-control border px-4 py-2 text-center font-display text-sm uppercase tracking-[0.08em] focus-visible:outline-2 focus-visible:outline-offset-4 outline-ink disabled:pointer-events-none disabled:opacity-60',
+    variants[variant],
+  )
 }
 export function Button({ variant = 'primary', className, type = 'button', ...props }: ComponentProps<'button'> & { variant?: Variant }) {
   return <button {...props} type={type} className={cx(buttonClass(variant), className)} />

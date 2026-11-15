@@ -15,7 +15,7 @@ export function RewardCard({
 }) {
   return (
     <div className="space-y-5">
-      <h1 className="text-center text-title font-bold tracking-tight text-ink">{questStrings.reward.title}</h1>
+      <h1 className="text-center font-display text-title tracking-tight text-ink">{questStrings.reward.title}</h1>
 
       <Card className="text-center">
         <Eyebrow>{questStrings.reward.eyebrow}</Eyebrow>

@@ -1,124 +1,179 @@
-// Home: map-first radar HUD. Brand, CIVIC points and neighborhood live in the shell header;
-// this screen is the full-bleed map with Report / Council / Deals dock over the pins.
+// Home: Mayor Patch's greeting, where your neighborhood stands, and the quests.
+// The interactive map has its own tab (MapScreen); a card at the bottom leads there.
 import { useQuery } from '@tanstack/react-query'
-import type L from 'leaflet'
-import { useCallback, useMemo, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { MAP_CENTER } from '../../../../shared/constants'
+import { NEIGHBORHOODS, POINTS } from '../../../../shared/constants'
+import type { LeaderboardRow, NeighborhoodId, Player } from '../../../../shared/types'
 import { api } from '../../app/api'
-import { CouncilIcon, NavigateIcon, PlusIcon } from '../../app/icons'
-import { prefersReducedMotion } from '../../app/motion'
-import { MAP_POLL_MS, reportsKey } from '../../app/queryClient'
+import { CameraIcon, ChevronRightIcon, CoinIcon, DocumentIcon, LockIcon, MapIcon, PieIcon, TagIcon } from '../../app/icons'
+import { usePlayer } from '../../app/player'
+import { leaderboardKey, MAP_POLL_MS, POLL_MS, reportsKey } from '../../app/queryClient'
 import { strings } from '../../app/strings'
-import { ErrorNotice } from '../../app/ui'
+import { cx, ErrorNotice, Eyebrow, MayorSays } from '../../app/ui'
 import { hasPlace } from './mapReports'
-import { type PopupInsets, ReportsMap } from './ReportsMap'
 
-const HOME_ZOOM = 14
-/** Left between an open popup and the header or the navigation. */
-const POPUP_GAP = 8
+function neighborhoodName(id: NeighborhoodId): string {
+  return NEIGHBORHOODS.find((n) => n.id === id)?.name ?? id
+}
 
-/** Tag / deal glyph for the Local Deals dock control. */
-function DealsIcon() {
+/** Where the player's neighborhood stands, worked out from the leaderboard. */
+function standing(rows: LeaderboardRow[], mine: NeighborhoodId) {
+  const index = rows.findIndex((row) => row.neighborhood === mine)
+  if (index === -1) return null
+  const row = rows[index]
+  const above = index > 0 ? rows[index - 1] : null
+  const below = index < rows.length - 1 ? rows[index + 1] : null
+  return {
+    rank: index + 1,
+    total: rows.length,
+    behind: above ? above.points - row.points : 0,
+    ahead: below ? row.points - below.points : row.points,
+  }
+}
+
+function Greeting({ player, rows }: { player: Player; rows: LeaderboardRow[] | undefined }) {
+  const home = strings.game.home
+  const name = neighborhoodName(player.neighborhood)
+  const place = rows ? standing(rows, player.neighborhood) : null
+  let line: string | null = null
+  if (place && place.rank === 1) line = home.leading(name)
+  else if (place) line = home.catchUp(name, Math.ceil((place.behind + 1) / POINTS['report-new']), place.rank - 1)
   return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 2 2 7l10 5 10-5-10-5Z" />
-      <path d="M2 17 12 22 22 17" />
-      <path d="M2 12 12 17 22 12" />
-    </svg>
+    <MayorSays>
+      <p className="text-base text-ink">
+        {home.welcome(player.nickname)}
+        {line ? ` ${line}` : null}
+      </p>
+    </MayorSays>
+  )
+}
+
+function RankCard({ player, rows }: { player: Player; rows: LeaderboardRow[] }) {
+  const place = standing(rows, player.neighborhood)
+  if (!place) return null
+  const home = strings.game.home
+  return (
+    <Link to="/leaderboard" className="rank-card">
+      <span className="rank-tile">{place.rank}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-lg text-ink">{neighborhoodName(player.neighborhood)}</span>
+        <span className="mt-0.5 block text-sm text-muted">
+          {place.rank === 1 ? home.rankLeading(place.total, place.ahead) : home.rankBehind(place.rank, place.total, place.behind)}
+        </span>
+      </span>
+      <span className="text-accent">
+        <ChevronRightIcon />
+      </span>
+    </Link>
+  )
+}
+
+function QuestRow({
+  to,
+  icon,
+  tone,
+  title,
+  body,
+  points,
+}: {
+  to?: string
+  icon: ReactNode
+  tone: 'quest' | 'accent' | 'locked'
+  title: string
+  body: string
+  points?: number
+}) {
+  const content = (
+    <>
+      <span className={cx('quest-icon', tone === 'quest' && 'bg-quest text-on-quest', tone === 'accent' && 'bg-accent text-on-accent', tone === 'locked' && 'bg-raised text-muted')}>
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className={cx('block font-display text-lg', tone === 'locked' ? 'text-muted' : 'text-ink')}>{title}</span>
+        <span className="mt-0.5 block text-sm text-muted">{body}</span>
+      </span>
+      {points !== undefined ? (
+        <span className="quest-points">
+          <CoinIcon />
+          {strings.game.home.plus(points)}
+        </span>
+      ) : null}
+      {tone === 'locked' ? (
+        <span className="flex shrink-0 items-center gap-1.5 text-sm text-muted">
+          <LockIcon />
+          {strings.game.home.soon}
+        </span>
+      ) : null}
+    </>
+  )
+  if (!to) {
+    return (
+      <div className="quest-row is-locked" aria-disabled="true">
+        {content}
+      </div>
+    )
+  }
+  return (
+    <Link to={to} className="quest-row">
+      {content}
+    </Link>
   )
 }
 
 export function HomeScreen() {
-  const mapRef = useRef<L.Map | null>(null)
-  const reports = useQuery({
-    queryKey: reportsKey,
-    queryFn: api.listReports,
-    refetchInterval: MAP_POLL_MS,
-  })
+  const player = usePlayer()
+  const leaderboard = useQuery({ queryKey: leaderboardKey, queryFn: api.getLeaderboard, refetchInterval: POLL_MS })
+  const reports = useQuery({ queryKey: reportsKey, queryFn: api.listReports, refetchInterval: MAP_POLL_MS })
+  const home = strings.game.home
+  const openReports = (reports.data?.reports ?? []).filter(hasPlace).length
 
-  const pins = useMemo(() => (reports.data?.reports ?? []).filter(hasPlace), [reports.data])
-
-  const onMapReady = useCallback((map: L.Map) => {
-    mapRef.current = map
-  }, [])
-
-  function recenter() {
-    mapRef.current?.setView([MAP_CENTER.lat, MAP_CENTER.lng], HOME_ZOOM, { animate: !prefersReducedMotion() })
+  if (player.isPending) {
+    return <p className="text-muted" role="status">{strings.home.loading}</p>
   }
-
-  // This map fills the screen, so the shell's header and navigation float over it. A popup that
-  // opens has to end up between the two. They are measured when asked, because their place
-  // depends on the phone (the notch, the home bar). The dock is not counted: it steps aside
-  // while a popup is open (see `.app-main-radar:has(.leaflet-popup)` in index.css).
-  const popupInsets = useCallback((): PopupInsets => {
-    const frame = mapRef.current?.getContainer().getBoundingClientRect()
-    if (!frame) return { top: POPUP_GAP, bottom: POPUP_GAP }
-    const header = document.querySelector('.app-header')?.getBoundingClientRect()
-    const nav = document.querySelector('.app-nav-inner')?.getBoundingClientRect()
-    return {
-      top: Math.max(0, header ? header.bottom - frame.top : 0) + POPUP_GAP,
-      bottom: Math.max(0, nav ? frame.bottom - nav.top : 0) + POPUP_GAP,
-    }
-  }, [])
-
-  if (reports.isError && !reports.data) {
+  if (player.isError || !player.data) {
     return (
-      <div className="flex h-full flex-col justify-end gap-3 p-4 pb-28">
-        <ErrorNotice message={reports.error.message} fallback={strings.map.error} onRetry={() => void reports.refetch()} retryLabel={strings.map.retry} />
-      </div>
+      <ErrorNotice
+        message={player.error?.message}
+        fallback={strings.errors.playerLoad}
+        onRetry={() => void player.refetch()}
+        retryLabel={strings.home.retry}
+      />
     )
   }
 
+  const rows = leaderboard.data?.neighborhoods
+
   return (
-    <div className="relative h-full min-h-0 w-full flex-1">
-      <div className="map-frame-radar absolute inset-0" aria-label={strings.home.mapLabel}>
-        <ReportsMap pins={pins} onMapReady={onMapReady} popupInsets={popupInsets} />
-        <span className="radar-ring" aria-hidden="true" />
-        <span className="radar-ring" aria-hidden="true" />
-        <span className="radar-ring" aria-hidden="true" />
-        <span className="radar-locus" aria-hidden="true" />
-      </div>
+    <div className="space-y-5">
+      <Greeting player={player.data} rows={rows} />
 
-      <button
-        type="button"
-        className="radar-dock-btn radar-recenter"
-        aria-label={strings.home.recenter}
-        onClick={recenter}
-      >
-        <NavigateIcon />
-      </button>
+      {rows ? <RankCard player={player.data} rows={rows} /> : null}
+      {leaderboard.isPending ? <p className="text-sm text-muted">{strings.home.rankLoading}</p> : null}
+      {leaderboard.isError && !rows ? <p className="text-sm text-muted">{strings.home.rankError}</p> : null}
 
-      <div className="radar-dock">
-        <div className="radar-dock-inner">
-          <div className="flex w-11 shrink-0 flex-col items-center">
-            <Link to="/deals" className="radar-dock-btn" aria-label={strings.home.dealsTitle}>
-              <DealsIcon />
-            </Link>
-            <span className="radar-dock-caption" aria-hidden="true">{strings.home.dealsShort}</span>
-          </div>
-          <Link to="/report" className="radar-dock-primary">
-            <span>{strings.home.reportCta}</span>
-            <span className="radar-dock-plus" aria-hidden="true"><PlusIcon /></span>
-          </Link>
-          <div className="flex w-11 shrink-0 flex-col items-center">
-            <Link to="/council" className="radar-dock-btn" aria-label={strings.home.councilTitle}>
-              <CouncilIcon />
-            </Link>
-            <span className="radar-dock-caption" aria-hidden="true">{strings.home.councilShort}</span>
-          </div>
-        </div>
-      </div>
+      <section aria-labelledby="home-quests" className="space-y-3">
+        <Eyebrow id="home-quests">{home.questsEyebrow}</Eyebrow>
+        <QuestRow to="/report" tone="quest" icon={<CameraIcon />} title={home.reportTitle} body={home.reportBody} points={POINTS['report-new']} />
+        <QuestRow to="/council" tone="quest" icon={<DocumentIcon />} title={home.councilTitle} body={home.councilBody} points={POINTS.council} />
+        <QuestRow to="/deals" tone="accent" icon={<TagIcon />} title={home.dealsTitle} body={home.dealsBody} />
+        <QuestRow tone="locked" icon={<PieIcon />} title={home.budgetTitle} body={home.budgetBody} />
+      </section>
+
+      <Link to="/map" className="quest-row">
+        <span className="quest-icon bg-raised text-accent">
+          <MapIcon />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-lg text-ink">{home.mapTitle}</span>
+          <span className="mt-0.5 block text-sm text-muted">
+            {reports.data ? home.mapBody(openReports) : strings.map.loading}
+          </span>
+        </span>
+        <span className="text-muted">
+          <ChevronRightIcon />
+        </span>
+      </Link>
     </div>
   )
 }
