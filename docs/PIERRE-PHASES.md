@@ -113,7 +113,7 @@ Do not change the awardPoints signature or return shape. Stop when done and give
 - [x] Pin popup shows the photo and details.
 - [x] "Copy city report" puts category, description, location and photo link on the clipboard.
 - [ ] Rate-limit helper `checkReportLimit` written and tested in `api/src/players/rateLimit.ts`; Sarah has added it to her route.
-- [ ] 10 test mints in a row all arrive (`mint-test.ts 10`).
+- [x] 10 test mints in a row all arrive (`mint-test.ts 10`).
 - [x] One-slide architecture diagram drafted.
 - [x] `npm run check` passes.
 
