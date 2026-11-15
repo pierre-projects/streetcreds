@@ -513,8 +513,6 @@ const label = LabelSchema.parse(JSON.parse(interaction.output_text));
 
 The prompt and the photo must sit inside one `user_input` step. Sent as a bare list of content parts, the API answers 400 (`'image' is not supported for 'input[1].type' in v1`). This was run against the live API on 2026-11-15.
 
-The S3 client in `api/src/quests/s3.ts` is created with `requestChecksumCalculation: 'WHEN_REQUIRED'`. Without it the SDK adds a checksum for an empty file to every upload link, which the photo the browser sends cannot match.
-
 When labeling fails, the player sees `label_failed` and the API logs one line with `"where": "labelPhoto.gemini"` (or `labelPhoto.s3`) and the cause, without any photo data.
 
 `LABEL_PROMPT`, to start from and tune against 10 test photos:
