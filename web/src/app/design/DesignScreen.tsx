@@ -148,7 +148,7 @@ export function Component() {
         <ScreenHeader title="Screen header" subtitle="Optional supporting text — sentence case, not shouted." />
         <ScreenHeader title="Title only" />
         <Eyebrow>Eyebrow label</Eyebrow>
-        <div className="flex items-center gap-3"><LogoMark /><span className="font-bold">Logo mark (orange hex S)</span></div>
+        <div className="flex items-center gap-3"><LogoMark /><span className="font-bold">Logo mark (pack: white S on orange)</span></div>
         <Card><Eyebrow>Keyboard focus</Eyebrow><p className="my-3 text-sm text-muted">Tab through these controls to see focus outlines.</p><Button variant="secondary" onClick={() => focusTarget.current?.focus()}>Move focus to next button</Button><Button ref={focusTarget} className="mt-4" variant="secondary">Focus target</Button></Card>
       </section>
 

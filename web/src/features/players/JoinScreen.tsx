@@ -61,8 +61,8 @@ export function JoinScreen() {
     <main className="app-column flex flex-col px-4 py-8">
       <BoardLink />
       <div className="mb-5 flex items-center gap-3">
-        <LogoMark />
-        <span className="text-lg font-bold tracking-tight text-ink">{strings.appName}</span>
+        <LogoMark className="size-9" />
+        <span className="text-xl font-bold tracking-tight text-ink">{strings.appName}</span>
       </div>
       <ScreenHeader title={strings.appName} subtitle={strings.tagline} />
 
